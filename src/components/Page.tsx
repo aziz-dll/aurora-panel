@@ -14,14 +14,14 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-[880px] px-5 pb-24 pt-7 md:px-10 md:pb-16 md:pt-10">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
       <header className="mb-6">
-        {icon && <div className="mb-1 text-[38px] leading-none select-none">{icon}</div>}
+        {icon && <div className="mb-1 text-[32px] leading-none select-none md:text-[38px]">{icon}</div>}
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-[26px] font-bold tracking-tight md:text-[32px]">{title}</h1>
-          {actions && <div className="mt-1.5 flex shrink-0 gap-1.5">{actions}</div>}
+          <h1 className="min-w-0 text-[24px] font-bold tracking-tight md:text-[32px]">{title}</h1>
+          {actions && <div className="mt-1 flex shrink-0 gap-1.5">{actions}</div>}
         </div>
-        {subtitle && <p className="mt-1 text-sm text-soft">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-[13px] text-soft md:text-sm">{subtitle}</p>}
       </header>
       {children}
     </div>

@@ -44,12 +44,12 @@ export default function Schedule() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] pb-24 pt-7 md:pb-10 md:pt-10">
+    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-5 md:pb-10 md:pt-10">
       <div className="px-5 md:px-10">
-        <div className="mb-1 text-[38px] leading-none select-none">📅</div>
+        <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">📅</div>
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[26px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
+            <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
             <p className="mt-1 text-sm text-soft">
               Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
             </p>

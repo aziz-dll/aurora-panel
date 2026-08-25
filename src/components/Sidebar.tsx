@@ -12,12 +12,11 @@ interface SidebarProps {
 function Brand() {
   return (
     <a href="#/" className="group flex items-center gap-2.5 px-4 py-4 transition-colors hover:bg-hover">
-      <span
-        className="grid h-8 w-8 place-items-center rounded-[10px] text-base shadow-[var(--shadow-card)] transition-transform group-hover:scale-105"
-        style={{ background: 'linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #9065b0))' }}
-      >
-        🎒
-      </span>
+      <img
+        src="/aurora.svg"
+        alt=""
+        className="h-8 w-8 rounded-[10px] shadow-[var(--shadow-card)] transition-transform group-hover:scale-105"
+      />
       <span className="font-semibold tracking-tight">Aurora</span>
     </a>
   );

@@ -88,10 +88,10 @@ export default function Fitness() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-5 pb-24 pt-8 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[38px] leading-none select-none">🏋️</div>
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">🏋️</div>
       <header className="mb-6">
-        <h1 className="text-[26px] font-bold tracking-tight md:text-[32px]">Spor</h1>
+        <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Spor</h1>
         <p className="mt-0.5 text-sm text-soft">Evde aletsiz program — kilona, boyuna ve yaşına göre hazırlandı.</p>
       </header>
 

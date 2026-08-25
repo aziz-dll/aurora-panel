@@ -21,6 +21,25 @@ export async function hasReminderPermission(): Promise<boolean> {
   return cur.display === 'granted';
 }
 
+/** Deneme amaçlı: ~1.5 sn sonra cihazda bildirim gösterir. */
+export async function sendTestNotification(): Promise<boolean> {
+  if (!remindersAvailable()) return false;
+  if (!(await hasReminderPermission())) {
+    if (!(await requestReminderPermission())) return false;
+  }
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: 987654321,
+        title: '🔔 Aurora test bildirimi',
+        body: 'Bildirimler çalışıyor! Ödev, yazılı, su ve spor hatırlatmaları böyle görünecek.',
+        schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true },
+      },
+    ],
+  });
+  return true;
+}
+
 function hashId(prefix: string, raw: string): string {
   let h = 0;
   for (let i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;

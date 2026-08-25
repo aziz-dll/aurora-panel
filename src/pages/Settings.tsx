@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from '../lib/icons';
 import { exportJSON, importJSON, patchSettings, resetAll, useDB } from '../lib/store';
-import { hasReminderPermission, requestReminderPermission, remindersAvailable } from '../lib/reminders';
+import { hasReminderPermission, requestReminderPermission, remindersAvailable, sendTestNotification } from '../lib/reminders';
 import { termux } from '../lib/termux';
 import type { ThemeMode } from '../lib/types';
 import { useTermuxStatus } from '../lib/useTermuxStatus';
@@ -102,11 +102,11 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[640px] px-5 pb-24 pt-7 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[38px] leading-none select-none">⚙️</div>
+    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">⚙️</div>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[26px] font-bold tracking-tight md:text-[32px]">Ayarlar</h1>
+          <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Ayarlar</h1>
           {feedback && <p className="mt-1 text-sm font-medium text-accent">{feedback}</p>}
         </div>
       </div>
@@ -175,6 +175,17 @@ export default function Settings() {
             label="Hatırlatıcılar açık"
             hint="Ödev, yazılı, su ve spor bildirimleri"
           />
+          {db.settings.remindersEnabled && (
+            <button
+              onClick={async () => {
+                const ok = await sendTestNotification();
+                flash(ok ? 'Test bildirimi gönderildi — 1-2 sn içinde düşecek ✓' : 'Bildirim izni yok ✗');
+              }}
+              className="btn btn-ghost border border-line justify-start"
+            >
+              <Icon name="bell" size={14} /> Test bildirimi gönder
+            </button>
+          )}
           {db.settings.remindersEnabled && permState === false && (
             <div className="rounded-lg bg-[#fae4e4] px-3 py-2.5 text-xs leading-relaxed text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
               <p className="font-semibold">Bildirim izni kapalı 🔕</p>

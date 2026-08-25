@@ -93,7 +93,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-5 pb-24 pt-8 md:px-10 md:pb-16">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16">
       <header className="relative mb-6">
         <div
           aria-hidden
@@ -106,7 +106,7 @@ export default function Dashboard() {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-2.5 py-1 text-[11.5px] font-medium text-soft shadow-[var(--shadow-card)]">
             <Icon name="calendar" size={11} /> {longDate(new Date())}
           </span>
-          <h1 className="mt-2 text-[26px] font-bold tracking-tight md:text-[34px]">
+          <h1 className="mt-2 text-[24px] font-bold tracking-tight md:text-[34px]">
             {greeting()}
             {name ? `, ${name}` : ''} 👋
           </h1>

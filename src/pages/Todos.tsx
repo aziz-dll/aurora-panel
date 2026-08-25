@@ -151,11 +151,11 @@ export default function Todos() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-5 pb-24 pt-7 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[38px] leading-none select-none">✅</div>
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">✅</div>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[26px] font-bold tracking-tight md:text-[32px]">Görevler</h1>
+          <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Görevler</h1>
           <p className="mt-1 text-sm text-soft">{activeCount} açık görev</p>
         </div>
       </div>

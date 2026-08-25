@@ -35,9 +35,9 @@ export default function Notes() {
     <div className="mx-auto flex h-full w-full max-w-[1000px] px-5 pt-7 md:px-10 md:pt-10">
       {/* Liste */}
       <aside className={cx('w-full shrink-0 flex-col pb-24 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
-        <div className="mb-1 text-[38px] leading-none select-none">📝</div>
+        <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">📝</div>
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-[26px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
+          <h1 className="text-[24px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
           <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="Yeni not">
             <Icon name="plus" size={14} />
           </button>
