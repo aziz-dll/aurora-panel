@@ -14,7 +14,7 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16 md:pt-10">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-14 md:px-10 md:pb-16 md:pt-10">
       <header className="mb-6">
         {icon && <div className="mb-1 text-[26px] leading-none select-none md:text-[38px]">{icon}</div>}
         <div className="flex items-start justify-between gap-3">

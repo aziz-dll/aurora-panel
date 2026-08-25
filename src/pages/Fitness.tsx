@@ -88,7 +88,7 @@ export default function Fitness() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16 md:pt-10">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-14 md:px-10 md:pb-16 md:pt-10">
       <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">🏋️</div>
       <header className="mb-6">
         <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Spor</h1>

@@ -93,7 +93,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-14 md:px-10 md:pb-16">
       <header className="relative mb-6">
         <div
           aria-hidden

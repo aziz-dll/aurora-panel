@@ -44,7 +44,7 @@ export default function Schedule() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-4 md:pb-10 md:pt-10">
+    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-14 md:pb-10 md:pt-10">
       <div className="px-5 md:px-10">
         <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📅</div>
         <div className="mb-6 flex items-start justify-between gap-3">
