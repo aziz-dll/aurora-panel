@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from '../lib/icons';
 import { exportJSON, importJSON, patchSettings, resetAll, useDB } from '../lib/store';
-import { requestReminderPermission, remindersAvailable } from '../lib/reminders';
+import { hasReminderPermission, requestReminderPermission, remindersAvailable } from '../lib/reminders';
 import { termux } from '../lib/termux';
 import type { ThemeMode } from '../lib/types';
 import { useTermuxStatus } from '../lib/useTermuxStatus';
@@ -59,8 +59,17 @@ export default function Settings() {
   const { connected, battery } = useTermuxStatus();
   const [manualPing, setManualPing] = useState<boolean | null>(null);
   const [feedback, setFeedback] = useState('');
+  const [permState, setPermState] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const up = manualPing ?? connected;
+
+  useEffect(() => {
+    if (db.settings.remindersEnabled && remindersAvailable()) {
+      void hasReminderPermission().then(setPermState);
+    } else {
+      setPermState(null);
+    }
+  }, [db.settings.remindersEnabled]);
 
   const flash = (msg: string) => {
     setFeedback(msg);
@@ -162,13 +171,28 @@ export default function Settings() {
           )}
           <Toggle
             checked={db.settings.remindersEnabled}
-            onChange={async (v) => {
-              if (v && !(await requestReminderPermission())) return;
-              patchSettings({ remindersEnabled: v });
-            }}
+            onChange={(v) => patchSettings({ remindersEnabled: v })}
             label="Hatırlatıcılar açık"
             hint="Ödev, yazılı, su ve spor bildirimleri"
           />
+          {db.settings.remindersEnabled && permState === false && (
+            <div className="rounded-lg bg-[#fae4e4] px-3 py-2.5 text-xs leading-relaxed text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
+              <p className="font-semibold">Bildirim izni kapalı 🔕</p>
+              <p className="mt-0.5">
+                Android bir kez reddedilince tekrar soramaz. Açmak için:{' '}
+                <b>Telefon Ayarları → Uygulamalar → Aurora → Bildirimler → İzin ver</b>
+              </p>
+              <button
+                onClick={async () => {
+                  if (await requestReminderPermission()) setPermState(true);
+                  else setFeedback('Sistem izin penceresi vermiyor — telefon ayarlarından aç ✗');
+                }}
+                className="btn mt-2 border border-current px-2.5 py-1 text-xs font-medium"
+              >
+                Tekrar dene
+              </button>
+            </div>
+          )}
           {db.settings.remindersEnabled && (
             <>
               <div className="grid grid-cols-2 gap-3">

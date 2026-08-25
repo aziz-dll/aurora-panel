@@ -3,7 +3,7 @@ import './index.css';
 import { Sidebar } from './components/Sidebar';
 import { Icon, type IconName } from './lib/icons';
 import { titleFor } from './lib/nav';
-import { patchSettings, useDB } from './lib/store';
+import { getDB, patchSettings, useDB } from './lib/store';
 import { syncReminders } from './lib/reminders';
 import type { ThemeMode } from './lib/types';
 import Dashboard from './pages/Dashboard';
@@ -75,10 +75,14 @@ export default function App() {
   }, [path]);
 
   // Hatırlatıcıları veriyle senkron tut (APK'da çalışır)
+  // — yazma sırasında spam olmasın diye gecikmeli, saat başı de tazele
   useEffect(() => {
-    void syncReminders(db);
-    const id = setInterval(() => void syncReminders(db), 15 * 60_000);
-    return () => clearInterval(id);
+    const id = setTimeout(() => void syncReminders(db), 800);
+    const iv = setInterval(() => void syncReminders(getDB()), 60 * 60_000);
+    return () => {
+      clearTimeout(id);
+      clearInterval(iv);
+    };
   }, [db]);
 
   const Page = PAGES[path] ?? Dashboard;
@@ -94,25 +98,21 @@ export default function App() {
       <Sidebar path={path} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex items-center gap-1 border-b border-line bg-paper/90 px-3 py-2 backdrop-blur md:hidden">
+          <button onClick={() => setDrawerOpen(true)} className="btn btn-ghost p-2" aria-label="Menü">
+            <Icon name="menu" size={18} />
+          </button>
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold">{titleFor(path)}</span>
+          <button onClick={cycleTheme} className="btn btn-ghost p-2" aria-label="Tema">
+            <Icon name={THEME_ICON[settings.theme]} size={17} className={settings.theme === 'system' ? 'opacity-50' : ''} />
+          </button>
+        </header>
+
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div key={path} className="animate-[page-in_300ms_var(--ease-out)]">
             <Page />
           </div>
         </div>
-
-        {/* Mobil alt bar — başparmak hizasında menü + tema */}
-        <nav
-          className="sticky bottom-0 z-30 flex items-center gap-1 border-t border-line bg-paper/95 px-3 pt-1.5 backdrop-blur md:hidden"
-          style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
-        >
-          <button onClick={() => setDrawerOpen(true)} className="btn btn-ghost p-2" aria-label="Menü">
-            <Icon name="menu" size={18} />
-          </button>
-          <span className="min-w-0 flex-1 truncate text-center text-sm font-semibold">{titleFor(path)}</span>
-          <button onClick={cycleTheme} className="btn btn-ghost p-2" aria-label="Tema">
-            <Icon name={THEME_ICON[settings.theme]} size={17} className={settings.theme === 'system' ? 'opacity-50' : ''} />
-          </button>
-        </nav>
       </div>
     </div>
   );

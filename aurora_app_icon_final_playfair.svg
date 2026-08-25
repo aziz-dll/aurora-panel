@@ -1,0 +1,13 @@
+<svg width="100%" viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg" role="img" style="">
+<title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:anthropic-sans, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Minimalist black Aurora app icon with letter A in Playfair Display font</title>
+<desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:anthropic-sans, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">A pure black rounded square app icon with a single bold white letter A set in the Playfair Display extrabold serif typeface, centered, no other decoration.</desc>
+<defs>
+
+<clipPath id="iconClipF"><rect x="140" y="40" width="400" height="400" rx="88"/></clipPath>
+</defs>
+<rect x="140" y="40" width="400" height="400" rx="88" fill="#0a0a0a" style="fill:rgb(10, 10, 10);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:anthropic-sans, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+<g clip-path="url(#iconClipF)" style="fill:rgb(0, 0, 0);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:anthropic-sans, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">
+<text x="340" y="332" text-anchor="middle" font-family="'Playfair Display', serif" font-weight="800" font-size="260" fill="#f5f5f5" style="fill:rgb(245, 245, 245);stroke:none;color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Playfair Display&quot;, serif;font-size:260px;font-weight:800;text-anchor:middle;dominant-baseline:auto">A</text>
+</g>
+<rect x="140" y="40" width="400" height="400" rx="88" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1" style="fill:none;stroke:rgb(255, 255, 255);color:rgb(11, 11, 11);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:anthropic-sans, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+</svg>

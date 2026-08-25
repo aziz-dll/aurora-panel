@@ -3,96 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#faf9f5" />
+  <meta name="theme-color" content="#0a0a0a" />
   <title>Aurora</title>
   <style>
-    :root {
-      --paper: #faf9f5; --side: #f3f1ea; --ink: #33312a; --soft: #767268;
-      --faint: #aaa69b; --line: #e8e5dc; --accent: #2383e2; --accent-soft: rgba(35, 131, 226, 0.12);
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --paper: #1c1b18; --side: #24231f; --ink: #ddd9cf; --soft: #9d998f;
-        --faint: #726f66; --line: #31302a; --accent-soft: rgba(35, 131, 226, 0.2);
-      }
-    }
     * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      background: var(--paper); color: var(--ink);
+      background: #0a0a0a; color: #f5f5f5;
       min-height: 100dvh; display: grid; place-items: center; padding: 24px;
       -webkit-font-smoothing: antialiased;
     }
     .box { width: 100%; max-width: 340px; text-align: center; }
     .logo {
-      width: 64px; height: 64px; margin: 0 auto 14px; display: grid; place-items: center;
-      font-size: 30px; border-radius: 18px;
-      background: linear-gradient(135deg, var(--accent), #9065b0);
-      box-shadow: 0 8px 24px -6px rgba(35, 131, 226, 0.4);
+      width: 96px; height: 96px; margin: 0 auto 18px; display: grid; place-items: center;
+      border-radius: 22px; background: #161616; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 16px 40px -12px rgba(0,0,0,.8);
+      animation: breathe 2.4s ease-in-out infinite;
     }
-    h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
-    p.sub { color: var(--soft); font-size: 13.5px; margin: 6px 0 22px; line-height: 1.5; }
-    .card {
-      background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
-      padding: 18px; box-shadow: 0 1px 2px rgba(45,40,28,.04), 0 6px 16px -2px rgba(45,40,28,.05);
-      text-align: left;
-    }
-    label { display: block; font-size: 12px; font-weight: 600; color: var(--soft); margin-bottom: 6px; }
-    input {
-      width: 100%; padding: 11px 12px; font-size: 15px; color: var(--ink);
-      background: transparent; border: 1px solid var(--line); border-radius: 10px; outline: none;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    input::placeholder { color: var(--faint); }
-    button {
-      width: 100%; margin-top: 12px; padding: 12px; font-size: 15px; font-weight: 600;
-      color: #fff; background: var(--accent); border: 0; border-radius: 10px; cursor: pointer;
-      transition: transform .12s cubic-bezier(.34,1.4,.64,1), filter .15s;
-    }
-    button:active { transform: scale(.97); }
-    button:disabled { opacity: .5; }
-    .status { margin-top: 14px; font-size: 13px; color: var(--soft); min-height: 18px; line-height: 1.45; }
-    .status.err { color: #e03e3e; }
-    .hint { margin-top: 18px; font-size: 12px; color: var(--faint); line-height: 1.6; }
-    .hint code { background: var(--side); padding: 1px 5px; border-radius: 5px; font-size: 11px; }
+    .logo img { width: 100%; height: 100%; display: block; }
+    @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .status { margin-top: 14px; font-size: 13.5px; color: #9d9d9d; min-height: 20px; line-height: 1.5; }
+    .status.err { color: #ef8b8b; }
     .spinner {
-      display: inline-block; width: 13px; height: 13px; vertical-align: -2px; margin-right: 6px;
-      border: 2px solid var(--accent-soft); border-top-color: var(--accent); border-radius: 50%;
+      display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 7px;
+      border: 2px solid rgba(255,255,255,.15); border-top-color: #f5f5f5; border-radius: 50%;
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .page-in { animation: pageIn .35s cubic-bezier(.22,1,.36,1) both; }
-    @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } }
+
+    /* Adres formu — sadece gerekirse belirir */
+    .form {
+      max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+      transition: max-height .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, margin-top .35s ease;
+    }
+    .form.open { max-height: 300px; opacity: 1; margin-top: 26px; }
+    .card {
+      background: #141414; border: 1px solid #262626; border-radius: 14px;
+      padding: 18px; text-align: left;
+    }
+    label { display: block; font-size: 12px; font-weight: 600; color: #9d9d9d; margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 11px 12px; font-size: 15px; color: #f5f5f5;
+      background: transparent; border: 1px solid #2c2c2c; border-radius: 10px; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus { border-color: #f5f5f5; box-shadow: 0 0 0 3px rgba(255,255,255,.08); }
+    input::placeholder { color: #5a5a5a; }
+    button {
+      width: 100%; margin-top: 12px; padding: 12px; font-size: 15px; font-weight: 600;
+      color: #0a0a0a; background: #f5f5f5; border: 0; border-radius: 10px; cursor: pointer;
+      transition: transform .12s cubic-bezier(.34,1.4,.64,1), opacity .15s;
+    }
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .5; }
+    .hint { margin-top: 16px; font-size: 12px; color: #6a6a6a; line-height: 1.6; }
+    .hint code { background: #1c1c1c; padding: 1px 5px; border-radius: 5px; font-size: 11px; }
+    .page-in { animation: pageIn .4s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } }
   </style>
 </head>
 <body>
   <div class="box page-in">
-    <div class="logo">🎒</div>
+    <div class="logo"><img src="logo.png" alt="" /></div>
     <h1>Aurora</h1>
-    <p class="sub">Sunucu adresini bir kez gir —<br/>sonra kendisi hatırlar.</p>
-    <div class="card">
-      <label for="addr">Sunucu adresi</label>
-      <input id="addr" type="url" inputmode="url" autocomplete="off"
-             spellcheck="false" placeholder="http://192.168.1.200:8788" />
-      <button id="go">Bağlan</button>
-      <div class="status" id="status"></div>
+    <div class="status" id="status"><span class="spinner"></span>Bağlanılıyor…</div>
+
+    <div class="form" id="form">
+      <div class="card">
+        <label for="addr">Sunucu adresi</label>
+        <input id="addr" type="url" inputmode="url" autocomplete="off"
+               spellcheck="false" placeholder="http://192.168.1.200:8788" />
+        <button id="go">Bağlan</button>
+        <p class="hint">
+          Adresi J7 Prime'daki Termux'ta sunucu başlarken ekrana yazılan URL'den al.<br/>
+          <code>bash ~/dashboard/start.sh</code>
+        </p>
+      </div>
     </div>
-    <p class="hint">
-      Adresi J7 Prime'daki Termux'ta sunucuyu başlattığında ekrana yazılır.<br/>
-      <code>bash ~/dashboard/start.sh</code>
-    </p>
   </div>
 
   <script>
     var $input = document.getElementById('addr');
     var $btn = document.getElementById('go');
     var $status = document.getElementById('status');
+    var $form = document.getElementById('form');
     var KEY = 'serverUrl';
+    var DEFAULT = 'http://192.168.1.200:8788';
 
     function setStatus(msg, isErr, busy) {
       $status.className = 'status' + (isErr ? ' err' : '');
       $status.innerHTML = (busy ? '<span class="spinner"></span>' : '') + msg;
+    }
+
+    function showForm() {
+      $form.classList.add('open');
+      setTimeout(function () { $input.focus(); }, 380);
     }
 
     function normalize(raw) {
@@ -113,34 +119,34 @@
           clearTimeout(timer);
           if (!data || data.ok !== true) return Promise.reject();
           if (remember) try { localStorage.setItem(KEY, origin); } catch (e) {}
-          setStatus('Bağlandı ✓ yönlendiriliyor…');
-          setTimeout(function () { location.replace(origin); }, 350);
+          setStatus('Bağlandı ✓');
+          setTimeout(function () { location.replace(origin); }, 250);
         })
         .catch(function () {
           clearTimeout(timer);
           $btn.disabled = false;
-          setStatus('Ulaşılamadı. J7 Prime açık, aynı WiFi\'da ve sunucu çalışıyor mu?', true);
+          setStatus('Sunucuya ulaşılamadı — J7 açık mı, aynı WiFi\'da mısın?', true);
+          showForm();
         });
     }
 
     $btn.addEventListener('click', function () {
       var origin = normalize($input.value);
-      if (!origin) { setStatus('Geçerli bir adres yaz (örn. 192.168.1.25:8788)', true); return; }
+      if (!origin) { setStatus('Geçerli bir adres yaz (örn. 192.168.1.200:8788)', true); return; }
       connect(origin, true);
     });
     $input.addEventListener('keydown', function (e) { if (e.key === 'Enter') $btn.click(); });
 
-    // Kayıtlı adres varsa otomatik dene, yoksa varsayılanı doldur
-    try {
-      var saved = localStorage.getItem(KEY);
-      if (saved) {
-        $input.value = saved;
-        connect(saved, false);
-      } else {
-        $input.value = 'http://192.168.1.200:8788';
-      }
-    } catch (e) {
-      $input.value = 'http://192.168.1.200:8788';
+    // Açılış: kayıtlı adresi sessizce dene; olmazsa formu aç
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    if (saved) {
+      $input.value = saved;
+      connect(saved, false);
+    } else {
+      $input.value = DEFAULT;
+      setStatus('Sunucu adresi bekleniyor');
+      showForm();
     }
   </script>
 </body>

@@ -15,6 +15,12 @@ export async function requestReminderPermission(): Promise<boolean> {
   return req.display === 'granted';
 }
 
+export async function hasReminderPermission(): Promise<boolean> {
+  if (!remindersAvailable()) return true;
+  const cur = await LocalNotifications.checkPermissions();
+  return cur.display === 'granted';
+}
+
 function hashId(prefix: string, raw: string): string {
   let h = 0;
   for (let i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;
@@ -92,11 +98,13 @@ export async function syncReminders(db: DB): Promise<void> {
     .slice(0, 32);
   for (const todo of openTodos) {
     const fireDate = plusDaysISO(daysUntil(todo.due!) - s.todoReminderDays);
+    const at = atTime(fireDate, '18:00');
+    if (at.getTime() <= Date.now()) continue; // hatırlatma anı geçtiyse kurma
     drafts.push({
       id: hashId('t', todo.id),
       title: '⏳ Ödev hatırlatması',
       body: `«${todo.title}» için ${s.todoReminderDays} gün kaldı — bugün başla, son geceye bırakma.`,
-      at: atTime(fireDate, '18:00'),
+      at,
     });
   }
 
@@ -107,11 +115,13 @@ export async function syncReminders(db: DB): Promise<void> {
     .slice(0, 32);
   for (const ex of exams) {
     const fireDate = plusDaysISO(daysUntil(ex.date) - s.examReminderDays);
+    const at = atTime(fireDate, '18:00');
+    if (at.getTime() <= Date.now()) continue; // hatırlatma anı geçtiyse kurma
     drafts.push({
       id: hashId('e', ex.id),
       title: '📝 Yazılı hatırlatması',
       body: `«${ex.title}» ${ex.date} tarihinde — ${s.examReminderDays} günün var, çalışma planı yap.`,
-      at: atTime(fireDate, '18:00'),
+      at,
     });
   }
 
