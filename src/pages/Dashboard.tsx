@@ -105,7 +105,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-32 pt-16 md:px-10 md:pb-16">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-32 pt-20 md:px-10 md:pb-16">
       <header className="mb-8">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1 text-[11.5px] font-medium text-soft shadow-[var(--shadow-card)]">
           <Icon name="calendar" size={11} /> {longDate(new Date())}

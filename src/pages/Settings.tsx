@@ -163,7 +163,10 @@ export default function Settings() {
           )}
           <Toggle
             checked={db.settings.remindersEnabled}
-            onChange={(v) => patchSettings({ remindersEnabled: v })}
+            onChange={(v) => {
+              patchSettings({ remindersEnabled: v });
+              if (v) void requestReminderPermission();
+            }}
             label="Hatırlatıcılar açık"
             hint="Ödev, yazılı, su ve spor bildirimleri"
           />
@@ -305,12 +308,6 @@ export default function Settings() {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={async () => flash((await termux.notify('Aurora 🎒', 'Termux bildirimi çalışıyor!')) ? 'Bildirim gönderildi ✓' : 'Termux bağlı değil ✗')}
-              className="btn btn-ghost border border-line justify-start"
-            >
-              <Icon name="bell" size={14} /> Bildirim testi
-            </button>
             <button
               onClick={async () => flash((await termux.toast('Merhaba Termux!')) ? 'Toast gösterildi ✓' : 'Termux bağlı değil ✗')}
               className="btn btn-ghost border border-line justify-start"

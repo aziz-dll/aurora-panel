@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import { Sidebar } from './components/Sidebar';
 import { DockNav } from './components/DockNav';
-import { Icon, type IconName } from './lib/icons';
-import { getDB, patchSettings, useDB } from './lib/store';
+
+import { getDB, useDB } from './lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
 import { checkServerBattery } from './lib/serverBattery';
-import type { ThemeMode } from './lib/types';
 import Dashboard from './pages/Dashboard';
 import Todos from './pages/Todos';
 import Schedule from './pages/Schedule';
@@ -43,7 +42,6 @@ const PAGES: Record<string, React.ComponentType> = {
   '/ayarlar': Settings,
 };
 
-const THEME_ICON: Record<ThemeMode, IconName> = { system: 'moon', light: 'sun', dark: 'moon' };
 
 export default function App() {
   const path = useHashRoute();
@@ -103,12 +101,6 @@ export default function App() {
 
   const Page = PAGES[path] ?? Dashboard;
 
-  const cycleTheme = () => {
-    const order: ThemeMode[] = ['system', 'light', 'dark'];
-    const next = order[(order.indexOf(settings.theme) + 1) % order.length];
-    patchSettings({ theme: next });
-  };
-
   return (
     <div className="flex h-dvh overflow-hidden bg-paper text-ink">
       <Sidebar path={path} />
@@ -119,15 +111,6 @@ export default function App() {
             <Page />
           </div>
         </div>
-
-        {/* Mobilde yüzen tema düğmesi — dock ile çakışmaz */}
-        <button
-          onClick={cycleTheme}
-          aria-label="Tema"
-          className="glass fixed right-3 top-5 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-line/70 text-soft shadow-[var(--shadow-card)] transition-transform active:scale-90 md:hidden"
-        >
-          <Icon name={THEME_ICON[settings.theme]} size={15} className={settings.theme === 'system' ? 'opacity-50' : ''} />
-        </button>
       </div>
 
       <DockNav path={path} />

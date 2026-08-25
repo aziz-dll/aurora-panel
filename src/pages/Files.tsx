@@ -17,7 +17,7 @@ export default function Files() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mx-auto w-full max-w-[1100px] px-4 pt-16 md:px-10 md:pt-10">
+      <div className="mx-auto w-full max-w-[1100px] px-4 pt-20 md:px-10 md:pt-10">
         <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📁</div>
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">

@@ -32,7 +32,7 @@ export default function Notes() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-16 md:px-10 md:pt-10">
+    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-20 md:px-10 md:pt-10">
       {/* Liste */}
       <aside className={cx('w-full shrink-0 flex-col pb-32 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
         <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📝</div>
