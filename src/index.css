@@ -14,15 +14,6 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
-  --animate-shimmer: shimmer 2.4s linear infinite;
-  --animate-ripple: ripple 3400ms ease infinite;
-  --animate-border-beam: border-beam var(--beam-duration, 7s) linear infinite;
-}
-
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
 }
 
 :root {
@@ -35,8 +26,6 @@
   --hover: rgba(43, 42, 37, 0.06);
   --accent: #2383e2;
   --accent-soft: rgba(35, 131, 226, 0.12);
-  --aurora-2: #9065b0;
-  --aurora-3: #e07a5f;
   --shadow-card: 0 1px 1px rgba(45, 40, 28, 0.03), 0 2px 6px rgba(45, 40, 28, 0.04), 0 6px 16px -2px rgba(45, 40, 28, 0.04);
   --shadow-pop: 0 0 0 1px rgba(45, 40, 28, 0.05), 0 4px 8px rgba(45, 40, 28, 0.07),
     0 12px 32px -4px rgba(45, 40, 28, 0.14);
@@ -125,104 +114,14 @@ h2 {
   letter-spacing: -0.015em;
 }
 
-/* ---- Aurora atmosferi ---- */
-
+/* Sadece marka ve karşılamada kullanılan hafif gradyan metin */
 .aurora-text {
-  background-image: linear-gradient(
-    90deg,
-    var(--accent),
-    var(--aurora-2),
-    var(--aurora-3),
-    var(--accent)
-  );
+  background-image: linear-gradient(90deg, var(--accent), #9065b0, #e07a5f, var(--accent));
   background-size: 200% auto;
-  animation: aurora-shift 6s linear infinite;
-}
-
-.aurora-blob {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(90px);
-  opacity: 0.28;
-  will-change: transform;
-}
-
-.dark .aurora-blob {
-  opacity: 0.2;
-}
-
-.aurora-blob-1 {
-  width: 480px;
-  height: 480px;
-  background: var(--accent);
-  top: -180px;
-  left: -140px;
-  animation: drift-1 26s ease-in-out infinite alternate;
-}
-
-.aurora-blob-2 {
-  width: 420px;
-  height: 420px;
-  background: var(--aurora-2);
-  top: 20%;
-  right: -160px;
-  animation: drift-2 32s ease-in-out infinite alternate;
-}
-
-.aurora-blob-3 {
-  width: 380px;
-  height: 380px;
-  background: var(--aurora-3);
-  bottom: -160px;
-  left: 25%;
-  animation: drift-3 38s ease-in-out infinite alternate;
-}
-
-/* Kart etrafında dönen ışık huzmesi (21st.dev border-beam) */
-.border-beam {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--angle, 0deg),
-    transparent 0deg 260deg,
-    var(--beam-color, var(--accent)) 330deg,
-    transparent 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-  animation: border-beam var(--beam-duration, 7s) linear infinite;
-  animation-delay: var(--beam-delay, 0s);
-}
-
-@keyframes border-beam {
-  to {
-    --angle: 360deg;
-  }
-}
-
-@keyframes shimmer {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes ripple {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(0.9);
-  }
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: aurora-shift 8s linear infinite;
 }
 
 @keyframes aurora-shift {
@@ -231,30 +130,12 @@ h2 {
   }
 }
 
-@keyframes drift-1 {
+@keyframes fade-in {
   from {
-    transform: translate(0, 0) scale(1);
+    opacity: 0;
   }
   to {
-    transform: translate(120px, 60px) scale(1.15);
-  }
-}
-
-@keyframes drift-2 {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(-100px, 80px) scale(0.9);
-  }
-}
-
-@keyframes drift-3 {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(90px, -70px) scale(1.1);
+    opacity: 1;
   }
 }
 
@@ -269,12 +150,14 @@ h2 {
   }
 }
 
-@keyframes fade-in {
+@keyframes page-in {
   from {
     opacity: 0;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
