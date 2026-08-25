@@ -18,7 +18,7 @@ export function Page({
   wide?: boolean;
 }) {
   return (
-    <div className={`mx-auto w-full px-4 pb-32 pt-8 md:px-10 md:pb-16 md:pt-10 ${wide ? 'max-w-[1100px]' : 'max-w-[880px]'}`}>
+    <div className={`mx-auto w-full px-4 pb-32 pt-16 md:px-10 md:pb-16 md:pt-10 ${wide ? 'max-w-[1100px]' : 'max-w-[880px]'}`}>
       <header className="mb-6">
         {icon && (
           <BlurFade delay={0}>

@@ -137,7 +137,7 @@ export default function App() {
         <button
           onClick={cycleTheme}
           aria-label="Tema"
-          className="glass fixed right-3 top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-line/70 text-soft shadow-[var(--shadow-card)] transition-transform active:scale-90 md:hidden"
+          className="glass fixed right-3 top-5 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-line/70 text-soft shadow-[var(--shadow-card)] transition-transform active:scale-90 md:hidden"
         >
           <Icon name={THEME_ICON[settings.theme]} size={15} className={settings.theme === 'system' ? 'opacity-50' : ''} />
         </button>

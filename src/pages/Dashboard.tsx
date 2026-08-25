@@ -110,7 +110,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="relative mx-auto w-full max-w-[880px] px-4 pb-32 pt-10 md:px-10 md:pb-16">
+    <div className="relative mx-auto w-full max-w-[880px] px-4 pb-32 pt-16 md:px-10 md:pb-16">
       <DotPattern className="[mask-image:radial-gradient(420px_circle_at_top,white,transparent)]" />
 
       <header className="relative mb-8 pt-2">
