@@ -1,9 +1,5 @@
 import { useState, type FormEvent } from 'react';
 import { Dialog } from '../components/Dialog';
-import { BlurFade } from '../components/ui/blur-fade';
-import { BorderBeam } from '../components/ui/border-beam';
-import { ShimmerButton } from '../components/ui/shimmer-button';
-import { TextAnimate } from '../components/ui/text-animate';
 import { Icon } from '../lib/icons';
 import { lessons as lessonActions, lessonsOfDay } from '../lib/actions';
 import { useDB } from '../lib/store';
@@ -50,25 +46,17 @@ export default function Schedule() {
   return (
     <div className="mx-auto w-full max-w-[1100px] pb-32 pt-16 md:pb-10 md:pt-10">
       <div className="px-5 md:px-10">
-        <BlurFade delay={0}>
-          <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📅</div>
-        </BlurFade>
+        <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📅</div>
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">
-              <TextAnimate text="Ders Programı" />
-            </h1>
-            <BlurFade delay={0.12}>
-              <p className="mt-1 text-sm text-soft">
-                Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
-              </p>
-            </BlurFade>
+            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
+            <p className="mt-1 text-sm text-soft">
+              Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
+            </p>
           </div>
-          <BlurFade delay={0.15}>
-            <ShimmerButton onClick={() => openNew(t)} className="mt-1.5">
-              <Icon name="plus" size={14} /> Ders
-            </ShimmerButton>
-          </BlurFade>
+          <button onClick={() => openNew(t)} className="btn btn-primary mt-1.5">
+            <Icon name="plus" size={14} /> Ders
+          </button>
         </div>
       </div>
 
@@ -80,11 +68,10 @@ export default function Schedule() {
             <section
               key={day}
               className={cx(
-                'relative flex min-w-[230px] max-w-[280px] flex-1 snap-start flex-col overflow-hidden rounded-2xl border',
+                'flex min-w-[230px] max-w-[280px] flex-1 snap-start flex-col rounded-2xl border',
                 isToday ? 'border-accent/30 bg-accent-soft/60' : 'border-line bg-side',
               )}
             >
-              {isToday && <BorderBeam duration={9} />}
               <header className="flex items-center justify-between px-3 pt-3 pb-1.5">
                 <span className={cx('text-sm', isToday ? 'font-bold' : 'font-semibold')}>
                   {day}

@@ -1,9 +1,6 @@
-import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Empty } from '../components/Dialog';
 import { Page } from '../components/Page';
-import { BlurFade } from '../components/ui/blur-fade';
-import { ShimmerButton } from '../components/ui/shimmer-button';
 import { Icon } from '../lib/icons';
 import { todos as todoActions } from '../lib/actions';
 import { useDB } from '../lib/store';
@@ -99,15 +96,7 @@ export default function Todos() {
     const pm = PRIORITY_META[t.priority];
     const editing = editingId === t.id;
     return (
-      <motion.li
-        key={t.id}
-        layout
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-        className="group flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-hover"
-      >
+      <li key={t.id} className="group flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-hover">
         <button
           onClick={() => todoActions.toggle(t.id)}
           aria-label="Tamamla"
@@ -154,72 +143,58 @@ export default function Todos() {
             <Icon name="trash" size={13} />
           </button>
         </div>
-      </motion.li>
+      </li>
     );
   };
 
   return (
     <Page icon="✅" title="Görevler" subtitle={`${activeCount} açık görev`}>
-      <BlurFade delay={0.1}>
-        <form onSubmit={submit} className="card mb-4 flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Yeni görev…"
-            className="field min-w-0 flex-1 border-transparent bg-transparent focus:bg-transparent sm:border-line dark:focus:bg-transparent"
-          />
-          <div className="flex gap-2">
-            <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="field w-auto" />
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="field w-auto">
-              <option value="high">Yüksek</option>
-              <option value="med">Orta</option>
-              <option value="low">Düşük</option>
-            </select>
-            <ShimmerButton type="submit" disabled={!title.trim()}>
-              <Icon name="plus" size={14} /> Ekle
-            </ShimmerButton>
-          </div>
-        </form>
-      </BlurFade>
-
-      <BlurFade delay={0.18}>
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-side p-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={cx('relative rounded-lg px-2.5 py-1 text-xs transition-colors', filter !== f.key && 'text-soft hover:text-ink')}
-              >
-                {filter === f.key && (
-                  <motion.span
-                    layoutId="todo-filter"
-                    className="absolute inset-0 rounded-lg bg-paper shadow-[var(--shadow-card)]"
-                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <span className={cx('relative', filter === f.key && 'font-medium')}>{f.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="relative ml-auto">
-            <Icon name="search" size={13} className="absolute top-1/2 left-2.5 -translate-y-1/2 text-faint" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ara…" className="field w-32 pl-7 text-xs md:w-44" />
-          </div>
+      <form onSubmit={submit} className="card mb-4 flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Yeni görev…"
+          className="field min-w-0 flex-1 border-transparent bg-transparent focus:bg-transparent sm:border-line dark:focus:bg-transparent"
+        />
+        <div className="flex gap-2">
+          <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="field w-auto" />
+          <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="field w-auto">
+            <option value="high">Yüksek</option>
+            <option value="med">Orta</option>
+            <option value="low">Düşük</option>
+          </select>
+          <button type="submit" disabled={!title.trim()} className="btn btn-primary">
+            <Icon name="plus" size={14} /> Ekle
+          </button>
         </div>
-      </BlurFade>
+      </form>
+
+      <div className="mb-3 flex items-center gap-2">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-side p-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={cx(
+                'rounded-lg px-2.5 py-1 text-xs transition-colors',
+                filter === f.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative ml-auto">
+          <Icon name="search" size={13} className="absolute top-1/2 left-2.5 -translate-y-1/2 text-faint" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ara…" className="field w-32 pl-7 text-xs md:w-44" />
+        </div>
+      </div>
 
       {list.length === 0 ? (
-        <BlurFade delay={0.24}>
-          <Empty emoji="🍃" text="Burada görünecek görev yok." />
-        </BlurFade>
+        <Empty emoji="🍃" text="Burada görünecek görev yok." />
       ) : (
         <div className="space-y-6">
-          {openList.length > 0 && (
-            <ul className="space-y-0.5">
-              <AnimatePresence initial={false}>{openList.map(row)}</AnimatePresence>
-            </ul>
-          )}
+          {openList.length > 0 && <ul className="space-y-0.5">{openList.map(row)}</ul>}
 
           {doneList.length > 0 && (
             <section>
@@ -227,11 +202,7 @@ export default function Todos() {
                 <Icon name={showDone ? 'chevronDown' : 'chevronRight'} size={12} />
                 Tamamlanan ({doneList.length})
               </button>
-              {showDone && (
-                <ul className="space-y-0.5">
-                  <AnimatePresence initial={false}>{doneList.map(row)}</AnimatePresence>
-                </ul>
-              )}
+              {showDone && <ul className="space-y-0.5">{doneList.map(row)}</ul>}
             </section>
           )}
         </div>

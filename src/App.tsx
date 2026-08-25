@@ -1,9 +1,7 @@
-import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import { Sidebar } from './components/Sidebar';
 import { DockNav } from './components/DockNav';
-import { AuroraBackground } from './components/ui/aurora-background';
 import { Icon, type IconName } from './lib/icons';
 import { getDB, patchSettings, useDB } from './lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
@@ -113,24 +111,13 @@ export default function App() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper text-ink">
-      <AuroraBackground />
       <Sidebar path={path} />
 
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto"
-          style={{ scrollbarGutter: 'stable' }}
-        >
-          <motion.div
-            key={path}
-            initial={{ opacity: 0, y: 14, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            className="min-h-full"
-          >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+          <div key={path} className="min-h-full animate-[page-in_250ms_var(--ease-out)]">
             <Page />
-          </motion.div>
+          </div>
         </div>
 
         {/* Mobilde yüzen tema düğmesi — dock ile çakışmaz */}

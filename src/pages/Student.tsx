@@ -1,25 +1,18 @@
 import { useState, type FormEvent } from 'react';
 import { Dialog, Empty } from '../components/Dialog';
 import { Page } from '../components/Page';
-import { BlurFade } from '../components/ui/blur-fade';
-import { BorderBeam } from '../components/ui/border-beam';
-import { MagicCard } from '../components/ui/magic-card';
-import { NumberTicker } from '../components/ui/number-ticker';
-import { ShimmerButton } from '../components/ui/shimmer-button';
 import { Icon } from '../lib/icons';
 import { courses as courseActions, exams as examActions } from '../lib/actions';
 import { useDB } from '../lib/store';
 import { courseAvg, cx, daysUntil, gradeFromScore, longDate, overallStats, todayISO } from '../lib/utils';
 
-function Stat({ label, value, sub }: { label: string; value: number | null; sub?: string }) {
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <MagicCard className="card h-full p-3 md:p-4">
+    <div className="card card-lift p-3 md:p-4">
       <p className="text-xs text-soft">{label}</p>
-      <p className="mt-0.5 text-2xl font-bold tracking-tight">
-        {value === null ? '—' : <NumberTicker value={value} decimalPlaces={value % 1 !== 0 ? 1 : 0} />}
-      </p>
+      <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums">{value}</p>
       {sub && <p className="text-[11px] text-faint">{sub}</p>}
-    </MagicCard>
+    </div>
   );
 }
 
@@ -61,90 +54,77 @@ export default function Student() {
       title="Öğrenci Paneli"
       subtitle="Notların, yazılıların ve sınav takvimin"
       actions={
-        <ShimmerButton onClick={() => setCourseForm({ name: '', teacher: '' })}>
+        <button onClick={() => setCourseForm({ name: '', teacher: '' })} className="btn btn-primary">
           <Icon name="plus" size={14} /> Ders
-        </ShimmerButton>
+        </button>
       }
     >
       <div className="mb-8 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
-        <BlurFade delay={0.1} className="h-full">
-          <Stat label="Ortalama (100)" value={stats.avg100 !== null ? Math.round(stats.avg100 * 10) / 10 : null} />
-        </BlurFade>
-        <BlurFade delay={0.15} className="h-full">
-          <Stat label="5'lik not" value={stats.grade5} />
-        </BlurFade>
-        <BlurFade delay={0.2} className="h-full">
-          <Stat label="Ders" value={stats.courseCount} />
-        </BlurFade>
-        <BlurFade delay={0.25} className="h-full">
-          <Stat label="Yaklaşan sınav" value={db.exams.filter((e) => e.date >= todayISO()).length} />
-        </BlurFade>
+        <Stat label="Ortalama (100)" value={stats.avg100 !== null ? String(Math.round(stats.avg100 * 10) / 10) : '—'} />
+        <Stat label="5'lik not" value={stats.grade5 !== null ? String(stats.grade5) : '—'} />
+        <Stat label="Ders" value={String(stats.courseCount)} />
+        <Stat label="Yaklaşan sınav" value={String(db.exams.filter((e) => e.date >= todayISO()).length)} />
       </div>
 
-      <BlurFade delay={0.28}>
-        <h2 className="mb-2 text-sm font-semibold text-soft">Dersler</h2>
-      </BlurFade>
+      <h2 className="mb-2 text-sm font-semibold text-soft">Dersler</h2>
       {db.courses.length === 0 ? (
         <Empty emoji="📚" text="Henüz ders eklenmedi." />
       ) : (
         <div className="mb-8 space-y-3">
-          {db.courses.map((c, i) => {
+          {db.courses.map((c) => {
             const avg = courseAvg(c);
             const g = avg !== null ? gradeFromScore(avg) : null;
             const draft = assessmentDraft[c.id] ?? { label: '', score: '' };
             return (
-              <BlurFade key={c.id} delay={0.3 + i * 0.05}>
-                <div className="card relative p-3 md:p-4">
-                  {avg !== null && avg < 50 && <BorderBeam duration={6} color="#e03e3e" />}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate font-semibold">{c.name}</h3>
-                        {g && <span className={cx('rounded-md px-1.5 py-0.5 text-xs font-bold', g.cls)}>{g.grade}</span>}
-                        {avg !== null && <span className="text-xs text-soft tabular-nums">{Math.round(avg * 10) / 10} puan</span>}
-                      </div>
-                      <p className="mt-0.5 text-xs text-faint">
-                        {c.teacher ? `${c.teacher} · ${c.assessments.length} not` : `${c.assessments.length} not girilmiş`}
-                      </p>
+              <div key={c.id} className="card p-3 md:p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate font-semibold">{c.name}</h3>
+                      {g && <span className={cx('rounded-md px-1.5 py-0.5 text-xs font-bold', g.cls)}>{g.grade}</span>}
+                      {avg !== null && <span className="text-xs text-soft tabular-nums">{Math.round(avg * 10) / 10} puan</span>}
                     </div>
-                    <button onClick={() => courseActions.remove(c.id)} className="btn btn-ghost p-1.5 text-faint hover:text-[#e03e3e]" aria-label="Dersi sil">
-                      <Icon name="trash" size={14} />
-                    </button>
+                    <p className="mt-0.5 text-xs text-faint">
+                      {c.teacher ? `${c.teacher} · ${c.assessments.length} not` : `${c.assessments.length} not girilmiş`}
+                    </p>
                   </div>
-
-                  {c.assessments.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap gap-1.5">
-                      {c.assessments.map((a) => (
-                        <span key={a.id} className="group flex items-center gap-1 rounded-full bg-hover py-1 pr-1.5 pl-2.5 text-xs">
-                          {a.label}: <b>{a.score}</b>
-                          <button onClick={() => courseActions.removeAssessment(c.id, a.id)} className="text-faint hover:text-[#e03e3e]" aria-label={`Sil ${a.label}`}>
-                            <Icon name="x" size={11} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <form onSubmit={(e) => submitAssessment(e, c.id)} className="mt-3 flex gap-2">
-                    <input
-                      value={draft.label}
-                      onChange={(e) => setAssessmentDraft({ ...assessmentDraft, [c.id]: { ...draft, label: e.target.value } })}
-                      placeholder="Yazılı / Performans…"
-                      className="field flex-1"
-                    />
-                    <input
-                      value={draft.score}
-                      onChange={(e) => setAssessmentDraft({ ...assessmentDraft, [c.id]: { ...draft, score: e.target.value } })}
-                      placeholder="Puan"
-                      inputMode="numeric"
-                      className="field w-20 shrink-0"
-                    />
-                    <button type="submit" className="btn btn-ghost border border-line" aria-label="Not ekle">
-                      <Icon name="plus" size={14} />
-                    </button>
-                  </form>
+                  <button onClick={() => courseActions.remove(c.id)} className="btn btn-ghost p-1.5 text-faint hover:text-[#e03e3e]" aria-label="Dersi sil">
+                    <Icon name="trash" size={14} />
+                  </button>
                 </div>
-              </BlurFade>
+
+                {c.assessments.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {c.assessments.map((a) => (
+                      <span key={a.id} className="group flex items-center gap-1 rounded-full bg-hover py-1 pr-1.5 pl-2.5 text-xs">
+                        {a.label}: <b>{a.score}</b>
+                        <button onClick={() => courseActions.removeAssessment(c.id, a.id)} className="text-faint hover:text-[#e03e3e]" aria-label={`Sil ${a.label}`}>
+                          <Icon name="x" size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <form onSubmit={(e) => submitAssessment(e, c.id)} className="mt-3 flex gap-2">
+                  <input
+                    value={draft.label}
+                    onChange={(e) => setAssessmentDraft({ ...assessmentDraft, [c.id]: { ...draft, label: e.target.value } })}
+                    placeholder="Yazılı / Performans…"
+                    className="field flex-1"
+                  />
+                  <input
+                    value={draft.score}
+                    onChange={(e) => setAssessmentDraft({ ...assessmentDraft, [c.id]: { ...draft, score: e.target.value } })}
+                    placeholder="Puan"
+                    inputMode="numeric"
+                    className="field w-20 shrink-0"
+                  />
+                  <button type="submit" className="btn btn-ghost border border-line" aria-label="Not ekle">
+                    <Icon name="plus" size={14} />
+                  </button>
+                </form>
+              </div>
             );
           })}
         </div>

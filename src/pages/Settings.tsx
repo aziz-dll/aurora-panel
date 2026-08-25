@@ -1,8 +1,5 @@
-import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Page } from '../components/Page';
-import { BlurFade } from '../components/ui/blur-fade';
-import { MagicCard } from '../components/ui/magic-card';
 import { Icon, type IconName } from '../lib/icons';
 import { exportJSON, importJSON, patchSettings, resetAll, useDB } from '../lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, sendTestNotification } from '../lib/reminders';
@@ -19,14 +16,14 @@ const THEMES: Array<{ key: ThemeMode; label: string }> = [
   { key: 'dark', label: 'Koyu' },
 ];
 
-function Section({ icon, title, delay = 0.1, children }: { icon: IconName; title: string; delay?: number; children: React.ReactNode }) {
+function Section({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
   return (
-    <BlurFade delay={delay} className="mb-5 md:mb-7">
+    <section className="mb-5 md:mb-7">
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
         <Icon name={icon} size={14} /> {title}
       </h2>
-      <MagicCard className="card p-3 md:p-4">{children}</MagicCard>
-    </BlurFade>
+      <div className="card p-3 md:p-4">{children}</div>
+    </section>
   );
 }
 
@@ -40,10 +37,11 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
         onClick={() => onChange(!checked)}
         className={cx('relative h-6 w-10 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-faint/40')}
       >
-        <motion.span
-          layout
-          transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-          className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow', checked ? 'right-0.5' : 'left-0.5')}
+        <span
+          className={cx(
+            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
+            checked && 'translate-x-4',
+          )}
         />
       </button>
       <div className="min-w-0 flex-1">
@@ -105,7 +103,7 @@ export default function Settings() {
 
   return (
     <Page icon="⚙️" title="Ayarlar" subtitle={feedback || undefined}>
-      <Section icon="star" title="Profil" delay={0.08}>
+      <Section icon="star" title="Profil">
         <label className="flex items-center gap-3">
           <span className="w-24 shrink-0 text-sm text-soft">Adın</span>
           <input
@@ -117,7 +115,7 @@ export default function Settings() {
         </label>
       </Section>
 
-      <Section icon="sun" title="Görünüm" delay={0.14}>
+      <Section icon="sun" title="Görünüm">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="w-24 shrink-0 text-sm text-soft">Tema</span>
@@ -126,16 +124,12 @@ export default function Settings() {
                 <button
                   key={t.key}
                   onClick={() => patchSettings({ theme: t.key })}
-                  className={cx('relative rounded-md px-3 py-1 text-xs transition-colors', db.settings.theme !== t.key && 'text-soft')}
-                >
-                  {db.settings.theme === t.key && (
-                    <motion.span
-                      layoutId="theme-pill"
-                      className="absolute inset-0 rounded-md bg-paper shadow-[var(--shadow-card)]"
-                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-                    />
+                  className={cx(
+                    'rounded-md px-3 py-1 text-xs transition-colors',
+                    db.settings.theme === t.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
                   )}
-                  <span className={cx('relative', db.settings.theme === t.key && 'font-medium')}>{t.label}</span>
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -160,7 +154,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="bell" title="Hatırlatıcılar" delay={0.2}>
+      <Section icon="bell" title="Hatırlatıcılar">
         <div className="space-y-4">
           {!remindersAvailable() && (
             <p className="rounded-lg bg-side px-3 py-2 text-xs text-soft">
@@ -271,7 +265,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="clipboard" title="Entegrasyonlar" delay={0.26}>
+      <Section icon="clipboard" title="Entegrasyonlar">
         <label className="space-y-1">
           <span className="text-sm text-soft">FileBrowser adresi</span>
           <input
@@ -285,7 +279,7 @@ export default function Settings() {
         <p className="mt-2 text-xs text-faint">«Dosyalar» sayfası bu adresteki FileBrowser'ı gömer.</p>
       </Section>
 
-      <Section icon="zap" title="Termux API" delay={0.32}>
+      <Section icon="zap" title="Termux API">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
@@ -346,7 +340,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="download" title="Veri" delay={0.38}>
+      <Section icon="download" title="Veri">
         <p className="mb-3 text-xs text-soft">Her şey cihazında saklanır — hesap yok, bulut yok.</p>
         <div className="grid grid-cols-3 gap-2">
           <button onClick={doExport} className="btn btn-ghost border border-line justify-start">

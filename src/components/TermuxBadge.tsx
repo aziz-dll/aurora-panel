@@ -1,5 +1,5 @@
 import { useTermuxStatus } from '../lib/useTermuxStatus';
-import { cn } from '../lib/cn';
+import { cx } from '../lib/utils';
 
 export function TermuxBadge() {
   const { connected, battery } = useTermuxStatus();
@@ -11,7 +11,7 @@ export function TermuxBadge() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
         )}
         <span
-          className={cn(
+          className={cx(
             'relative inline-flex h-1.5 w-1.5 rounded-full',
             connected === null ? 'bg-faint' : connected ? 'bg-emerald-500' : 'bg-zinc-400 opacity-50',
           )}
