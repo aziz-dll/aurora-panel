@@ -14,18 +14,29 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-ripple: ripple 3400ms ease infinite;
+  --animate-border-beam: border-beam var(--beam-duration, 7s) linear infinite;
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
 }
 
 :root {
-  --paper: #faf9f5;
-  --side: #f3f1ea;
-  --ink: #33312a;
+  --paper: #fafaf8;
+  --side: #f3f2ee;
+  --ink: #2b2a25;
   --soft: #767268;
-  --faint: #aaa69b;
-  --line: #e8e5dc;
-  --hover: rgba(51, 49, 42, 0.06);
+  --faint: #a8a499;
+  --line: #e7e4da;
+  --hover: rgba(43, 42, 37, 0.06);
   --accent: #2383e2;
   --accent-soft: rgba(35, 131, 226, 0.12);
+  --aurora-2: #9065b0;
+  --aurora-3: #e07a5f;
   --shadow-card: 0 1px 1px rgba(45, 40, 28, 0.03), 0 2px 6px rgba(45, 40, 28, 0.04), 0 6px 16px -2px rgba(45, 40, 28, 0.04);
   --shadow-pop: 0 0 0 1px rgba(45, 40, 28, 0.05), 0 4px 8px rgba(45, 40, 28, 0.07),
     0 12px 32px -4px rgba(45, 40, 28, 0.14);
@@ -36,12 +47,12 @@
 }
 
 .dark {
-  --paper: #1c1b18;
-  --side: #24231f;
-  --ink: #ddd9cf;
+  --paper: #131210;
+  --side: #1b1a17;
+  --ink: #e3dfd5;
   --soft: #9d998f;
-  --faint: #726f66;
-  --line: #31302a;
+  --faint: #6e6b62;
+  --line: #2a2924;
   --hover: rgba(255, 253, 245, 0.06);
   --accent-soft: rgba(35, 131, 226, 0.2);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.28);
@@ -56,7 +67,6 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Mobilde global yoğunluk: tüm rem ölçüleri %10 küçülür */
 @media (max-width: 767px) {
   html {
     font-size: 14.5px;
@@ -77,7 +87,6 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Uygulama hissi: lastikli kaydırma ve metin seçme davranışını kısıtla */
   overscroll-behavior-y: none;
 }
 
@@ -116,11 +125,181 @@ h2 {
   letter-spacing: -0.015em;
 }
 
+/* ---- Aurora atmosferi ---- */
+
+.aurora-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--aurora-2),
+    var(--aurora-3),
+    var(--accent)
+  );
+  background-size: 200% auto;
+  animation: aurora-shift 6s linear infinite;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.28;
+  will-change: transform;
+}
+
+.dark .aurora-blob {
+  opacity: 0.2;
+}
+
+.aurora-blob-1 {
+  width: 480px;
+  height: 480px;
+  background: var(--accent);
+  top: -180px;
+  left: -140px;
+  animation: drift-1 26s ease-in-out infinite alternate;
+}
+
+.aurora-blob-2 {
+  width: 420px;
+  height: 420px;
+  background: var(--aurora-2);
+  top: 20%;
+  right: -160px;
+  animation: drift-2 32s ease-in-out infinite alternate;
+}
+
+.aurora-blob-3 {
+  width: 380px;
+  height: 380px;
+  background: var(--aurora-3);
+  bottom: -160px;
+  left: 25%;
+  animation: drift-3 38s ease-in-out infinite alternate;
+}
+
+/* Kart etrafında dönen ışık huzmesi (21st.dev border-beam) */
+.border-beam {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    transparent 0deg 260deg,
+    var(--beam-color, var(--accent)) 330deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: border-beam var(--beam-duration, 7s) linear infinite;
+  animation-delay: var(--beam-delay, 0s);
+}
+
+@keyframes border-beam {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ripple {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+@keyframes aurora-shift {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes drift-1 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(120px, 60px) scale(1.15);
+  }
+}
+
+@keyframes drift-2 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-100px, 80px) scale(0.9);
+  }
+}
+
+@keyframes drift-3 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(90px, -70px) scale(1.1);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Bileşen utility'leri ---- */
+
 @utility card {
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   background: var(--paper);
   box-shadow: var(--shadow-card);
   border: 1px solid var(--line);
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 @utility btn {
@@ -252,55 +431,6 @@ h2 {
 
   &.struck::after {
     transform: scaleX(1);
-  }
-}
-
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slide-in {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes check-draw {
-  from {
-    stroke-dashoffset: 20;
-  }
-  to {
-    stroke-dashoffset: 0;
   }
 }
 

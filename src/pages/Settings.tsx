@@ -1,4 +1,8 @@
+import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
+import { Page } from '../components/Page';
+import { BlurFade } from '../components/ui/blur-fade';
+import { MagicCard } from '../components/ui/magic-card';
 import { Icon, type IconName } from '../lib/icons';
 import { exportJSON, importJSON, patchSettings, resetAll, useDB } from '../lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, sendTestNotification } from '../lib/reminders';
@@ -15,14 +19,14 @@ const THEMES: Array<{ key: ThemeMode; label: string }> = [
   { key: 'dark', label: 'Koyu' },
 ];
 
-function Section({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
+function Section({ icon, title, delay = 0.1, children }: { icon: IconName; title: string; delay?: number; children: React.ReactNode }) {
   return (
-    <section className="mb-5 md:mb-7">
+    <BlurFade delay={delay} className="mb-5 md:mb-7">
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
         <Icon name={icon} size={14} /> {title}
       </h2>
-      <div className="card p-3 md:p-4">{children}</div>
-    </section>
+      <MagicCard className="card p-3 md:p-4">{children}</MagicCard>
+    </BlurFade>
   );
 }
 
@@ -36,11 +40,10 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
         onClick={() => onChange(!checked)}
         className={cx('relative h-6 w-10 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-faint/40')}
       >
-        <span
-          className={cx(
-            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
-            checked && 'translate-x-4',
-          )}
+        <motion.span
+          layout
+          transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+          className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow', checked ? 'right-0.5' : 'left-0.5')}
         />
       </button>
       <div className="min-w-0 flex-1">
@@ -61,11 +64,13 @@ export default function Settings() {
   const up = manualPing ?? connected;
 
   useEffect(() => {
-    if (db.settings.remindersEnabled && remindersAvailable()) {
-      void hasReminderPermission().then(setPermState);
-    } else {
-      setPermState(null);
-    }
+    void (async () => {
+      if (db.settings.remindersEnabled && remindersAvailable()) {
+        setPermState(await hasReminderPermission());
+      } else {
+        setPermState(null);
+      }
+    })();
   }, [db.settings.remindersEnabled]);
 
   const flash = (msg: string) => {
@@ -99,16 +104,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 pt-14 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">⚙️</div>
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ayarlar</h1>
-          {feedback && <p className="mt-1 text-sm font-medium text-accent">{feedback}</p>}
-        </div>
-      </div>
-
-      <Section icon="star" title="Profil">
+    <Page icon="⚙️" title="Ayarlar" subtitle={feedback || undefined}>
+      <Section icon="star" title="Profil" delay={0.08}>
         <label className="flex items-center gap-3">
           <span className="w-24 shrink-0 text-sm text-soft">Adın</span>
           <input
@@ -120,7 +117,7 @@ export default function Settings() {
         </label>
       </Section>
 
-      <Section icon="sun" title="Görünüm">
+      <Section icon="sun" title="Görünüm" delay={0.14}>
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="w-24 shrink-0 text-sm text-soft">Tema</span>
@@ -129,12 +126,16 @@ export default function Settings() {
                 <button
                   key={t.key}
                   onClick={() => patchSettings({ theme: t.key })}
-                  className={cx(
-                    'btn px-3 py-1 text-xs',
-                    db.settings.theme === t.key ? 'bg-paper shadow-[var(--shadow-card)] font-medium' : 'text-soft',
-                  )}
+                  className={cx('relative rounded-md px-3 py-1 text-xs transition-colors', db.settings.theme !== t.key && 'text-soft')}
                 >
-                  {t.label}
+                  {db.settings.theme === t.key && (
+                    <motion.span
+                      layoutId="theme-pill"
+                      className="absolute inset-0 rounded-md bg-paper shadow-[var(--shadow-card)]"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <span className={cx('relative', db.settings.theme === t.key && 'font-medium')}>{t.label}</span>
                 </button>
               ))}
             </div>
@@ -159,7 +160,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="bell" title="Hatırlatıcılar">
+      <Section icon="bell" title="Hatırlatıcılar" delay={0.2}>
         <div className="space-y-4">
           {!remindersAvailable() && (
             <p className="rounded-lg bg-side px-3 py-2 text-xs text-soft">
@@ -270,7 +271,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="clipboard" title="Entegrasyonlar">
+      <Section icon="clipboard" title="Entegrasyonlar" delay={0.26}>
         <label className="space-y-1">
           <span className="text-sm text-soft">FileBrowser adresi</span>
           <input
@@ -284,16 +285,19 @@ export default function Settings() {
         <p className="mt-2 text-xs text-faint">«Dosyalar» sayfası bu adresteki FileBrowser'ı gömer.</p>
       </Section>
 
-      <Section icon="zap" title="Termux API">
+      <Section icon="zap" title="Termux API" delay={0.32}>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              <span
-                className={cx(
-                  'h-2 w-2 rounded-full',
-                  up === null ? 'bg-faint' : up ? 'bg-emerald-500' : 'bg-zinc-400 opacity-50',
-                )}
-              />
+              <span className="relative flex h-2 w-2">
+                {up === true && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
+                <span
+                  className={cx(
+                    'relative inline-flex h-2 w-2 rounded-full',
+                    up === null ? 'bg-faint' : up ? 'bg-emerald-500' : 'bg-zinc-400 opacity-50',
+                  )}
+                />
+              </span>
               {up === null ? 'Kontrol ediliyor…' : up ? 'Bağlı' : 'Bağlı değil'}
               {battery && (
                 <span className="text-xs text-faint">
@@ -342,7 +346,7 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="download" title="Veri">
+      <Section icon="download" title="Veri" delay={0.38}>
         <p className="mb-3 text-xs text-soft">Her şey cihazında saklanır — hesap yok, bulut yok.</p>
         <div className="grid grid-cols-3 gap-2">
           <button onClick={doExport} className="btn btn-ghost border border-line justify-start">
@@ -375,6 +379,6 @@ export default function Settings() {
           }}
         />
       </Section>
-    </div>
+    </Page>
   );
 }

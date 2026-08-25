@@ -1,6 +1,9 @@
+import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { BlurFade } from '../components/ui/blur-fade';
+import { ShimmerButton } from '../components/ui/shimmer-button';
 import { Icon } from '../lib/icons';
 import { notes as noteActions } from '../lib/actions';
 import { useDB } from '../lib/store';
@@ -32,43 +35,51 @@ export default function Notes() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-14 md:px-10 md:pt-10">
+    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-8 md:px-10 md:pt-10">
       {/* Liste */}
-      <aside className={cx('w-full shrink-0 flex-col pb-24 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
-        <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📝</div>
+      <aside className={cx('w-full shrink-0 flex-col pb-32 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
+        <BlurFade delay={0}>
+          <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📝</div>
+        </BlurFade>
         <div className="mb-4 flex items-start justify-between gap-3">
           <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
-          <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="Yeni not">
+          <ShimmerButton onClick={create} className="mt-1 !px-2.5" aria-label="Yeni not">
             <Icon name="plus" size={14} />
-          </button>
+          </ShimmerButton>
         </div>
         {sorted.length === 0 && <p className="text-sm text-faint">Henüz not yok.</p>}
         <ul className="space-y-0.5">
-          {sorted.map((n) => (
-            <li key={n.id}>
-              <button
-                onClick={() => setSelectedId(n.id)}
-                className={cx(
-                  'w-full rounded-lg px-3 py-2 text-left transition-colors',
-                  n.id === selectedId ? 'bg-hover' : 'hover:bg-hover',
-                )}
-              >
-                <span className="flex items-center gap-1.5">
-                  {n.pinned && <Icon name="star" size={11} className="shrink-0 text-[#d9730d]" />}
-                  <span className="truncate text-sm font-medium">{n.title || 'Başlıksız'}</span>
-                </span>
-                <span className="block truncate text-xs text-faint">
-                  {n.body.split('\n')[0] || 'Boş not'}
-                </span>
-              </button>
-            </li>
+          {sorted.map((n, i) => (
+            <BlurFade key={n.id} delay={0.08 + i * 0.04}>
+              <li>
+                <button
+                  onClick={() => setSelectedId(n.id)}
+                  className={cx(
+                    'w-full rounded-lg px-3 py-2 text-left transition-colors',
+                    n.id === selectedId ? 'bg-accent-soft' : 'hover:bg-hover',
+                  )}
+                >
+                  <span className="flex items-center gap-1.5">
+                    {n.pinned && <Icon name="star" size={11} className="shrink-0 text-[#d9730d]" />}
+                    <span className="truncate text-sm font-medium">{n.title || 'Başlıksız'}</span>
+                  </span>
+                  <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Boş not'}</span>
+                </button>
+              </li>
+            </BlurFade>
           ))}
         </ul>
       </aside>
 
       {/* Düzenleyici */}
       {selected && (
-        <section className="flex min-w-0 flex-1 flex-col pb-10 md:pl-8">
+        <motion.section
+          key={selected.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          className="flex min-w-0 flex-1 flex-col pb-10 md:pl-8"
+        >
           <div className="flex items-center gap-1.5">
             <button onClick={() => setSelectedId(null)} className="btn btn-ghost -ml-2 p-2 text-soft md:hidden" aria-label="Geri">
               <Icon name="arrowLeft" size={17} />
@@ -76,7 +87,7 @@ export default function Notes() {
             <div className="flex-1" />
             <button
               onClick={() => noteActions.patch(selected.id, { pinned: !selected.pinned })}
-              className={cx('btn btn-ghost p-2', selected.pinned ? 'text-[#d9730d]' : 'text-faint')}
+              className={cx('btn btn-ghost p-2 transition-transform active:scale-90', selected.pinned ? 'text-[#d9730d]' : 'text-faint')}
               aria-label="Sabitle"
             >
               <Icon name="star" size={15} />
@@ -114,7 +125,7 @@ export default function Notes() {
             {selected.body.trim() ? selected.body.trim().split(/\s+/).length : 0} kelime · son düzenleme{' '}
             {formatDistanceToNow(new Date(selected.updatedAt), { addSuffix: true, locale: tr })}
           </p>
-        </section>
+        </motion.section>
       )}
     </div>
   );

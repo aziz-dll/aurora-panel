@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { BlurFade } from '../components/ui/blur-fade';
+import { TextAnimate } from '../components/ui/text-animate';
 import { Icon } from '../lib/icons';
 import { patchSettings, useDB } from '../lib/store';
 
@@ -17,11 +19,15 @@ export default function Files() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mx-auto w-full max-w-[1100px] px-4 pt-14 md:px-10 md:pt-10">
-        <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📁</div>
+      <div className="mx-auto w-full max-w-[1100px] px-4 pt-8 md:px-10 md:pt-10">
+        <BlurFade delay={0}>
+          <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📁</div>
+        </BlurFade>
         <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Dosyalar</h1>
+          <div className="min-w-0">
+            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">
+              <TextAnimate text="Dosyalar" />
+            </h1>
             <p className="mt-1 truncate text-sm text-soft">{db.settings.filebrowserUrl}</p>
           </div>
           <div className="mt-1.5 flex shrink-0 gap-1.5">
@@ -35,7 +41,7 @@ export default function Files() {
         </div>
 
         {editing && (
-          <form onSubmit={saveUrl} className="card mb-4 flex gap-2 p-3">
+          <form onSubmit={saveUrl} className="card mb-4 flex gap-2 p-3 animate-[pop-in_240ms_var(--ease-spring)]">
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -49,7 +55,7 @@ export default function Files() {
         )}
       </div>
 
-      <div className="mx-auto w-full max-w-[1100px] flex-1 px-4 pb-6 md:px-10">
+      <BlurFade delay={0.15} className="mx-auto w-full max-w-[1100px] flex-1 px-4 pb-28 md:px-10 md:pb-6">
         <div className="card h-[calc(100dvh-260px)] min-h-[420px] overflow-hidden">
           <iframe
             src={db.settings.filebrowserUrl}
@@ -61,7 +67,7 @@ export default function Files() {
         <p className="mt-2 text-center text-xs text-faint">
           Gömülü sayfa açılmazsa (sunucu izin vermezse) «Tarayıcıda aç» ile kullan.
         </p>
-      </div>
+      </BlurFade>
     </div>
   );
 }
