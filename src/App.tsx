@@ -1,8 +1,10 @@
+import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import { Sidebar } from './components/Sidebar';
+import { DockNav } from './components/DockNav';
+import { AuroraBackground } from './components/ui/aurora-background';
 import { Icon, type IconName } from './lib/icons';
-import { titleFor } from './lib/nav';
 import { getDB, patchSettings, useDB } from './lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
 import { checkServerBattery } from './lib/serverBattery';
@@ -47,7 +49,6 @@ const THEME_ICON: Record<ThemeMode, IconName> = { system: 'moon', light: 'sun', 
 
 export default function App() {
   const path = useHashRoute();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const db = useDB();
   const settings = db.settings;
@@ -57,7 +58,7 @@ export default function App() {
     const apply = () => {
       const dark = settings.theme === 'dark' || (settings.theme === 'system' && mq.matches);
       document.documentElement.classList.toggle('dark', dark);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#191919' : '#ffffff');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#131210' : '#fafaf8');
     };
     apply();
     mq.addEventListener('change', apply);
@@ -94,7 +95,7 @@ export default function App() {
     })();
   }, []);
 
-  // Sunucu (J7 Prime) bataryası %25 altına düşerse client'ta uyar
+  // Sunucu bataryası düşükse client'ta uyar
   useEffect(() => {
     if (!remindersAvailable()) return;
     void checkServerBattery();
@@ -112,25 +113,37 @@ export default function App() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper text-ink">
-      <Sidebar path={path} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <AuroraBackground />
+      <Sidebar path={path} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-11 items-center gap-0.5 border-b border-line bg-paper/95 px-1.5 backdrop-blur md:hidden">
-          <button onClick={() => setDrawerOpen(true)} className="btn btn-ghost p-2" aria-label="Menü">
-            <Icon name="menu" size={17} />
-          </button>
-          <span className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold">{titleFor(path)}</span>
-          <button onClick={cycleTheme} className="btn btn-ghost p-2" aria-label="Tema">
-            <Icon name={THEME_ICON[settings.theme]} size={16} className={settings.theme === 'system' ? 'opacity-50' : ''} />
-          </button>
-        </header>
-
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          <div key={path} className="animate-[page-in_300ms_var(--ease-out)]">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto"
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          <motion.div
+            key={path}
+            initial={{ opacity: 0, y: 14, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="min-h-full"
+          >
             <Page />
-          </div>
+          </motion.div>
         </div>
+
+        {/* Mobilde yüzen tema düğmesi — dock ile çakışmaz */}
+        <button
+          onClick={cycleTheme}
+          aria-label="Tema"
+          className="glass fixed right-3 top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-line/70 text-soft shadow-[var(--shadow-card)] transition-transform active:scale-90 md:hidden"
+        >
+          <Icon name={THEME_ICON[settings.theme]} size={15} className={settings.theme === 'system' ? 'opacity-50' : ''} />
+        </button>
       </div>
+
+      <DockNav path={path} />
     </div>
   );
 }

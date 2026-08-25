@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Dialog } from '../components/Dialog';
+import { BlurFade } from '../components/ui/blur-fade';
+import { BorderBeam } from '../components/ui/border-beam';
+import { ShimmerButton } from '../components/ui/shimmer-button';
+import { TextAnimate } from '../components/ui/text-animate';
 import { Icon } from '../lib/icons';
 import { lessons as lessonActions, lessonsOfDay } from '../lib/actions';
 import { useDB } from '../lib/store';
@@ -44,37 +48,49 @@ export default function Schedule() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-14 md:pb-10 md:pt-10">
+    <div className="mx-auto w-full max-w-[1100px] pb-32 pt-8 md:pb-10 md:pt-10">
       <div className="px-5 md:px-10">
-        <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📅</div>
+        <BlurFade delay={0}>
+          <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📅</div>
+        </BlurFade>
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
-            <p className="mt-1 text-sm text-soft">
-              Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
-            </p>
+            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">
+              <TextAnimate text="Ders Programı" />
+            </h1>
+            <BlurFade delay={0.12}>
+              <p className="mt-1 text-sm text-soft">
+                Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
+              </p>
+            </BlurFade>
           </div>
-          <button onClick={() => openNew(t)} className="btn btn-primary mt-1.5">
-            <Icon name="plus" size={14} /> Ders
-          </button>
+          <BlurFade delay={0.15}>
+            <ShimmerButton onClick={() => openNew(t)} className="mt-1.5">
+              <Icon name="plus" size={14} /> Ders
+            </ShimmerButton>
+          </BlurFade>
         </div>
       </div>
 
       <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-4 md:gap-3 md:px-10">
         {DAY_NAMES.map((day, i) => {
           const dayLessons = lessonsOfDay(db.lessons, i);
+          const isToday = i === t;
           return (
             <section
               key={day}
               className={cx(
-                'flex min-w-[230px] max-w-[280px] flex-1 snap-start flex-col rounded-xl',
-                i === t ? 'bg-accent-soft' : 'bg-side',
+                'relative flex min-w-[230px] max-w-[280px] flex-1 snap-start flex-col overflow-hidden rounded-2xl border',
+                isToday ? 'border-accent/30 bg-accent-soft/60' : 'border-line bg-side',
               )}
             >
+              {isToday && <BorderBeam duration={9} />}
               <header className="flex items-center justify-between px-3 pt-3 pb-1.5">
-                <span className={cx('text-sm', i === t ? 'font-bold' : 'font-semibold')}>
+                <span className={cx('text-sm', isToday ? 'font-bold' : 'font-semibold')}>
                   {day}
-                  {i === t && <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-white">Bugün</span>}
+                  {isToday && (
+                    <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-white">Bugün</span>
+                  )}
                 </span>
                 <button onClick={() => openNew(i)} className="btn btn-ghost p-1 text-faint hover:text-ink" aria-label={`${day} ders ekle`}>
                   <Icon name="plus" size={13} />
@@ -84,13 +100,13 @@ export default function Schedule() {
               <div className="flex-1 space-y-1.5 p-2 pt-1">
                 {dayLessons.length === 0 && <p className="px-1 py-3 text-center text-xs text-faint">Boş</p>}
                 {dayLessons.map((l) => {
-                  const isNow = i === t && hhmmToMin(l.start) <= now && now < hhmmToMin(l.end);
+                  const isNow = isToday && hhmmToMin(l.start) <= now && now < hhmmToMin(l.end);
                   return (
                     <button
                       key={l.id}
                       onClick={() => openEdit(l)}
                       className={cx(
-                        'block w-full rounded-lg border-l-[3px] bg-paper px-2.5 py-2 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]',
+                        'block w-full rounded-lg border-l-[3px] bg-paper px-2.5 py-2 text-left shadow-[var(--shadow-card)] transition-all hover:-translate-y-px active:scale-[0.98]',
                         isNow && 'ring-2 ring-accent',
                       )}
                       style={{ borderColor: l.color }}
