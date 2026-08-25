@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Aurora</string>
+    <string name="title_activity_main">Okul Paneli</string>
+    <string name="package_name">com.gh0st.okulpaneli</string>
+    <string name="custom_url_scheme">com.gh0st.okulpaneli</string>
+</resources>
