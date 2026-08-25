@@ -7,7 +7,7 @@ import { courseAvg, cx, daysUntil, gradeFromScore, longDate, overallStats, today
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="card p-4">
+    <div className="card p-3 md:p-4">
       <p className="text-xs text-soft">{label}</p>
       <p className="mt-0.5 text-2xl font-bold tracking-tight">{value ?? '—'}</p>
       {sub && <p className="text-[11px] text-faint">{sub}</p>}
@@ -48,11 +48,11 @@ export default function Student() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">🎓</div>
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">🎓</div>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Öğrenci Paneli</h1>
+          <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Öğrenci Paneli</h1>
           <p className="mt-1 text-sm text-soft">Notların, yazılıların ve sınav takvimin</p>
         </div>
         <button onClick={() => setCourseForm({ name: '', teacher: '' })} className="btn btn-primary mt-1.5">
@@ -60,7 +60,7 @@ export default function Student() {
         </button>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
         <Stat label="Ortalama (100)" value={stats.avg100 !== null ? Math.round(stats.avg100 * 10) / 10 + '' : '—'} />
         <Stat label="5'lik not" value={stats.grade5 !== null ? String(stats.grade5) : '—'} />
         <Stat label="Ders" value={String(stats.courseCount)} />
@@ -77,7 +77,7 @@ export default function Student() {
             const g = avg !== null ? gradeFromScore(avg) : null;
             const draft = assessmentDraft[c.id] ?? { label: '', score: '' };
             return (
-              <div key={c.id} className="card p-4">
+              <div key={c.id} className="card p-3 md:p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

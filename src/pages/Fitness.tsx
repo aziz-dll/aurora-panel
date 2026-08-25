@@ -15,7 +15,7 @@ const KIND_LABEL: Record<Kind, string> = { guc: 'Güç', kardiyo: 'Kardiyo', din
 
 function Stat({ icon, value, label }: { icon: string; value: React.ReactNode; label: string }) {
   return (
-    <div className="card card-lift flex items-center gap-3 p-3.5">
+    <div className="card card-lift flex items-center gap-3 p-3">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-hover text-lg">{icon}</span>
       <div className="min-w-0">
         <div className="text-xl font-bold leading-tight tracking-tight tabular-nums">{value}</div>
@@ -88,14 +88,14 @@ export default function Fitness() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">🏋️</div>
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">🏋️</div>
       <header className="mb-6">
-        <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Spor</h1>
+        <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Spor</h1>
         <p className="mt-0.5 text-sm text-soft">Evde aletsiz program — kilona, boyuna ve yaşına göre hazırlandı.</p>
       </header>
 
-      <section className="card mb-4 p-4">
+      <section className="card mb-4 p-3 md:p-4">
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-soft">
           <Icon name="target" size={14} /> Ölçülerin
         </h2>
@@ -143,7 +143,7 @@ export default function Fitness() {
         <Stat icon="🏆" value={totalDone} label="Toplam tamamlanan" />
       </section>
 
-      <section className="card mb-6 p-4">
+      <section className="card mb-6 p-3 md:p-4">
         <div className="mb-2 flex items-center justify-between gap-2 text-sm">
           <span className="min-w-0 truncate font-medium">
             Bugün: {DAY_SHORT[todayWd]} — {todayPlan.focus}
@@ -174,7 +174,7 @@ export default function Fitness() {
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
         <Icon name="dumbbell" size={14} /> Haftalık Program
       </h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
         {PROGRAM.map((plan, i) => {
           const isToday = i === todayWd;
           const dayIso = (() => {
@@ -188,7 +188,7 @@ export default function Fitness() {
             <section
               key={i}
               className={cx(
-                'card p-4 transition-all',
+                'card p-3 transition-all md:p-4',
                 isToday && !allDone && 'ring-2 ring-accent/40',
                 allDone && 'ring-1 ring-emerald-500/30',
               )}
@@ -258,8 +258,8 @@ export default function Fitness() {
         })}
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <section className="card p-4">
+      <div className="mt-6 grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+        <section className="card p-3 md:p-4">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
             <Icon name="flame" size={14} /> Altın kurallar
           </h3>
@@ -274,7 +274,7 @@ export default function Fitness() {
             </li>
           </ul>
         </section>
-        <section className="card p-4">
+        <section className="card p-3 md:p-4">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
             <Icon name="activity" size={14} /> Nasıl ilerlersin?
           </h3>

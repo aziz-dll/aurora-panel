@@ -56,6 +56,13 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Mobilde global yoğunluk: tüm rem ölçüleri %10 küçülür */
+@media (max-width: 767px) {
+  html {
+    font-size: 14.5px;
+  }
+}
+
 body {
   margin: 0;
   font-family:

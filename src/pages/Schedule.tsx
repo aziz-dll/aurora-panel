@@ -44,12 +44,12 @@ export default function Schedule() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-5 md:pb-10 md:pt-10">
+    <div className="mx-auto w-full max-w-[1100px] pb-28 pt-4 md:pb-10 md:pt-10">
       <div className="px-5 md:px-10">
-        <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">📅</div>
+        <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📅</div>
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
+            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
             <p className="mt-1 text-sm text-soft">
               Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
             </p>
@@ -60,7 +60,7 @@ export default function Schedule() {
         </div>
       </div>
 
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-4 md:px-10">
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-4 md:gap-3 md:px-10">
         {DAY_NAMES.map((day, i) => {
           const dayLessons = lessonsOfDay(db.lessons, i);
           return (

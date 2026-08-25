@@ -32,12 +32,12 @@ export default function Notes() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1000px] px-5 pt-7 md:px-10 md:pt-10">
+    <div className="mx-auto flex h-full w-full max-w-[1000px] px-5 pt-5 md:px-10 md:pt-10">
       {/* Liste */}
       <aside className={cx('w-full shrink-0 flex-col pb-24 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
-        <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">📝</div>
+        <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">📝</div>
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-[24px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
+          <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
           <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="Yeni not">
             <Icon name="plus" size={14} />
           </button>
@@ -99,7 +99,7 @@ export default function Notes() {
             value={selected.title}
             onChange={(e) => noteActions.patch(selected.id, { title: e.target.value })}
             placeholder="Başlıksız"
-            className="font-display -ml-1 mt-3 w-full bg-transparent text-2xl font-bold tracking-tight placeholder:text-faint/50"
+            className="font-display -ml-1 mt-3 w-full bg-transparent text-xl font-bold tracking-tight placeholder:text-faint/50 md:text-2xl"
           />
           <textarea
             ref={bodyRef}

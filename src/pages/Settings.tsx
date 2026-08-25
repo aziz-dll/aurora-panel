@@ -17,38 +17,35 @@ const THEMES: Array<{ key: ThemeMode; label: string }> = [
 
 function Section({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-7">
+    <section className="mb-5 md:mb-7">
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
         <Icon name={icon} size={14} /> {title}
       </h2>
-      <div className="card p-4">{children}</div>
+      <div className="card p-3 md:p-4">{children}</div>
     </section>
   );
 }
 
 function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 py-1">
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={cx(
-          'relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200',
-          checked ? 'bg-accent' : 'bg-faint/40',
-        )}
+        className={cx('relative h-6 w-10 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-faint/40')}
       >
         <span
           className={cx(
-            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
-            checked ? 'translate-x-[18px]' : 'translate-x-0.5',
+            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
+            checked && 'translate-x-4',
           )}
         />
       </button>
-      <div className="min-w-0">
-        <p className="text-sm font-medium">{label}</p>
-        {hint && <p className="text-xs text-faint">{hint}</p>}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium leading-tight">{label}</p>
+        {hint && <p className="mt-0.5 text-xs leading-snug text-faint">{hint}</p>}
       </div>
     </div>
   );
@@ -102,11 +99,11 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
-      <div className="mb-1 text-[32px] leading-none md:text-[38px] select-none">⚙️</div>
+    <div className="mx-auto w-full max-w-[640px] px-4 pb-28 pt-4 md:px-10 md:pb-16 md:pt-10">
+      <div className="mb-1 text-[26px] leading-none md:text-[38px] select-none">⚙️</div>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight md:text-[32px]">Ayarlar</h1>
+          <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ayarlar</h1>
           {feedback && <p className="mt-1 text-sm font-medium text-accent">{feedback}</p>}
         </div>
       </div>
@@ -204,74 +201,72 @@ export default function Settings() {
               </button>
             </div>
           )}
-          {db.settings.remindersEnabled && (
-            <>
+          <div className={cx('space-y-3', !db.settings.remindersEnabled && 'pointer-events-none opacity-40')}>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="space-y-1">
+                <span className="text-xs text-soft">Ödevi kaç gün önce hatırlat</span>
+                <select
+                  value={db.settings.todoReminderDays}
+                  onChange={(e) => patchSettings({ todoReminderDays: Number(e.target.value) })}
+                  className="field"
+                >
+                  <option value={1}>1 gün önce</option>
+                  <option value={2}>2 gün önce</option>
+                  <option value={3}>3 gün önce</option>
+                </select>
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs text-soft">Yazılıyı kaç gün önce hatırlat</span>
+                <select
+                  value={db.settings.examReminderDays}
+                  onChange={(e) => patchSettings({ examReminderDays: Number(e.target.value) })}
+                  className="field"
+                >
+                  <option value={3}>3 gün önce</option>
+                  <option value={7}>1 hafta önce</option>
+                  <option value={14}>2 hafta önce</option>
+                </select>
+              </label>
+            </div>
+            <div className="space-y-3 border-t border-line pt-3">
+              <Toggle
+                checked={db.settings.waterEnabled}
+                onChange={(v) => patchSettings({ waterEnabled: v })}
+                label="💧 Su hatırlatması"
+                hint={`${db.settings.waterFrom}–${db.settings.waterTo} arası, ${db.settings.waterEveryHours} saatte bir`}
+              />
+              <Toggle
+                checked={db.settings.workoutEnabled}
+                onChange={(v) => patchSettings({ workoutEnabled: v })}
+                label="🏋️ Spor hatırlatması"
+                hint={`Her gün ${db.settings.workoutTime} — o gün yaptıysan gelmez`}
+              />
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1">
-                  <span className="text-xs text-soft">Ödevi kaç gün önce hatırlat</span>
-                  <select
-                    value={db.settings.todoReminderDays}
-                    onChange={(e) => patchSettings({ todoReminderDays: Number(e.target.value) })}
+                  <span className="text-xs text-soft">Spor saati</span>
+                  <input
+                    type="time"
+                    value={db.settings.workoutTime}
+                    onChange={(e) => patchSettings({ workoutTime: e.target.value })}
                     className="field"
-                  >
-                    <option value={1}>1 gün önce</option>
-                    <option value={2}>2 gün önce</option>
-                    <option value={3}>3 gün önce</option>
-                  </select>
+                  />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs text-soft">Yazılıyı kaç gün önce hatırlat</span>
+                  <span className="text-xs text-soft">Su kaç saatte bir</span>
                   <select
-                    value={db.settings.examReminderDays}
-                    onChange={(e) => patchSettings({ examReminderDays: Number(e.target.value) })}
+                    value={db.settings.waterEveryHours}
+                    onChange={(e) => patchSettings({ waterEveryHours: Number(e.target.value) })}
                     className="field"
                   >
-                    <option value={3}>3 gün önce</option>
-                    <option value={7}>1 hafta önce</option>
-                    <option value={14}>2 hafta önce</option>
+                    <option value={1}>1 saat</option>
+                    <option value={2}>2 saat</option>
+                    <option value={3}>3 saat</option>
+                    <option value={4}>4 saat</option>
                   </select>
                 </label>
               </div>
-              <div className="space-y-3 border-t border-line pt-3">
-                <Toggle
-                  checked={db.settings.waterEnabled}
-                  onChange={(v) => patchSettings({ waterEnabled: v })}
-                  label="💧 Su hatırlatması"
-                  hint={`${db.settings.waterFrom}–${db.settings.waterTo} arası, ${db.settings.waterEveryHours} saatte bir`}
-                />
-                <Toggle
-                  checked={db.settings.workoutEnabled}
-                  onChange={(v) => patchSettings({ workoutEnabled: v })}
-                  label="🏋️ Spor hatırlatması"
-                  hint={`Her gün ${db.settings.workoutTime} — o gün yaptıysan gelmez`}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="space-y-1">
-                    <span className="text-xs text-soft">Spor saati</span>
-                    <input
-                      type="time"
-                      value={db.settings.workoutTime}
-                      onChange={(e) => patchSettings({ workoutTime: e.target.value })}
-                      className="field"
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-xs text-soft">Su kaç saatte bir</span>
-                    <select
-                      value={db.settings.waterEveryHours}
-                      onChange={(e) => patchSettings({ waterEveryHours: Number(e.target.value) })}
-                      className="field"
-                    >
-                      <option value={1}>1 saat</option>
-                      <option value={2}>2 saat</option>
-                      <option value={3}>3 saat</option>
-                      <option value={4}>4 saat</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </Section>
 

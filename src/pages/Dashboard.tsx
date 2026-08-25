@@ -93,7 +93,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-5 md:px-10 md:pb-16">
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-28 pt-4 md:px-10 md:pb-16">
       <header className="relative mb-6">
         <div
           aria-hidden
@@ -106,7 +106,7 @@ export default function Dashboard() {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-2.5 py-1 text-[11.5px] font-medium text-soft shadow-[var(--shadow-card)]">
             <Icon name="calendar" size={11} /> {longDate(new Date())}
           </span>
-          <h1 className="mt-2 text-[24px] font-bold tracking-tight md:text-[34px]">
+          <h1 className="mt-2 text-[22px] font-bold tracking-tight md:text-[34px]">
             {greeting()}
             {name ? `, ${name}` : ''} 👋
           </h1>
@@ -124,7 +124,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
         {[
           { icon: '📅', value: todayLessons.length, label: 'Bugünkü ders', href: '#/program' },
           { icon: '✅', value: openTotal, label: 'Açık görev', href: '#/gorevler' },
@@ -136,9 +136,9 @@ export default function Dashboard() {
           },
           { icon: '🏋️', value: streak > 0 ? `${streak} g 🔥` : PROGRAM[wdOf(new Date())].focus, label: 'Spor serisi', href: '#/spor' },
         ].map((s) => (
-          <a key={s.label} href={s.href} className="card card-lift block p-3.5">
-            <span className="text-base select-none">{s.icon}</span>
-            <p className="mt-1 truncate text-lg font-bold leading-tight tracking-tight tabular-nums">{s.value}</p>
+          <a key={s.label} href={s.href} className="card card-lift block p-3">
+            <span className="text-sm select-none md:text-base">{s.icon}</span>
+            <p className="mt-1 truncate text-base font-bold leading-tight tracking-tight tabular-nums md:text-lg">{s.value}</p>
             <p className="truncate text-[11px] font-medium text-soft">{s.label}</p>
           </a>
         ))}
@@ -146,7 +146,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Bugünkü dersler */}
-        <section className="card p-4">
+        <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">
             📅 Bugün dersler
           </h2>
@@ -181,7 +181,7 @@ export default function Dashboard() {
         </section>
 
         {/* Görevler */}
-        <section className="card p-4">
+        <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
             ✅ Görevler
             <a href="#/gorevler" className="text-xs font-medium text-accent hover:underline">
@@ -216,7 +216,7 @@ export default function Dashboard() {
         </section>
 
         {/* Sınavlar */}
-        <section className="card p-4">
+        <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
             🗓️ Yaklaşan sınavlar
             <a href="#/ogrenci" className="text-xs font-medium text-accent hover:underline">
@@ -249,7 +249,7 @@ export default function Dashboard() {
         </section>
 
         {/* Cihaz / Termux */}
-        <section className="card p-4">
+        <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
             📱 Cihaz
             <a href="#/ayarlar" className="text-xs font-medium text-accent hover:underline">
