@@ -23,6 +23,10 @@ export async function hasReminderPermission(): Promise<boolean> {
 
 /** Deneme amaçlı: ~1.5 sn sonra cihazda bildirim gösterir. */
 export async function sendTestNotification(): Promise<boolean> {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'aurora-test' }, '*');
+    return true;
+  }
   if (!remindersAvailable()) return false;
   if (!(await hasReminderPermission())) {
     if (!(await requestReminderPermission())) return false;
@@ -68,9 +72,14 @@ interface Draft {
 /**
  * Veri değişince çağrılır: tüm planlı bildirimleri sıfırlayıp
  * ayarlara + güncel görev/sınav listesine göre yeniden kurar.
- * Sadece APK'da (native) çalışır.
+ * Sadece APK'da (native) çalışır. Panel iframe içinde çalışıyorsa
+ * (APK kabuğu) planlamayı parent yapar — burada çift planlama olmasın.
  */
 export async function syncReminders(db: DB): Promise<void> {
+  if (window.parent !== window) {
+    postStateToParent(db);
+    return;
+  }
   if (!remindersAvailable()) return;
   const s = db.settings;
   if (!s.remindersEnabled) {
@@ -176,4 +185,21 @@ function strId(raw: string): number {
 
 async function clearAll(): Promise<void> {
   await LocalNotifications.cancelAll();
+}
+
+/** APK kabuğu (loader) iframe modundayken panel durumunu parent'a iletir. */
+export function postStateToParent(db: DB): void {
+  if (window.parent === window) return;
+  window.parent.postMessage(
+    {
+      type: 'aurora-state',
+      payload: {
+        todos: db.todos,
+        exams: db.exams,
+        workouts: db.workouts,
+        settings: db.settings,
+      },
+    },
+    '*',
+  );
 }

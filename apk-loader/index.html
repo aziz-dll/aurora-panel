@@ -31,8 +31,6 @@
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Adres formu — sadece gerekirse belirir */
     .form {
       max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
       transition: max-height .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, margin-top .35s ease;
@@ -61,10 +59,22 @@
     .hint code { background: #1c1c1c; padding: 1px 5px; border-radius: 5px; font-size: 11px; }
     .page-in { animation: pageIn .4s cubic-bezier(.22,1,.36,1) both; }
     @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } }
+
+    /* Panel çerçevesi — bağlanınca tüm ekran */
+    #shell { display: none; position: fixed; inset: 0; background: #0a0a0a; }
+    #shell.on { display: block; }
+    #panel { width: 100%; height: 100%; border: 0; }
+    #reload {
+      position: fixed; right: 12px; bottom: 96px; z-index: 60;
+      width: 40px; height: 40px; margin: 0; border-radius: 999px;
+      background: #161616; color: #9d9d9d; border: 1px solid #2c2c2c;
+      font-size: 16px; line-height: 1; opacity: .55;
+    }
+    #reload:active { transform: scale(.92); }
   </style>
 </head>
 <body>
-  <div class="box page-in">
+  <div class="box page-in" id="splash">
     <div class="logo"><img src="aurora.svg" alt="" /></div>
     <h1>Aurora</h1>
     <div class="status" id="status"><span class="spinner"></span>Bağlanılıyor…</div>
@@ -83,31 +93,173 @@
     </div>
   </div>
 
+  <div id="shell">
+    <iframe id="panel" title="Panel"></iframe>
+    <button id="reload" aria-label="Paneli yenile">↻</button>
+  </div>
+
   <script>
+    var $splash = document.getElementById('splash');
     var $input = document.getElementById('addr');
     var $btn = document.getElementById('go');
     var $status = document.getElementById('status');
     var $form = document.getElementById('form');
+    var $shell = document.getElementById('shell');
+    var $panel = document.getElementById('panel');
+    var $reload = document.getElementById('reload');
     var KEY = 'serverUrl';
     var DEFAULT = 'http://192.168.1.200:8788';
+    var IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    var LN = IS_NATIVE ? window.Capacitor.Plugins.LocalNotifications : null;
+
+    /* ---------- bildirim motoru (APK native — sunucuya bildirim isteği gitmez) ---------- */
+
+    function hashId(prefix, raw) {
+      var h = 0;
+      for (var i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;
+      return (h % 100000) + 1;
+    }
+    function plusDaysISO(n) {
+      var d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.toISOString().slice(0, 10);
+    }
+    function atTime(dateISO, hhmm) {
+      var p = hhmm.split(':');
+      return new Date(dateISO + 'T' + p[0] + ':' + p[1] + ':00');
+    }
+    function nextOccurrence(hhmm) {
+      var p = hhmm.split(':');
+      var c = new Date();
+      c.setHours(+p[0], +p[1], 0, 0);
+      if (c.getTime() <= Date.now()) c.setDate(c.getDate() + 1);
+      return c;
+    }
+    function todayISO() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function daysUntil(iso) {
+      var a = new Date(iso + 'T00:00:00');
+      var b = new Date();
+      b.setHours(0, 0, 0, 0);
+      return Math.round((a - b) / 86400000);
+    }
+
+    async function requestPerm() {
+      if (!LN) return false;
+      var cur = await LN.checkPermissions();
+      if (cur.display === 'granted') return true;
+      var req = await LN.requestPermissions();
+      return req.display === 'granted';
+    }
+
+    async function scheduleAll(st) {
+      if (!LN) return;
+      var s = st.settings || {};
+      if (s.remindersEnabled === false) { await LN.cancelAll(); return; }
+      var perm = await LN.checkPermissions();
+      if (perm.display !== 'granted') return;
+
+      var drafts = [];
+      var t = todayISO();
+
+      if (s.waterEnabled !== false) {
+        var fromH = parseInt((s.waterFrom || '08:00').split(':')[0], 10) || 8;
+        var toH = parseInt((s.waterTo || '22:00').split(':')[0], 10) || 22;
+        var step = Math.max(1, Math.min(6, s.waterEveryHours || 2));
+        for (var h = fromH; h <= toH; h += step) {
+          drafts.push({ id: hashId('w', '' + h), title: '💧 Su içme zamanı', body: 'Bir bardak su iç, beyin de susuzluk çekiyor.', schedule: { on: { hour: h, minute: 0 }, allowWhileIdle: true } });
+        }
+      }
+
+      var doneToday = (st.workouts && st.workouts[t] && st.workouts[t].length > 0);
+      if (s.workoutEnabled !== false && !doneToday) {
+        drafts.push({ id: 900001, title: '🏋️ Spor vakti', body: 'Bugünkü antrenman hâlâ seni bekliyor. Hadi, 30 dakika yeter!', schedule: { at: nextOccurrence(s.workoutTime || '17:30'), allowWhileIdle: true } });
+      }
+
+      var todos = (st.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= (s.todoReminderDays || 2); })
+        .sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); }).slice(0, 32);
+      todos.forEach(function (todo) {
+        var at = atTime(plusDaysISO(daysUntil(todo.due) - (s.todoReminderDays || 2)), '18:00');
+        if (at.getTime() <= Date.now()) return;
+        drafts.push({ id: hashId('t', todo.id), title: '⏳ Ödev hatırlatması', body: '«' + todo.title + '» için ' + (s.todoReminderDays || 2) + ' gün kaldı — bugün başla, son geceye bırakma.', schedule: { at: at, allowWhileIdle: true } });
+      });
+
+      var exams = (st.exams || []).filter(function (e) { return daysUntil(e.date) >= (s.examReminderDays || 7); })
+        .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); }).slice(0, 32);
+      exams.forEach(function (ex) {
+        var at = atTime(plusDaysISO(daysUntil(ex.date) - (s.examReminderDays || 7)), '18:00');
+        if (at.getTime() <= Date.now()) return;
+        drafts.push({ id: hashId('e', ex.id), title: '📝 Yazılı hatırlatması', body: '«' + ex.title + '» ' + ex.date + ' tarihinde — ' + (s.examReminderDays || 7) + ' günün var, çalışma planı yap.', schedule: { at: at, allowWhileIdle: true } });
+      });
+
+      await LN.cancelAll();
+      if (drafts.length) await LN.schedule({ notifications: drafts });
+    }
+
+    /* Sunucu bataryası: %25 altı + şarjda değil → APK bildirimi */
+    var batteryLast = 0;
+    async function checkServerBattery(origin) {
+      if (!LN) return;
+      try {
+        var r = await fetch(origin + '/api/battery', { cache: 'no-store' });
+        if (!r.ok) return;
+        var b = await r.json();
+        if (b.percent === null || b.percent === undefined) return;
+        var low = b.percent <= 25 && !b.charging;
+        if (!low) { localStorage.removeItem('batteryAlertAt'); return; }
+        var last = Number(localStorage.getItem('batteryAlertAt') || 0);
+        if (Date.now() - last < 3600000) return;
+        localStorage.setItem('batteryAlertAt', String(Date.now()));
+        await LN.schedule({ notifications: [{ id: 555001, title: '🔋 Sunucu şarjı düşük', body: 'J7 Prime şarjı %' + b.percent + ' — şarja tak, panel kapalı kalmasın.', schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true } }] });
+      } catch (e) { /* sunucu erişilemez — sessiz geç */ }
+    }
+
+    /* Panel iframe'den gelen durum mesajları → native planlama */
+    window.addEventListener('message', function (e) {
+      if (!e.data) return;
+      if (e.data.type === 'aurora-state') {
+        try { localStorage.setItem('lastState', JSON.stringify(e.data.payload)); } catch (err) {}
+        scheduleAll(e.data.payload);
+      } else if (e.data.type === 'aurora-test') {
+        (async function () {
+          if (!(await requestPerm())) return;
+          LN.schedule({ notifications: [{ id: 987654321, title: '🔔 Aurora test bildirimi', body: 'Bildirimler çalışıyor! Ödev, yazılı, su ve spor hatırlatmaları böyle görünecek.', schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true } }] });
+        })();
+      }
+    });
+
+    function enterShell(origin) {
+      $splash.style.display = 'none';
+      $shell.classList.add('on');
+      $panel.src = origin;
+      if (IS_NATIVE) {
+        requestPerm().then(function (granted) { if (granted) scheduleAll(readCachedState()); });
+        setInterval(function () { checkServerBattery(origin); }, 60000);
+        checkServerBattery(origin);
+      }
+    }
+    function readCachedState() {
+      try { return JSON.parse(localStorage.getItem('lastState') || '{}'); } catch (e) { return {}; }
+    }
+
+    /* ---------- bağlantı akışı ---------- */
 
     function setStatus(msg, isErr, busy) {
       $status.className = 'status' + (isErr ? ' err' : '');
       $status.innerHTML = (busy ? '<span class="spinner"></span>' : '') + msg;
     }
-
     function showForm() {
       $form.classList.add('open');
       setTimeout(function () { $input.focus(); }, 380);
     }
-
     function normalize(raw) {
       var v = raw.trim();
       if (!v) return null;
       if (!/^https?:\/\//i.test(v)) v = 'http://' + v;
       try { return new URL(v).origin; } catch (e) { return null; }
     }
-
     function connect(origin, remember) {
       setStatus('Bağlanılıyor…', false, true);
       $btn.disabled = true;
@@ -120,7 +272,7 @@
           if (!data || data.ok !== true) return Promise.reject();
           if (remember) try { localStorage.setItem(KEY, origin); } catch (e) {}
           setStatus('Bağlandı ✓');
-          setTimeout(function () { location.replace(origin); }, 250);
+          setTimeout(function () { enterShell(origin); }, 250);
         })
         .catch(function () {
           clearTimeout(timer);
@@ -136,8 +288,11 @@
       connect(origin, true);
     });
     $input.addEventListener('keydown', function (e) { if (e.key === 'Enter') $btn.click(); });
+    $reload.addEventListener('click', function () {
+      var origin = normalize($input.value);
+      if (origin) $panel.src = origin;
+    });
 
-    // Açılış: kayıtlı adresi sessizce dene; olmazsa formu aç
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
     if (saved) {
