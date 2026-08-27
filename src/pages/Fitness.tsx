@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Page } from '../components/Page';
 import { Icon } from '../lib/icons';
 import { workouts } from '../lib/actions';
-import { DAY_SHORT, PROGRAM, isoOf, wdOf, dayDone, computeStreak, type Kind } from '../lib/fitness';
+import { DAY_SHORT, planOf, isoOf, wdOf, dayDone, computeStreak, type Kind } from '../lib/fitness';
 import { patchSettings, useDB } from '../lib/store';
 import { cx } from '../lib/utils';
 
@@ -66,7 +66,7 @@ export default function Fitness() {
   );
 
   const todayChecked = db.workouts[tIso] ?? [];
-  const todayPlan = PROGRAM[todayWd];
+  const todayPlan = planOf(todayWd);
   const todayAllDone = todayPlan.exs.every((e) => todayChecked.includes(e.id));
   const progress = (todayChecked.length / todayPlan.exs.length) * 100;
 
@@ -160,8 +160,10 @@ export default function Fitness() {
         <Icon name="dumbbell" size={14} /> Haftalık Program
       </h2>
       <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
-        {PROGRAM.map((plan, i) => {
+        {DAY_SHORT.map((_, i) => {
+          const plan = planOf(i);
           const isToday = i === todayWd;
+          const isWeekend = i >= 5;
           const dayIso = (() => {
             const d = new Date();
             d.setDate(d.getDate() - todayWd + i);
@@ -176,6 +178,7 @@ export default function Fitness() {
                 'card p-3 transition-shadow md:p-4',
                 isToday && !allDone && 'ring-2 ring-accent/40',
                 allDone && 'ring-1 ring-emerald-500/30',
+                !isWeekend && 'opacity-80',
               )}
             >
               <div className="mb-2.5 flex items-center gap-2">
@@ -206,8 +209,8 @@ export default function Fitness() {
                 <span className="flex items-center gap-1 rounded-full bg-hover px-2 py-0.5 text-[10.5px] font-medium text-soft">
                   <Icon name="clock" size={10} /> {plan.mins}
                 </span>
-                {isToday && (
-                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">Bugün</span>
+                {isWeekend && (
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">Haftasonu</span>
                 )}
               </div>
               <ul className="space-y-0.5">

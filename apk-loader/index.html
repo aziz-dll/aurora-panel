@@ -64,13 +64,6 @@
     #shell { display: none; position: fixed; inset: 0; background: #0a0a0a; }
     #shell.on { display: block; }
     #panel { width: 100%; height: 100%; border: 0; }
-    #reload {
-      position: fixed; right: 12px; bottom: 96px; z-index: 60;
-      width: 40px; height: 40px; margin: 0; border-radius: 999px;
-      background: #161616; color: #9d9d9d; border: 1px solid #2c2c2c;
-      font-size: 16px; line-height: 1; opacity: .55;
-    }
-    #reload:active { transform: scale(.92); }
   </style>
 </head>
 <body>
@@ -95,7 +88,6 @@
 
   <div id="shell">
     <iframe id="panel" title="Panel"></iframe>
-    <button id="reload" aria-label="Paneli yenile">↻</button>
   </div>
 
   <script>
@@ -106,7 +98,6 @@
     var $form = document.getElementById('form');
     var $shell = document.getElementById('shell');
     var $panel = document.getElementById('panel');
-    var $reload = document.getElementById('reload');
     var KEY = 'serverUrl';
     var DEFAULT = 'http://192.168.1.200:8788';
     var IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
@@ -174,8 +165,9 @@
       }
 
       var doneToday = (st.workouts && st.workouts[t] && st.workouts[t].length > 0);
-      if (s.workoutEnabled !== false && !doneToday) {
-        drafts.push({ id: 900001, title: '🏋️ Spor vakti', body: 'Bugünkü antrenman hâlâ seni bekliyor. Hadi, 30 dakika yeter!', schedule: { at: nextOccurrence(s.workoutTime || '17:30'), allowWhileIdle: true } });
+      var wd = (new Date().getDay() + 6) % 7; // 0=Pzt … 6=Paz — spor yalnızca haftasonunda
+      if (s.workoutEnabled !== false && wd >= 5 && !doneToday) {
+        drafts.push({ id: 900001, title: '🏋️ Haftasonu antrenmanı', body: 'Bugünkü antrenman hâlâ seni bekliyor. Hadi, 35 dakika yeter!', schedule: { at: nextOccurrence(s.workoutTime || '10:00'), allowWhileIdle: true } });
       }
 
       var todos = (st.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= (s.todoReminderDays || 2); })
@@ -288,10 +280,6 @@
       connect(origin, true);
     });
     $input.addEventListener('keydown', function (e) { if (e.key === 'Enter') $btn.click(); });
-    $reload.addEventListener('click', function () {
-      var origin = normalize($input.value);
-      if (origin) $panel.src = origin;
-    });
 
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}

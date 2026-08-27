@@ -237,7 +237,7 @@ export default function Settings() {
                 checked={db.settings.workoutEnabled}
                 onChange={(v) => patchSettings({ workoutEnabled: v })}
                 label="🏋️ Spor hatırlatması"
-                hint={`Her gün ${db.settings.workoutTime} — o gün yaptıysan gelmez`}
+                hint={`Cumartesi ve Pazar ${db.settings.workoutTime} — o gün yaptıysan gelmez`}
               />
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1">
