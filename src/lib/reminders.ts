@@ -106,14 +106,16 @@ export async function syncReminders(db: DB): Promise<void> {
     }
   }
 
-  // Spor hatırlatması — bugün yapılmadıysa sıradaki uygun zamanda
+  // Spor hatırlatması — cumartesi ve pazar, plan haftasonunda olduğu için yalnızca o günlerde
   if (s.workoutEnabled) {
+    const wd = (new Date().getDay() + 6) % 7; // 0=Pzt … 6=Paz
+    const isWeekend = wd >= 5;
     const doneToday = (db.workouts[todayISO()]?.length ?? 0) > 0;
-    if (!doneToday) {
+    if (isWeekend && !doneToday) {
       drafts.push({
         id: 'wo',
-        title: '🏋️ Spor vakti',
-        body: "Bugünkü antrenman hâlâ seni bekliyor. Hadi, 30 dakika yeter!",
+        title: '🏋️ Haftasonu antrenmanı',
+        body: "Bugünkü antrenman hâlâ seni bekliyor. Hadi, 35 dakika yeter!",
         at: nextOccurrence(s.workoutTime),
       });
     }

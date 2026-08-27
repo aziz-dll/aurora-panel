@@ -16,6 +16,8 @@ Türkçe, tamamen lokal (localStorage) çalışan öğrenci paneli. React 19 + T
 - **Tema**: CSS değişkenleri (`.dark` sınıfı); vurgu rengi ayarlardan `--accent`/`--accent-soft`'a yazılır.
 - **Navigasyon**: hash tabanlı; masaüstünde `Sidebar`, mobilde altta `DockNav` (saf CSS geçişli).
 - `vite.config.ts` içinde `server.allowedHosts: true` ve `/api` → `127.0.0.1:8788` proxy (Termux köprü sunucusu `server.mjs`).
+- **Sunucu detayları**: API uçları, ortam değişkenleri, güvenlik notları için `SUNUCU.md`'ye bak.
+- **Spor programı** (`src/lib/fitness.ts`): hafta içi tam gün okul olduğu için antrenman yalnızca haftasonunda. `PROGRAM` gün bazlı `days` dizileriyle tanımlı; `planOf(wd)` günü plana eşler. Spor hatırlatması da sadece cumartesi/pazar kurulur.
 
 ## Not
 

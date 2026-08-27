@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Icon } from '../lib/icons';
 import { todos as todoActions, lessonsOfDay } from '../lib/actions';
-import { PROGRAM, computeStreak, wdOf } from '../lib/fitness';
+import { planOf, computeStreak, wdOf } from '../lib/fitness';
 import { useDB } from '../lib/store';
 import { termux, type BatteryInfo } from '../lib/termux';
 import { cx, daysUntil, hhmmToMin, longDate, nowMin, shortDate, todayISO } from '../lib/utils';
@@ -274,7 +274,7 @@ export default function Dashboard() {
       <a href="#/spor" className="card card-lift mt-6 flex items-center gap-3 p-4">
         <span className="text-2xl">🏋️</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">Bugünkü antrenman: {PROGRAM[wdOf(new Date())].focus}</p>
+          <p className="truncate text-sm font-semibold">Bugünkü antrenman: {planOf(wdOf(new Date())).focus}</p>
           <p className="text-xs text-soft">{streak > 0 ? `${streak} günlük seri devam ediyor 🔥` : 'Seriyi bugün başlat'}</p>
         </div>
         <Icon name="chevronRight" size={16} className="shrink-0 text-faint" />

@@ -78,7 +78,7 @@ const defaultSettings: Settings = {
   waterTo: '22:00',
   waterEveryHours: 2,
   workoutEnabled: true,
-  workoutTime: '17:30',
+  workoutTime: '10:00',
 };
 
 function normalizeSettings(s: Partial<Settings> | undefined): Settings {
