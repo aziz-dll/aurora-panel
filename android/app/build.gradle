@@ -1,6 +1,9 @@
 apply plugin: 'com.android.application'
 
 android {
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
     namespace = "com.gh0st.okulpaneli"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
@@ -43,6 +46,12 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// capacitor.build.gradle Java 21 set ediyor; JDK 17 ile derlemek için sonradan eziyoruz.
+android.compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+}
 
 try {
     def servicesJSON = file('google-services.json')

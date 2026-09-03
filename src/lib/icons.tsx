@@ -95,12 +95,6 @@ const paths = {
     </>
   ),
   zap: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
-  refresh: (
-    <>
-      <path d="M23 4v6h-6" />
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-    </>
-  ),
   alert: (
     <>
       <circle cx="12" cy="12" r="9" />

@@ -55,11 +55,10 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
 export default function Settings() {
   const db = useDB();
   const { connected, battery } = useTermuxStatus();
-  const [manualPing, setManualPing] = useState<boolean | null>(null);
   const [feedback, setFeedback] = useState('');
   const [permState, setPermState] = useState<boolean | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const up = manualPing ?? connected;
+  const up = connected;
 
   useEffect(() => {
     void (async () => {
@@ -74,11 +73,6 @@ export default function Settings() {
   const flash = (msg: string) => {
     setFeedback(msg);
     setTimeout(() => setFeedback(''), 2500);
-  };
-
-  const checkConnection = async () => {
-    const p = await termux.ping();
-    setManualPing(p?.termux === true);
   };
 
   const doExport = () => {
@@ -302,9 +296,6 @@ export default function Settings() {
                 </span>
               )}
             </div>
-            <button onClick={() => void checkConnection()} className="btn btn-ghost border border-line p-1.5" aria-label="Yenile">
-              <Icon name="refresh" size={13} />
-            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
