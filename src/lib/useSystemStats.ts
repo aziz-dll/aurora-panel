@@ -59,7 +59,7 @@ export function useSystemStats(pollMs = 15_000): SystemStats {
       if (!alive) return;
       setStats({ connected: true, memory, disk, uptime, info, cpu, thermal, wifi });
       // Push server stats to AuroraStorage so BatteryWidget renders fresh data
-      updateServerStats({ battery: null, memory, disk, cpu, thermal, wifi });
+      updateServerStats({ battery: null, memory, disk: disk ?? [], cpu, thermal });
     }
 
     void refresh();

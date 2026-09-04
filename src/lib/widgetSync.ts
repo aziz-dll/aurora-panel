@@ -79,9 +79,20 @@ export function updateServerStats(stats: {
   cpu: CpuSample | null;
   thermal: ThermalInfo | null;
 }): void {
-  if (!lastData) return;
-  lastData.server = stats;
-  lastData.updatedAt = Date.now();
+  // Polling'de henüz DB snapshot'ı yazılmamış olsa bile server stats'ı
+  // AuroraStorage'a yaz — ağırlık widget'ı her zaman taze veri görsün.
+
+  if (!lastData) {
+    lastData = {
+      todos: [],
+      lessons: [],
+      server: stats,
+      updatedAt: Date.now(),
+    };
+  } else {
+    lastData.server = stats;
+    lastData.updatedAt = Date.now();
+  }
   AuroraStorage.set({ key: KEY, value: JSON.stringify(lastData) }).catch(() => {});
   AuroraStorage.notifyWidgets().catch(() => {});
 }
