@@ -38,7 +38,7 @@ export default function Schedule() {
     e.preventDefault();
     if (!form || !form.name.trim()) return;
     if (form.start >= form.end) {
-      alert('Bitiş saati başlangıçtan sonra olmalı.');
+      alert('End time must be after start time.');
       return;
     }
     // Aynı gün aynı saat aralığında başka ders var mı?
@@ -62,7 +62,7 @@ export default function Schedule() {
           <div>
             <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Schedule</h1>
             <p className="mt-1 text-sm text-soft">
-              Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
+              Weekly {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} h of class` : 'no classes added yet'}
             </p>
           </div>
           <button onClick={() => openNew(t)} className="btn btn-primary mt-1.5">
@@ -90,7 +90,7 @@ export default function Schedule() {
                     <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-white">Today</span>
                   )}
                 </span>
-                <button onClick={() => openNew(i)} className="btn btn-ghost p-1 text-faint hover:text-ink" aria-label={`${day} ders ekle`}>
+                <button onClick={() => openNew(i)} className="btn btn-ghost p-1 text-faint hover:text-ink" aria-label={`Add class on ${day}`}>
                   <Icon name="plus" size={13} />
                 </button>
               </header>
@@ -136,7 +136,7 @@ export default function Schedule() {
             />
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1">
-                <span className="text-xs text-soft">Gün</span>
+                <span className="text-xs text-soft">Day</span>
                 <select value={form.day} onChange={(e) => setForm({ ...form, day: Number(e.target.value) })} className="field">
                   {DAY_NAMES.map((d, i) => (
                     <option key={d} value={i}>
@@ -146,15 +146,15 @@ export default function Schedule() {
                 </select>
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Sınıf / yer</span>
+                <span className="text-xs text-soft">Class / room</span>
                 <input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. 301" className="field" />
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Başlangıç</span>
+                <span className="text-xs text-soft">Start</span>
                 <input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} className="field" />
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Bitiş</span>
+                <span className="text-xs text-soft">End</span>
                 <input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} className="field" />
               </label>
             </div>

@@ -39,7 +39,7 @@ export default function Files() {
             <p className="mt-1 truncate text-sm text-soft">{db.settings.filebrowserUrl || '— adres gir —'}</p>
           </div>
           <div className="mt-1.5 flex shrink-0 gap-1.5">
-            <button onClick={() => setEditing(!editing)} className="btn btn-ghost border border-line" aria-label="Adresi düzenle">
+            <button onClick={() => setEditing(!editing)} className="btn btn-ghost border border-line" aria-label="Edit address">
               <Icon name="pencil" size={14} />
             </button>
             {!urlIsEmpty && (
@@ -66,7 +66,7 @@ export default function Files() {
 
         {urlIsEmpty && (
           <div className="card mb-4 p-4 text-center">
-            <p className="text-sm font-medium">FileBrowser adresi boş</p>
+            <p className="text-sm font-medium">FileBrowser address is empty</p>
             <p className="mt-1 text-xs text-soft">
               Yukarıdaki kalem ikonuna tıklayıp adresi gir (e.g. http://192.168.1.200:5555).
             </p>
@@ -90,7 +90,7 @@ export default function Files() {
           )}
           {failed && !urlIsEmpty && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
-              <p className="text-sm font-medium">Sayfa yüklenemedi</p>
+              <p className="text-sm font-medium">Page failed to load</p>
               <p className="max-w-md text-xs text-soft">
                 FileBrowser 5 saniye içinde yanıt vermedi. Server kapalı olabilir ya da
                 adres yanlış. «Tarayıcıda aç» ile dene veya adresi kontrol et.

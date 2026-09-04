@@ -9,6 +9,7 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.gh0st.okulpaneli.widgets.HabitWidget;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.gh0st.okulpaneli.widgets.BatteryWidget;
 import com.gh0st.okulpaneli.widgets.ScheduleWidget;
@@ -63,13 +64,28 @@ public class AuroraStoragePlugin extends Plugin {
     @PluginMethod
     public void notifyWidgets(PluginCall call) {
         Context ctx = getContext();
-        AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
-        int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, TodosWidget.class));
-        if (ids != null && ids.length > 0) {
-            mgr.notifyAppWidgetViewDataChanged(ids, android.R.id.list);
-        }
-        mgr.notifyAppWidgetViewDataChanged(mgr.getAppWidgetIds(new ComponentName(ctx, BatteryWidget.class)), android.R.id.list);
-        mgr.notifyAppWidgetViewDataChanged(mgr.getAppWidgetIds(new ComponentName(ctx, ScheduleWidget.class)), android.R.id.list);
+        // Widget'lara gerçekten onUpdate gönder — notifyAppWidgetViewDataChanged
+        // RemoteViews (statik text) kullanan widget'larda görünmüyor.
+
+
+        broadcastUpdate(ctx, TodosWidget.class);
+        broadcastUpdate(ctx, BatteryWidget.class);
+        broadcastUpdate(ctx, ScheduleWidget.class);
+        broadcastUpdate(ctx, HabitWidget.class);
         call.resolve();
+    }
+
+    private void broadcastUpdate(Context ctx, Class<?> cls) {
+        try {
+            ComponentName name = new ComponentName(ctx, cls);
+            AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
+            int[] ids = mgr.getAppWidgetIds(name);
+            if (ids != null && ids.length > 0) {
+                android.content.Intent intent = new android.content.Intent(ctx, cls);
+                intent.setAction(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                intent.putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                ctx.sendBroadcast(intent);
+            }
+        } catch (Exception ignored) {}
     }
 }

@@ -34,8 +34,8 @@ export async function checkServerBattery(): Promise<void> {
     notifications: [
       {
         id: 555001,
-        title: '🔋 Server şarjı düşük',
-        body: `J7 Prime şarjı %${b.percent} — şarja tak, panel kapalı kalmasın.`,
+        title: '🔋 Server battery low',
+        body: `J7 Prime battery at ${b.percent}% — plug it in, don't let the panel die.`,
         schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true },
       },
     ],

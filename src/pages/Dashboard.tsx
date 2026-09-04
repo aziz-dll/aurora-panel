@@ -15,10 +15,10 @@ const CATS: Array<{ key: TodoCategory; emoji: string; label: string }> = [
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 6) return 'İyi geceler';
-  if (h < 12) return 'Günaydın';
-  if (h < 18) return 'İyi günler';
-  return 'İyi akşamlar';
+  if (h < 6) return 'Good night';
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good day';
+  return 'Good evening';
 }
 
 function BatteryRing({ percent, charging }: { percent: number | null; charging: boolean }) {
@@ -101,13 +101,13 @@ export default function Dashboard() {
   };
 
   const stats = [
-    { icon: '📅', value: String(todayLessons.length), label: 'Todaykü ders', href: '#/schedule' },
+    { icon: '📅', value: String(todayLessons.length), label: 'Today', href: '#/schedule' },
     { icon: '✅', value: String(openTotal), label: 'Open task', href: '#/todos' },
     { icon: '🔥', value: `${streak} g`, label: 'Workout streak', href: '#/fitness' },
     {
       icon: '🗓️',
       value: nextExamIn === null ? '—' : `${nextExamIn} g`,
-      label: nextExams.length ? nextExams[0].title : 'Exam yok',
+      label: nextExams.length ? nextExams[0].title : 'No exams',
       href: '#/student',
     },
   ];
@@ -133,7 +133,7 @@ export default function Dashboard() {
             <input
               value={quick}
               onChange={(e) => setQuick(e.target.value)}
-              placeholder="Hızlı görev ekle…"
+              placeholder="Quick add task…"
               className="field flex-1"
             />
             <button type="submit" disabled={!quick.trim()} className="btn btn-primary px-4" aria-label="Add">
@@ -171,9 +171,9 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">📅 Today dersler</h2>
+          <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">📅 Today's classes</h2>
           {todayLessons.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">Today ders yok 🎉</p>
+            <p className="py-3 text-center text-sm text-faint">No classes today 🎉</p>
           ) : (
             <ul className="space-y-1.5">
               {todayLessons.map((l) => {
@@ -210,7 +210,7 @@ export default function Dashboard() {
             </a>
           </h2>
           <div className="mb-2 flex gap-1.5 text-[11px]">
-            <span className="rounded-full bg-hover px-2 py-0.5 text-soft">{dueToday} bugün</span>
+            <span className="rounded-full bg-hover px-2 py-0.5 text-soft">{dueToday} today</span>
             {overdue > 0 && (
               <span className="rounded-full bg-[#fae4e4] px-2 py-0.5 font-medium text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
                 {overdue} geciken
@@ -218,7 +218,7 @@ export default function Dashboard() {
             )}
           </div>
           {openTodos.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">Her şey tamam! 🌟</p>
+            <p className="py-3 text-center text-sm text-faint">All clear! 🌟</p>
           ) : (
             <ul className="space-y-1">
               {openTodos.map((todo) => (
@@ -238,13 +238,13 @@ export default function Dashboard() {
 
         <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            🗓️ Yaklaşan sınavlar
+            🗓️ Upcoming exams
             <a href="#/student" className="text-xs font-medium text-accent hover:underline">
               Dashboard →
             </a>
           </h2>
           {nextExams.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">Planlanmış sınav yok.</p>
+            <p className="py-3 text-center text-sm text-faint">No exams scheduled.</p>
           ) : (
             <ul className="space-y-2">
               {nextExams.map((ex) => {
@@ -259,7 +259,7 @@ export default function Dashboard() {
                         diff === 0 ? 'bg-[#f4b8b8] text-[#3d0c0c] dark:bg-[#4a1f1f] dark:text-[#f19999]' : 'bg-hover text-soft',
                       )}
                     >
-                      {diff === 0 ? 'Today!' : `${diff} gün`}
+                      {diff === 0 ? 'Today!' : `${diff} days`}
                     </span>
                   </li>
                 );
@@ -287,8 +287,8 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 py-1">
               <BatteryRing percent={battery.percent} charging={battery.charging} />
               <div className="space-y-0.5 text-sm">
-                <p className="font-medium capitalize">{battery.charging ? 'Şarj oluyor ⚡' : 'Pil modu'}</p>
-                <p className="text-xs text-faint">Termux API aktif · canlı</p>
+                <p className="font-medium capitalize">{battery.charging ? 'Charging ⚡' : 'On battery'}</p>
+                <p className="text-xs text-faint">Termux API online · live</p>
               </div>
             </div>
           ) : (
@@ -300,7 +300,7 @@ export default function Dashboard() {
       <a href="#/fitness" className="card card-lift mt-6 flex items-center gap-3 p-4">
         <span className="text-2xl">🏋️</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">Todaykü antrenman: {PROGRAM[wdOf(new Date())].focus}</p>
+          <p className="truncate text-sm font-semibold">Today's workout: {PROGRAM[wdOf(new Date())].focus}</p>
           <p className="text-xs text-soft">{streak > 0 ? `${streak} daily streak continues 🔥` : 'Start the streak today'}</p>
         </div>
         <Icon name="chevronRight" size={16} className="shrink-0 text-faint" />

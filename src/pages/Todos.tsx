@@ -164,7 +164,7 @@ export default function Todos() {
             </span>
           )}
           {dm && <span className={cx('rounded-full px-2 py-0.5 text-xs font-medium', dm.cls)}>{dm.text}</span>}
-          <span title={`Öncelik: ${pm.label}`} className="h-2 w-2 shrink-0 rounded-full" style={{ background: pm.color }} />
+          <span title={`Priority: ${pm.label}`} className="h-2 w-2 shrink-0 rounded-full" style={{ background: pm.color }} />
           <button
             onClick={() => todoActions.remove(t.id)}
             aria-label="Delete"
@@ -178,13 +178,13 @@ export default function Todos() {
   };
 
   return (
-    <Page icon="✅" title="Tasks" subtitle={`${activeCount} açık görev`}>
+    <Page icon="✅" title="Tasks" subtitle={`${activeCount} open task(s)`}>
       <form onSubmit={submit} className="card mb-3 flex flex-col gap-2 p-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Yeni görev…"
+            placeholder="New task…"
             className="field min-w-0 flex-1 border-transparent bg-transparent focus:bg-transparent sm:border-line dark:focus:bg-transparent"
           />
           <div className="flex gap-2">
@@ -265,7 +265,7 @@ export default function Todos() {
       </div>
 
       {list.length === 0 ? (
-        <Empty emoji="🍃" text="Burada görünecek görev yok." />
+        <Empty emoji="🍃" text="No tasks to show here." />
       ) : (
         <div className="space-y-6">
           {openList.length > 0 && <ul className="space-y-0.5">{openList.map(row)}</ul>}

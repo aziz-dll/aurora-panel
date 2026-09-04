@@ -140,10 +140,10 @@ export default function App() {
   const Page = PAGES[path] ?? Dashboard;
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-paper text-ink">
+    <div className="flex h-screen flex-col overflow-hidden bg-paper text-ink">
       <TopBar path={path} />
-      <div className="relative flex min-w-0 flex-1 flex-col">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
           <div key={path} className="min-h-full animate-[page-in_250ms_var(--ease-out)]">
             <Page />
           </div>

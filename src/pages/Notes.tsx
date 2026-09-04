@@ -38,11 +38,11 @@ export default function Notes() {
         <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📝</div>
         <div className="mb-4 flex items-start justify-between gap-3">
           <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notes</h1>
-          <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="Yeni not">
+          <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="New note">
             <Icon name="plus" size={14} />
           </button>
         </div>
-        {sorted.length === 0 && <p className="text-sm text-faint">Henüz not yok.</p>}
+        {sorted.length === 0 && <p className="text-sm text-faint">No notes yet.</p>}
         <ul className="space-y-0.5">
           {sorted.map((n) => (
             <li key={n.id}>
@@ -55,9 +55,9 @@ export default function Notes() {
               >
                 <span className="flex items-center gap-1.5">
                   {n.pinned && <Icon name="star" size={11} className="shrink-0 text-[#d9730d]" />}
-                  <span className="truncate text-sm font-medium">{n.title || 'Başlıksız'}</span>
+                  <span className="truncate text-sm font-medium">{n.title || 'Untitled'}</span>
                 </span>
-                <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Free not'}</span>
+                <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Untitled'}</span>
               </button>
             </li>
           ))}
@@ -81,7 +81,7 @@ export default function Notes() {
             </button>
             <button
               onClick={() => {
-                if (confirm('Bu not silinsin mi?')) {
+                if (confirm('Delete this note?')) {
                   noteActions.remove(selected.id);
                   setSelectedId(null);
                 }
@@ -96,14 +96,14 @@ export default function Notes() {
           <input
             value={selected.title}
             onChange={(e) => noteActions.patch(selected.id, { title: e.target.value })}
-            placeholder="Başlıksız"
+            placeholder="Untitled"
             className="font-display -ml-1 mt-3 w-full bg-transparent text-xl font-bold tracking-tight placeholder:text-faint/50 md:text-2xl"
           />
           <textarea
             ref={bodyRef}
             value={selected.body}
             onChange={(e) => noteActions.patch(selected.id, { body: e.target.value })}
-            placeholder="Bir şeyler yaz…"
+            placeholder="Write something…"
             rows={6}
             className="-ml-1 mt-3 w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed placeholder:text-faint/50"
           />

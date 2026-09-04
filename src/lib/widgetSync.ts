@@ -8,6 +8,8 @@
  */
 import { AuroraStorage } from './auroraStorage';
 import type { DB } from './types';
+import { habitExpectedOn, habitStreak } from './habits';
+import { todayISO } from './utils';
 import type { MemoryInfo, DiskInfo, CpuSample, BatteryInfo, ThermalInfo } from './termux';
 
 export interface WidgetTodo {
@@ -26,9 +28,17 @@ export interface WidgetLesson {
   color: string;
 }
 
+export interface WidgetHabit {
+  id: string;
+  title: string;
+  type: 'build' | 'quit';
+  streak: number;
+}
+
 export interface WidgetData {
   todos: WidgetTodo[];
   lessons: WidgetLesson[];
+  habits: WidgetHabit[];
   server: {
     battery: BatteryInfo | null;
     memory: MemoryInfo | null;
@@ -42,6 +52,7 @@ export interface WidgetData {
 const KEY = 'widget-data';
 
 function buildFromDB(db: DB): WidgetData {
+  const t = todayISO();
   return {
     todos: db.todos
       .filter((t) => !t.done)
@@ -52,6 +63,16 @@ function buildFromDB(db: DB): WidgetData {
       .slice()
       .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start))
       .slice(0, 12),
+    habits: (db.habits ?? [])
+      .filter((h) => !h.archived && habitExpectedOn(db.habitLog ?? {}, h, t))
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .slice(0, 5)
+      .map((h) => ({
+        id: h.id,
+        title: h.title,
+        type: h.type,
+        streak: habitStreak(db.habitLog ?? {}, h, t),
+      })),
     server: { battery: null, memory: null, disk: [], cpu: null, thermal: null },
     updatedAt: Date.now(),
   };
@@ -86,6 +107,7 @@ export function updateServerStats(stats: {
     lastData = {
       todos: [],
       lessons: [],
+      habits: [],
       server: stats,
       updatedAt: Date.now(),
     };

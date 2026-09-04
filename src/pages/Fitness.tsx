@@ -100,7 +100,7 @@ export default function Fitness() {
           <div className="w-24">{numField('Boy', 'cm', height, 'heightCm')}</div>
           <div className="w-24">{numField('Age', '', age, 'ageYears')}</div>
           <div className="ml-auto flex items-center gap-3">
-            <div className="relative h-14 w-14 shrink-0" role="img" aria-label={`Vücut kitle indeksi ${bmi.toFixed(1)}`}>
+            <div className="relative h-14 w-14 shrink-0" role="img" aria-label={`Body mass index ${bmi.toFixed(1)}`}>
               <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
                 <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--line)" strokeWidth="3.5" />
                 <circle
@@ -240,13 +240,13 @@ export default function Fitness() {
             <Icon name="flame" size={14} /> Golden rules
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
-            <li>💧 Günde <b>2,5–3 litre su</b> — şişeni al yanına</li>
-            <li>😴 <b>8–9 saat uyku</b> — kas ve yağ yakımı burada olur</li>
-            <li>🥤 Şekerli içecek ve paketli abur cubur eve gelmesin</li>
-            <li>🚶 Günlük <b>6.000 → 10.000 Namem</b>, her hafta +500</li>
-            <li>⚖️ Tartı sadece <b>pazar sabahı</b>, aç karnına</li>
+            <li>💧 Drink <b>2.5–3 L of water</b> daily — keep a bottle handy</li>
+            <li>😴 <b>8–9 h of sleep</b> — muscles and fat loss happen here</li>
+            <li>🥤 No sugary drinks or packaged snacks at home</li>
+            <li>🚶 <b>6,000 →  ️10,000 steps</b> daily, plus 500 each week</li>
+            <li>⚖️ Weigh in only <b>Sunday morning</b>, on an empty stomach</li>
             <li>
-              ❤️ Yürüyüşte nabız <b>{hrLow}–{hrHigh}</b> civarı olsun
+              ❤️ Heart rate during walks around <b>{hrLow}–{hrHigh}</b>
             </li>
           </ul>
         </section>
@@ -255,10 +255,10 @@ export default function Fitness() {
             <Icon name="activity" size={14} /> Nasıl ilerlersin?
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
-            <li><b>1.–2. hafta:</b> Yazan tekrarları rahat yapana dek aynen devam</li>
-            <li><b>Sonrasında:</b> Her strength gününde +1 tekrar veya +5 sn ekle</li>
-            <li>Rahatlaşınca duvar → masa kenarı → diz üstü pompa sırasına geç</li>
-            <li>Yürüyüş sürelerini her 2 haftada 5 dk uzat</li>
+            <li><b>Weeks 1–2:</b> Keep the same reps until they feel easy</li>
+            <li><b>Progress:</b> Add +1 rep or +5 s each strength day</li>
+            <li>When it gets easy, progress: wall → table edge → knee push-ups</li>
+            <li>Extend walksby 5 min every 2 weeks</li>
           </ul>
           <p className="mt-3 rounded-lg bg-side px-3 py-2 text-xs leading-relaxed text-soft">
             Büyüme çağındasın: form bozulmasın, ağrı olursa dur, aşırı aç kalmadan beslen. Şüphedeysen ailenle/doktorunla paylaş. 💪

@@ -23,7 +23,7 @@ export function TermuxBadge() {
           {battery.charging ? ' ⚡' : ''}
         </span>
       ) : (
-        <span className="truncate">{connected === false ? 'Termux API kapalı' : 'Termux API…'}</span>
+        <span className="truncate">{connected === false ? 'Termux API offline' : 'Termux API…'}</span>
       )}
     </div>
   );
