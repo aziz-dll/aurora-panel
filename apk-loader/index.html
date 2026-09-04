@@ -283,7 +283,7 @@
         var last = Number(localStorage.getItem('batteryAlertAt') || 0);
         if (Date.now() - last < 3600000) return;
         localStorage.setItem('batteryAlertAt', String(Date.now()));
-        await LN.schedule({ notifications: [{ id: 555001, title: '🔋 Server battery low', body: 'J7 Prime battery at ' + b.percent + '% — plug it in, don't let the panel die.', schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true } }] });
+        await LN.schedule({ notifications: [{ id: 555001, title: '🔋 Server battery low', body: 'J7 Prime battery at ' + b.percent + '% — plug it in, don\'t let the panel die.', schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true } }] });
       } catch (e) { /* server unreachable — skip silently */ }
     }
 
@@ -361,7 +361,7 @@
         .catch(function () {
           clearTimeout(timer);
           $btn.disabled = false;
-          setStatus('Can't reach the server — is J7 on and on the same Wi-Fi?', true);
+          setStatus('Can\'t reach the server — is J7 on and on the same Wi-Fi?', true);
           showForm();
         });
     }
