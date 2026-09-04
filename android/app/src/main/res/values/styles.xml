@@ -13,9 +13,10 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- Android 15+ edge-to-edge zorlamasından çık: içerik durum çubuğunun altına girmesin -->
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
-        <item name="android:fitsSystemWindows">true</item>
+        <!-- Android 15+ edge-to-edge zorlaması: içerik tam ekran kaplasın,
+             safe-area boşluğu CSS'te env(safe-area-inset-*) ile yönetilsin. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">false</item>
+        <item name="android:fitsSystemWindows">false</item>
     </style>
 
 

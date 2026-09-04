@@ -8,8 +8,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Uygulama durum çubuğu ve gesture barının altına taşmasın (edge-to-edge'i zorla kapat)
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        // WebView tam ekran açılsın; status bar altından başlamasın (aşağıdaki
+        // safe-area insets'i CSS'te tek kaynak olarak uygulanıyor — çifte boşluk olmasın)
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         // Custom Capacitor plugin: SharedPreferences-backed key/value store
         registerPlugin(AuroraStoragePlugin.class);
     }
