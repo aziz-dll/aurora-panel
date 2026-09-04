@@ -37,6 +37,17 @@ export default function Schedule() {
   const save = (e: FormEvent) => {
     e.preventDefault();
     if (!form || !form.name.trim()) return;
+    if (form.start >= form.end) {
+      alert('Bitiş saati başlangıçtan sonra olmalı.');
+      return;
+    }
+    // Aynı gün aynı saat aralığında başka ders var mı?
+    const conflict = db.lessons.find(
+      (l) => l.day === form.day && l.id !== (form.id ?? '') && l.start < form.end && l.end > form.start,
+    );
+    if (conflict && !confirm(`Bu saatte zaten «${conflict.name}» var. Yine de ekle?`)) {
+      return;
+    }
     const payload = { day: form.day, start: form.start, end: form.end, name: form.name.trim(), room: form.room.trim() || undefined, color: form.color };
     if (form.id) lessonActions.update(form.id, payload);
     else lessonActions.add(payload);
@@ -49,13 +60,13 @@ export default function Schedule() {
         <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📅</div>
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Ders Programı</h1>
+            <h1 className="text-[22px] font-bold tracking-tight md:text-[32px]">Schedule</h1>
             <p className="mt-1 text-sm text-soft">
               Haftalık {weeklyHours > 0 ? `${Math.round(weeklyHours * 10) / 10} saat ders` : 'henüz ders eklenmemiş'}
             </p>
           </div>
           <button onClick={() => openNew(t)} className="btn btn-primary mt-1.5">
-            <Icon name="plus" size={14} /> Ders
+            <Icon name="plus" size={14} /> Course
           </button>
         </div>
       </div>
@@ -76,7 +87,7 @@ export default function Schedule() {
                 <span className={cx('text-sm', isToday ? 'font-bold' : 'font-semibold')}>
                   {day}
                   {isToday && (
-                    <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-white">Bugün</span>
+                    <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-white">Today</span>
                   )}
                 </span>
                 <button onClick={() => openNew(i)} className="btn btn-ghost p-1 text-faint hover:text-ink" aria-label={`${day} ders ekle`}>
@@ -85,7 +96,7 @@ export default function Schedule() {
               </header>
 
               <div className="flex-1 space-y-1.5 p-2 pt-1">
-                {dayLessons.length === 0 && <p className="px-1 py-3 text-center text-xs text-faint">Boş</p>}
+                {dayLessons.length === 0 && <p className="px-1 py-3 text-center text-xs text-faint">Free</p>}
                 {dayLessons.map((l) => {
                   const isNow = isToday && hhmmToMin(l.start) <= now && now < hhmmToMin(l.end);
                   return (
@@ -113,14 +124,14 @@ export default function Schedule() {
         })}
       </div>
 
-      <Dialog open={form !== null} onClose={() => setForm(null)} title={form?.id ? 'Dersi düzenle' : 'Yeni ders'}>
+      <Dialog open={form !== null} onClose={() => setForm(null)} title={form?.id ? 'Edit lesson' : 'New lesson'}>
         {form && (
           <form onSubmit={save} className="space-y-3">
             <input
               autoFocus
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ders adı"
+              placeholder="Course name"
               className="field"
             />
             <div className="grid grid-cols-2 gap-3">
@@ -136,7 +147,7 @@ export default function Schedule() {
               </label>
               <label className="space-y-1">
                 <span className="text-xs text-soft">Sınıf / yer</span>
-                <input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="örn. 301" className="field" />
+                <input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="e.g. 301" className="field" />
               </label>
               <label className="space-y-1">
                 <span className="text-xs text-soft">Başlangıç</span>
@@ -172,13 +183,13 @@ export default function Schedule() {
                   }}
                   className="btn text-[#e03e3e] hover:bg-[#fae4e4] dark:hover:bg-[#40222a]"
                 >
-                  <Icon name="trash" size={14} /> Sil
+                  <Icon name="trash" size={14} /> Delete
                 </button>
               ) : (
                 <span />
               )}
               <button type="submit" disabled={!form.name.trim()} className="btn btn-primary">
-                Kaydet
+                Save
               </button>
             </div>
           </form>

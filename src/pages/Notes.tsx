@@ -37,7 +37,7 @@ export default function Notes() {
       <aside className={cx('w-full shrink-0 flex-col pb-32 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
         <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📝</div>
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notlar</h1>
+          <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notes</h1>
           <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="Yeni not">
             <Icon name="plus" size={14} />
           </button>
@@ -57,7 +57,7 @@ export default function Notes() {
                   {n.pinned && <Icon name="star" size={11} className="shrink-0 text-[#d9730d]" />}
                   <span className="truncate text-sm font-medium">{n.title || 'Başlıksız'}</span>
                 </span>
-                <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Boş not'}</span>
+                <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Free not'}</span>
               </button>
             </li>
           ))}
@@ -87,7 +87,7 @@ export default function Notes() {
                 }
               }}
               className="btn btn-ghost p-2 text-faint hover:text-[#e03e3e]"
-              aria-label="Sil"
+              aria-label="Delete"
             >
               <Icon name="trash" size={15} />
             </button>

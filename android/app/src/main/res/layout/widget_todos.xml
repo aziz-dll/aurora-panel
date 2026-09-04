@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_todos_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+    <TextView
+        android:id="@+id/widget_todos_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#37352f"
+        android:singleLine="true"
+        android:ellipsize="end" />
+    <TextView
+        android:id="@+id/widget_todos_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="#37352f"
+        android:layout_marginTop="6dp"
+        android:singleLine="true"
+        android:ellipsize="end" />
+    <TextView
+        android:id="@+id/widget_todos_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="#37352f"
+        android:singleLine="true"
+        android:ellipsize="end" />
+    <TextView
+        android:id="@+id/widget_todos_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="#37352f"
+        android:singleLine="true"
+        android:ellipsize="end" />
+    <TextView
+        android:id="@+id/widget_todos_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="#787774"
+        android:layout_marginTop="6dp"
+        android:singleLine="true" />
+</LinearLayout>

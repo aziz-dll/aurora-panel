@@ -1,31 +1,35 @@
+import type { IconName } from './icons';
+
 export interface NavItem {
   path: string;
   label: string;
-  emoji: string;
+  icon: IconName;
 }
 
 export const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
   {
-    label: 'Genel',
+    label: 'General',
     items: [
-      { path: '/', label: 'Panel', emoji: '🏠' },
-      { path: '/gorevler', label: 'Görevler', emoji: '✅' },
-      { path: '/program', label: 'Ders Programı', emoji: '📅' },
-      { path: '/ogrenci', label: 'Öğrenci', emoji: '🎓' },
+      { path: '/', label: 'Dashboard', icon: 'home' },
+      { path: '/todos', label: 'Tasks', icon: 'checkSquare' },
+      { path: '/schedule', label: 'Schedule', icon: 'calendarDays' },
+      { path: '/student', label: 'Student', icon: 'graduationCap' },
     ],
   },
   {
-    label: 'Kişisel',
+    label: 'Personal',
     items: [
-      { path: '/spor', label: 'Spor', emoji: '🏋️' },
-      { path: '/notlar', label: 'Notlar', emoji: '📝' },
+      { path: '/fitness', label: 'Fitness', icon: 'dumbbell' },
+      { path: '/habits', label: 'Habits', icon: 'repeat' },
+      { path: '/notes', label: 'Notes', icon: 'stickyNote' },
     ],
   },
   {
-    label: 'Sistem',
+    label: 'System',
     items: [
-      { path: '/dosyalar', label: 'Dosyalar', emoji: '📁' },
-      { path: '/ayarlar', label: 'Ayarlar', emoji: '⚙️' },
+      { path: '/files', label: 'Files', icon: 'folder' },
+      { path: '/server', label: 'Server', icon: 'server' },
+      { path: '/settings', label: 'Settings', icon: 'cog' },
     ],
   },
 ];
@@ -33,5 +37,5 @@ export const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
 export const NAV: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 
 export function titleFor(path: string): string {
-  return NAV.find((n) => n.path === path)?.label ?? 'Panel';
+  return NAV.find((n) => n.path === path)?.label ?? 'Dashboard';
 }

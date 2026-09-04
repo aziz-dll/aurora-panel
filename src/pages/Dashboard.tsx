@@ -4,7 +4,14 @@ import { todos as todoActions, lessonsOfDay } from '../lib/actions';
 import { PROGRAM, computeStreak, wdOf } from '../lib/fitness';
 import { useDB } from '../lib/store';
 import { termux, type BatteryInfo } from '../lib/termux';
+import type { TodoCategory } from '../lib/types';
 import { cx, daysUntil, hhmmToMin, longDate, nowMin, shortDate, todayISO } from '../lib/utils';
+
+const CATS: Array<{ key: TodoCategory; emoji: string; label: string }> = [
+  { key: 'school', emoji: '🏫', label: 'School' },
+  { key: 'personal', emoji: '👤', label: 'Personal' },
+  { key: 'sport', emoji: '🏋️', label: 'Fitness' },
+];
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -46,6 +53,7 @@ export default function Dashboard() {
   const [quick, setQuick] = useState('');
   const [battery, setBattery] = useState<BatteryInfo | null>(null);
   const [termuxUp, setTermuxUp] = useState<boolean | null>(null);
+  const [quickCat, setQuickCat] = useState<TodoCategory>('school');
 
   const t = todayISO();
   const now = nowMin();
@@ -88,19 +96,19 @@ export default function Dashboard() {
     e.preventDefault();
     const title = quick.trim();
     if (!title) return;
-    todoActions.add(title);
+    todoActions.add(title, 'med', undefined, undefined, quickCat);
     setQuick('');
   };
 
   const stats = [
-    { icon: '📅', value: String(todayLessons.length), label: 'Bugünkü ders', href: '#/program' },
-    { icon: '✅', value: String(openTotal), label: 'Açık görev', href: '#/gorevler' },
-    { icon: '🔥', value: `${streak} g`, label: 'Spor serisi', href: '#/spor' },
+    { icon: '📅', value: String(todayLessons.length), label: 'Todaykü ders', href: '#/schedule' },
+    { icon: '✅', value: String(openTotal), label: 'Open task', href: '#/todos' },
+    { icon: '🔥', value: `${streak} g`, label: 'Workout streak', href: '#/fitness' },
     {
       icon: '🗓️',
       value: nextExamIn === null ? '—' : `${nextExamIn} g`,
-      label: nextExams.length ? nextExams[0].title : 'Sınav yok',
-      href: '#/ogrenci',
+      label: nextExams.length ? nextExams[0].title : 'Exam yok',
+      href: '#/student',
     },
   ];
 
@@ -120,16 +128,34 @@ export default function Dashboard() {
           ) : null}{' '}
           👋
         </h1>
-        <form onSubmit={quickAdd} className="mt-4 flex gap-2">
-          <input
-            value={quick}
-            onChange={(e) => setQuick(e.target.value)}
-            placeholder="Hızlı görev ekle…"
-            className="field flex-1"
-          />
-          <button type="submit" disabled={!quick.trim()} className="btn btn-primary px-4" aria-label="Ekle">
-            <Icon name="plus" size={15} /> Ekle
-          </button>
+        <form onSubmit={quickAdd} className="mt-4 space-y-2">
+          <div className="flex gap-2">
+            <input
+              value={quick}
+              onChange={(e) => setQuick(e.target.value)}
+              placeholder="Hızlı görev ekle…"
+              className="field flex-1"
+            />
+            <button type="submit" disabled={!quick.trim()} className="btn btn-primary px-4" aria-label="Add">
+              <Icon name="plus" size={15} /> Add
+            </button>
+          </div>
+          <div className="flex gap-1 rounded-lg bg-side p-0.5">
+            {CATS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => setQuickCat(c.key)}
+                className={cx(
+                  'flex-1 rounded-md px-2 py-1 text-[11px] transition-colors',
+                  quickCat === c.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
+                )}
+                aria-pressed={quickCat === c.key}
+              >
+                {c.emoji} {c.label}
+              </button>
+            ))}
+          </div>
         </form>
       </header>
 
@@ -145,9 +171,9 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">📅 Bugün dersler</h2>
+          <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">📅 Today dersler</h2>
           {todayLessons.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">Bugün ders yok 🎉</p>
+            <p className="py-3 text-center text-sm text-faint">Today ders yok 🎉</p>
           ) : (
             <ul className="space-y-1.5">
               {todayLessons.map((l) => {
@@ -178,9 +204,9 @@ export default function Dashboard() {
 
         <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            ✅ Görevler
-            <a href="#/gorevler" className="text-xs font-medium text-accent hover:underline">
-              Tümü →
+            ✅ Tasks
+            <a href="#/todos" className="text-xs font-medium text-accent hover:underline">
+              All →
             </a>
           </h2>
           <div className="mb-2 flex gap-1.5 text-[11px]">
@@ -213,8 +239,8 @@ export default function Dashboard() {
         <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
             🗓️ Yaklaşan sınavlar
-            <a href="#/ogrenci" className="text-xs font-medium text-accent hover:underline">
-              Panel →
+            <a href="#/student" className="text-xs font-medium text-accent hover:underline">
+              Dashboard →
             </a>
           </h2>
           {nextExams.length === 0 ? (
@@ -233,7 +259,7 @@ export default function Dashboard() {
                         diff === 0 ? 'bg-[#f4b8b8] text-[#3d0c0c] dark:bg-[#4a1f1f] dark:text-[#f19999]' : 'bg-hover text-soft',
                       )}
                     >
-                      {diff === 0 ? 'Bugün!' : `${diff} gün`}
+                      {diff === 0 ? 'Today!' : `${diff} gün`}
                     </span>
                   </li>
                 );
@@ -244,17 +270,17 @@ export default function Dashboard() {
 
         <section className="card p-3 md:p-4">
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            📱 Cihaz
-            <a href="#/ayarlar" className="text-xs font-medium text-accent hover:underline">
-              Ayarlar →
+            📱 Device
+            <a href="#/settings" className="text-xs font-medium text-accent hover:underline">
+              Settings →
             </a>
           </h2>
           {termuxUp === false ? (
             <div className="flex flex-col items-start gap-1 py-2">
-              <p className="text-sm font-medium">Termux API bağlı değil</p>
+              <p className="text-sm font-medium">Termux API not connected</p>
               <p className="text-xs leading-relaxed text-faint">
-                Bildirim, titreşim ve batarya için <code className="rounded bg-hover px-1">npm run start</code> ile
-                sunucuyu çalıştır ve Termux:API kur.
+                For notifications, vibration, and battery run <code className="rounded bg-hover px-1">npm run start</code> ile
+                the server and install Termux:API.
               </p>
             </div>
           ) : battery ? (
@@ -271,11 +297,11 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <a href="#/spor" className="card card-lift mt-6 flex items-center gap-3 p-4">
+      <a href="#/fitness" className="card card-lift mt-6 flex items-center gap-3 p-4">
         <span className="text-2xl">🏋️</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">Bugünkü antrenman: {PROGRAM[wdOf(new Date())].focus}</p>
-          <p className="text-xs text-soft">{streak > 0 ? `${streak} günlük seri devam ediyor 🔥` : 'Seriyi bugün başlat'}</p>
+          <p className="truncate text-sm font-semibold">Todaykü antrenman: {PROGRAM[wdOf(new Date())].focus}</p>
+          <p className="text-xs text-soft">{streak > 0 ? `${streak} daily streak continues 🔥` : 'Start the streak today'}</p>
         </div>
         <Icon name="chevronRight" size={16} className="shrink-0 text-faint" />
       </a>

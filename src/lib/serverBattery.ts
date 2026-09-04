@@ -6,7 +6,7 @@ const STORE_KEY = 'serverBatteryAlertAt';
 const THROTTLE_MS = 60 * 60_000; // aynı düşüş için saatte bir hatırlat
 
 /**
- * Sunucunun (J7 Prime) bataryasını kontrol eder; %25 altına düşmüş ve
+ * Servernun (J7 Prime) bataryasını kontrol eder; %25 altına düşmüş ve
  * şarjda değilse client cihazında yerel bildirim gösterir.
  */
 export async function checkServerBattery(): Promise<void> {
@@ -34,7 +34,7 @@ export async function checkServerBattery(): Promise<void> {
     notifications: [
       {
         id: 555001,
-        title: '🔋 Sunucu şarjı düşük',
+        title: '🔋 Server şarjı düşük',
         body: `J7 Prime şarjı %${b.percent} — şarja tak, panel kapalı kalmasın.`,
         schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true },
       },

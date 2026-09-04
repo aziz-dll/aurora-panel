@@ -1,9 +1,10 @@
 import { updateDB } from './store';
 import { uid, todayISO } from './utils';
-import type { Lesson, Note, Priority } from './types';
+import { habitCompletedOn, habitSetCompletion } from './habits';
+import type { Habit, Lesson, Note, Priority, TodoCategory } from './types';
 
 export const todos = {
-  add(title: string, priority: Priority = 'med', due?: string, course?: string) {
+  add(title: string, priority: Priority = 'med', due?: string, course?: string, category: TodoCategory = 'school') {
     const id = uid();
     updateDB((d) => {
       d.todos.unshift({
@@ -11,12 +12,19 @@ export const todos = {
         title,
         done: false,
         priority,
+        category,
         due: due || undefined,
         course: course || undefined,
         createdAt: new Date().toISOString(),
       });
     });
     return id;
+  },
+  setCategory(id: string, category: TodoCategory) {
+    updateDB((d) => {
+      const t = d.todos.find((x) => x.id === id);
+      if (t) t.category = category;
+    });
   },
   toggle(id: string) {
     updateDB((d) => {
@@ -146,6 +154,42 @@ export const workouts = {
       const next = cur.includes(exId) ? cur.filter((x) => x !== exId) : [...cur, exId];
       if (next.length === 0) delete d.workouts[dateISO];
       else d.workouts[dateISO] = next;
+    });
+  },
+};
+
+export const habits = {
+  add(input: Omit<Habit, 'id' | 'createdAt'>) {
+    const id = uid();
+    updateDB((d) => {
+      d.habits.push({ ...input, id, createdAt: new Date().toISOString() });
+    });
+    return id;
+  },
+  update(id: string, patch: Partial<Omit<Habit, 'id' | 'createdAt'>>) {
+    updateDB((d) => {
+      const i = d.habits.findIndex((h) => h.id === id);
+      if (i !== -1) d.habits[i] = { ...d.habits[i], ...patch };
+    });
+  },
+  remove(id: string) {
+    updateDB((d) => {
+      d.habits = d.habits.filter((h) => h.id !== id);
+      delete d.habitLog[id];
+    });
+  },
+  toggle(dateISO: string, id: string) {
+    updateDB((d) => {
+      const habit = d.habits.find((h) => h.id === id);
+      if (!habit) return;
+      const currentlyDone = habitCompletedOn(d.habitLog, habit, dateISO);
+      d.habitLog = habitSetCompletion(d.habitLog, habit, dateISO, !currentlyDone);
+    });
+  },
+  archive(id: string, archived: boolean) {
+    updateDB((d) => {
+      const i = d.habits.findIndex((h) => h.id === id);
+      if (i !== -1) d.habits[i] = { ...d.habits[i], archived };
     });
   },
 };

@@ -7,12 +7,12 @@ import { patchSettings, useDB } from '../lib/store';
 import { cx } from '../lib/utils';
 
 const KIND_BADGE: Record<Kind, string> = {
-  guc: 'bg-[#ddebf1] text-[#183347] dark:bg-[#1e3346] dark:text-[#8fc4ea]',
-  kardiyo: 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]',
-  dinlenme: 'bg-hover text-soft',
+  strength: 'bg-[#ddebf1] text-[#183347] dark:bg-[#1e3346] dark:text-[#8fc4ea]',
+  cardio: 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]',
+  recovery: 'bg-hover text-soft',
 };
 
-const KIND_LABEL: Record<Kind, string> = { guc: 'Güç', kardiyo: 'Kardiyo', dinlenme: 'Dinlenme' };
+const KIND_LABEL: Record<Kind, string> = { strength: 'Strength', cardio: 'Cardio', recovery: 'Recovery' };
 
 function Stat({ icon, value, label }: { icon: string; value: string; label: string }) {
   return (
@@ -90,15 +90,15 @@ export default function Fitness() {
   );
 
   return (
-    <Page icon="🏋️" title="Spor" subtitle="Evde aletsiz program — kilona, boyuna ve yaşına göre hazırlandı.">
+    <Page icon="🏋️" title="Fitness" subtitle="Home equipment-free program — tuned for your weight, height, and age.">
       <section className="card mb-4 p-3 md:p-4">
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-soft">
-          <Icon name="target" size={14} /> Ölçülerin
+          <Icon name="target" size={14} /> Your stats
         </h2>
         <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
           <div className="w-24">{numField('Kilo', 'kg', weight, 'weightKg')}</div>
           <div className="w-24">{numField('Boy', 'cm', height, 'heightCm')}</div>
-          <div className="w-24">{numField('Yaş', '', age, 'ageYears')}</div>
+          <div className="w-24">{numField('Age', '', age, 'ageYears')}</div>
           <div className="ml-auto flex items-center gap-3">
             <div className="relative h-14 w-14 shrink-0" role="img" aria-label={`Vücut kitle indeksi ${bmi.toFixed(1)}`}>
               <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
@@ -118,26 +118,26 @@ export default function Fitness() {
               <span className="absolute inset-0 grid place-items-center text-[11px] font-bold tabular-nums">{bmi.toFixed(1)}</span>
             </div>
             <div className="text-xs leading-relaxed text-soft">
-              <p className="font-semibold text-ink">VKİ {bmi.toFixed(1)}</p>
+              <p className="font-semibold text-ink">BMI {bmi.toFixed(1)}</p>
               <p>
-                İdeal aralık: <b>{idealMin}–{idealMax} kg</b>
+                Ideal range: <b>{idealMin}–{idealMax} kg</b>
               </p>
-              <p className="text-faint">Haftada 0,5 kg gayet yeterli 🐢</p>
+              <p className="text-faint">Losing 0.5 kg/week is plenty 🐢</p>
             </div>
           </div>
         </div>
       </section>
 
       <section className="mb-4 grid grid-cols-3 gap-3 max-sm:gap-2">
-        <Stat icon="🔥" value={`${streak}`} label="Seri (gün)" />
+        <Stat icon="🔥" value={`${streak}`} label="Streak (days)" />
         <Stat icon="📅" value={`${weekDone}`} label="Bu hafta / 7" />
-        <Stat icon="🏆" value={`${totalDone}`} label="Toplam tamamlanan" />
+        <Stat icon="🏆" value={`${totalDone}`} label="Total tamamlanan" />
       </section>
 
       <section className="card mb-6 p-3 md:p-4">
         <div className="mb-2 flex items-center justify-between gap-2 text-sm">
           <span className="min-w-0 truncate font-medium">
-            Bugün: {DAY_SHORT[todayWd]} — {todayPlan.focus}
+            Today: {DAY_SHORT[todayWd]} — {todayPlan.focus}
           </span>
           <span
             className={cx(
@@ -145,7 +145,7 @@ export default function Fitness() {
               todayAllDone ? 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]' : 'bg-hover text-soft',
             )}
           >
-            {todayAllDone ? 'Bitti ✓' : `${todayChecked.length}/${todayPlan.exs.length}`}
+            {todayAllDone ? 'Done ✓' : `${todayChecked.length}/${todayPlan.exs.length}`}
           </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-side">
@@ -157,7 +157,7 @@ export default function Fitness() {
       </section>
 
       <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
-        <Icon name="dumbbell" size={14} /> Haftalık Program
+        <Icon name="dumbbell" size={14} /> Weekly program
       </h2>
       <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
         {PROGRAM.map((plan, i) => {
@@ -207,7 +207,7 @@ export default function Fitness() {
                   <Icon name="clock" size={10} /> {plan.mins}
                 </span>
                 {isToday && (
-                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">Bugün</span>
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">Today</span>
                 )}
               </div>
               <ul className="space-y-0.5">
@@ -237,13 +237,13 @@ export default function Fitness() {
       <div className="mt-6 grid gap-2.5 sm:grid-cols-2 sm:gap-3">
         <section className="card p-3 md:p-4">
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
-            <Icon name="flame" size={14} /> Altın kurallar
+            <Icon name="flame" size={14} /> Golden rules
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
             <li>💧 Günde <b>2,5–3 litre su</b> — şişeni al yanına</li>
             <li>😴 <b>8–9 saat uyku</b> — kas ve yağ yakımı burada olur</li>
             <li>🥤 Şekerli içecek ve paketli abur cubur eve gelmesin</li>
-            <li>🚶 Günlük <b>6.000 → 10.000 adım</b>, her hafta +500</li>
+            <li>🚶 Günlük <b>6.000 → 10.000 Namem</b>, her hafta +500</li>
             <li>⚖️ Tartı sadece <b>pazar sabahı</b>, aç karnına</li>
             <li>
               ❤️ Yürüyüşte nabız <b>{hrLow}–{hrHigh}</b> civarı olsun
@@ -256,7 +256,7 @@ export default function Fitness() {
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
             <li><b>1.–2. hafta:</b> Yazan tekrarları rahat yapana dek aynen devam</li>
-            <li><b>Sonrasında:</b> Her güç gününde +1 tekrar veya +5 sn ekle</li>
+            <li><b>Sonrasında:</b> Her strength gününde +1 tekrar veya +5 sn ekle</li>
             <li>Rahatlaşınca duvar → masa kenarı → diz üstü pompa sırasına geç</li>
             <li>Yürüyüş sürelerini her 2 haftada 5 dk uzat</li>
           </ul>

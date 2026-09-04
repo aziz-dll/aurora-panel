@@ -1,5 +1,5 @@
 import { format, differenceInCalendarDays, parseISO } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import type { Course } from './types';
 
 export function uid(): string {
@@ -15,11 +15,11 @@ export function todayISO(): string {
 }
 
 export function longDate(d: Date | string): string {
-  return format(typeof d === 'string' ? parseISO(d) : d, 'd MMMM yyyy, EEEE', { locale: tr });
+  return format(typeof d === 'string' ? parseISO(d) : d, 'EEEE, MMMM d, yyyy', { locale: enUS });
 }
 
 export function shortDate(iso: string): string {
-  return format(parseISO(iso), 'd MMM', { locale: tr });
+  return format(parseISO(iso), 'MMM d', { locale: enUS });
 }
 
 export function daysUntil(iso: string): number {
@@ -36,7 +36,7 @@ export function nowMin(): number {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-export const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const LESSON_COLORS = [
   '#e07a5f',
@@ -54,7 +54,7 @@ interface Grade {
   cls: string;
 }
 
-// Lise 5'lik not sistemi (e-Okul aralıkları)
+// Lise 5'lik not sistemi (e-School aralıkları)
 export function gradeFromScore(score: number): Grade {
   if (score >= 70) return { grade: 5, cls: 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]' };
   if (score >= 55) return { grade: 4, cls: 'bg-[#ddebf1] text-[#183347] dark:bg-[#1e3346] dark:text-[#8fc4ea]' };

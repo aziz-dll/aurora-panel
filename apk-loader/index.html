@@ -113,7 +113,7 @@
     function plusDaysISO(n) {
       var d = new Date();
       d.setDate(d.getDate() + n);
-      return d.toISOString().slice(0, 10);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
     function atTime(dateISO, hhmm) {
       var p = hhmm.split(':');
@@ -154,35 +154,63 @@
 
       var drafts = [];
       var t = todayISO();
+      var notif = s.notifications || {};
+      var reminderTime = s.reminderTime || '18:00';
+      var todoDays = s.todoReminderDays || 2;
+      var examDays = s.examReminderDays || 7;
+      var leadMin = Math.max(5, Math.min(180, s.examLeadMinutes || 30));
 
       if (s.waterEnabled !== false) {
         var fromH = parseInt((s.waterFrom || '08:00').split(':')[0], 10) || 8;
         var toH = parseInt((s.waterTo || '22:00').split(':')[0], 10) || 22;
         var step = Math.max(1, Math.min(6, s.waterEveryHours || 2));
         for (var h = fromH; h <= toH; h += step) {
-          drafts.push({ id: hashId('w', '' + h), title: '💧 Su içme zamanı', body: 'Bir bardak su iç, beyin de susuzluk çekiyor.', schedule: { on: { hour: h, minute: 0 }, allowWhileIdle: true } });
+          drafts.push({ id: hashId('w', '' + h), title: '💧 Time to drink water', body: 'Have a glass of water — your brain needs it too.', schedule: { on: { hour: h, minute: 0 }, allowWhileIdle: true } });
         }
       }
 
       var doneToday = (st.workouts && st.workouts[t] && st.workouts[t].length > 0);
       if (s.workoutEnabled !== false && !doneToday) {
-        drafts.push({ id: 900001, title: '🏋️ Spor vakti', body: 'Bugünkü antrenman hâlâ seni bekliyor. Hadi, 30 dakika yeter!', schedule: { at: nextOccurrence(s.workoutTime || '17:30'), allowWhileIdle: true } });
+        drafts.push({ id: 900001, title: '🏋️ Workout time', body: "Today's training is still waiting. Come on, 30 minutes is enough!", schedule: { at: nextOccurrence(s.workoutTime || '17:30'), allowWhileIdle: true } });
       }
 
-      var todos = (st.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= (s.todoReminderDays || 2); })
-        .sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); }).slice(0, 32);
-      todos.forEach(function (todo) {
-        var at = atTime(plusDaysISO(daysUntil(todo.due) - (s.todoReminderDays || 2)), '18:00');
-        if (at.getTime() <= Date.now()) return;
-        drafts.push({ id: hashId('t', todo.id), title: '⏳ Ödev hatırlatması', body: '«' + todo.title + '» için ' + (s.todoReminderDays || 2) + ' gün kaldı — bugün başla, son geceye bırakma.', schedule: { at: at, allowWhileIdle: true } });
-      });
+      if (notif.todoChannel !== false) {
+        var todos = (st.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= todoDays; })
+          .sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); }).slice(0, 32);
+        todos.forEach(function (todo) {
+          var at = atTime(plusDaysISO(daysUntil(todo.due) - todoDays), reminderTime);
+          if (at.getTime() <= Date.now()) return;
+          drafts.push({ id: hashId('t', todo.id), title: '⏳ Homework reminder', body: '«' + todo.title + '» — ' + todoDays + ' day(s) left. Start today, don’t leave it for the last night.', schedule: { at: at, allowWhileIdle: true } });
+        });
+      }
 
-      var exams = (st.exams || []).filter(function (e) { return daysUntil(e.date) >= (s.examReminderDays || 7); })
-        .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); }).slice(0, 32);
-      exams.forEach(function (ex) {
-        var at = atTime(plusDaysISO(daysUntil(ex.date) - (s.examReminderDays || 7)), '18:00');
+      if (notif.examChannel !== false) {
+        var exams = (st.exams || []).filter(function (e) { return daysUntil(e.date) >= examDays; })
+          .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); }).slice(0, 32);
+        exams.forEach(function (ex) {
+          var at = atTime(plusDaysISO(daysUntil(ex.date) - examDays), reminderTime);
+          if (at.getTime() <= Date.now()) return;
+          drafts.push({ id: hashId('e', ex.id), title: '📝 Exam reminder', body: '«' + ex.title + '» is on ' + ex.date + ' — ' + examDays + ' day(s) left, make a study plan.', schedule: { at: at, allowWhileIdle: true } });
+        });
+
+        // Sınav bugün ve saati varsa: sınav saatinden N dk önce ek bildirim
+        var todayExams = (st.exams || []).filter(function (e) { return e.date === t && e.time; });
+        todayExams.forEach(function (ex) {
+          var examAt = atTime(ex.date, ex.time);
+          var at = new Date(examAt.getTime() - leadMin * 60000);
+          if (at.getTime() <= Date.now()) return;
+          drafts.push({ id: hashId('e30', ex.id), title: '⏰ Exam approaching', body: '«' + ex.title + '» starts in ' + leadMin + ' minutes (' + ex.time + '). Do your final prep!', schedule: { at: at, allowWhileIdle: true } });
+        });
+      }
+
+      // Habit reminders
+      (st.habits || []).forEach(function (h) {
+        if (h.archived || !h.reminderTime) return;
+        var at = atTime(todayISO(), h.reminderTime);
         if (at.getTime() <= Date.now()) return;
-        drafts.push({ id: hashId('e', ex.id), title: '📝 Yazılı hatırlatması', body: '«' + ex.title + '» ' + ex.date + ' tarihinde — ' + (s.examReminderDays || 7) + ' günün var, çalışma planı yap.', schedule: { at: at, allowWhileIdle: true } });
+        var title = h.type === 'quit' ? '🚭 Stay strong' : ('🔁 ' + h.title);
+        var body = h.type === 'quit' ? "You're doing great — keep it up!" : 'Time to check in on your habit.';
+        drafts.push({ id: hashId('hb', h.id), title: title, body: body, schedule: { at: at, allowWhileIdle: true } });
       });
 
       await LN.cancelAll();
@@ -207,16 +235,29 @@
       } catch (e) { /* sunucu erişilemez — sessiz geç */ }
     }
 
-    /* Panel iframe'den gelen durum mesajları → native planlama */
+    /* Panel iframe'den gelen durum mesajları → native planlama
+       Sadece panel'in yüklendiği origin'den gelen mesajları kabul et. */
+    var $currentOrigin = null;
+    function trustedOrigin() {
+      if ($currentOrigin) return $currentOrigin;
+      try {
+        var saved = localStorage.getItem(KEY);
+        if (saved) $currentOrigin = new URL(saved).origin;
+      } catch (e) {}
+      return $currentOrigin;
+    }
     window.addEventListener('message', function (e) {
       if (!e.data) return;
+      var origin = trustedOrigin();
+      // origin tespit edilemediyse ya da eşleşmiyorsa reddet
+      if (origin && e.origin !== origin) return;
       if (e.data.type === 'aurora-state') {
         try { localStorage.setItem('lastState', JSON.stringify(e.data.payload)); } catch (err) {}
         scheduleAll(e.data.payload);
       } else if (e.data.type === 'aurora-test') {
         (async function () {
           if (!(await requestPerm())) return;
-          LN.schedule({ notifications: [{ id: 987654321, title: '🔔 Aurora test bildirimi', body: 'Bildirimler çalışıyor! Ödev, yazılı, su ve spor hatırlatmaları böyle görünecek.', schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true } }] });
+          LN.schedule({ notifications: [{ id: 987654321, title: '🔔 Aurora test notification', body: 'Notifications work! Homework, exam, water, and workout reminders will look like this.', schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true } }] });
         })();
       }
     });

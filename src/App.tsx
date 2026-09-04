@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
-import { Sidebar } from './components/Sidebar';
-import { DockNav } from './components/DockNav';
+import { TopBar } from './components/TopBar';
 
 import { getDB, useDB } from './lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
 import { checkServerBattery } from './lib/serverBattery';
+import { syncWidgetsFromDB } from './lib/widgetSync';
 import Dashboard from './pages/Dashboard';
 import Todos from './pages/Todos';
 import Schedule from './pages/Schedule';
@@ -13,16 +13,27 @@ import Student from './pages/Student';
 import Fitness from './pages/Fitness';
 import Notes from './pages/Notes';
 import Files from './pages/Files';
+import Habits from './pages/Habits';
+import Server from './pages/Server';
 import Settings from './pages/Settings';
 
-function useHashRoute(): string {
-  const [path, setPath] = useState(() => location.hash.slice(1) || '/');
+export function useHashRoute(): { path: string; query: URLSearchParams } {
+  const parse = () => {
+    const raw = location.hash.replace(/^#/, '') || '/';
+    const [pathname, qs = ''] = raw.split('?');
+    return { path: pathname || '/', query: new URLSearchParams(qs) };
+  };
+  const [state, setState] = useState(parse);
   useEffect(() => {
-    const onChange = () => setPath(location.hash.slice(1) || '/');
+    const onChange = () => setState(parse());
     window.addEventListener('hashchange', onChange);
-    return () => window.removeEventListener('hashchange', onChange);
+    window.addEventListener('popstate', onChange);
+    return () => {
+      window.removeEventListener('hashchange', onChange);
+      window.removeEventListener('popstate', onChange);
+    };
   }, []);
-  return path;
+  return state;
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -33,18 +44,20 @@ function hexToRgb(hex: string): [number, number, number] {
 
 const PAGES: Record<string, React.ComponentType> = {
   '/': Dashboard,
-  '/gorevler': Todos,
-  '/program': Schedule,
-  '/ogrenci': Student,
-  '/spor': Fitness,
-  '/notlar': Notes,
-  '/dosyalar': Files,
-  '/ayarlar': Settings,
+  '/todos': Todos,
+  '/schedule': Schedule,
+  '/student': Student,
+  '/fitness': Fitness,
+  '/habits': Habits,
+  '/notes': Notes,
+  '/files': Files,
+  '/server': Server,
+  '/settings': Settings,
 };
 
 
 export default function App() {
-  const path = useHashRoute();
+  const { path } = useHashRoute();
   const scrollRef = useRef<HTMLDivElement>(null);
   const db = useDB();
   const settings = db.settings;
@@ -73,15 +86,40 @@ export default function App() {
   }, [path]);
 
   // Hatırlatıcıları veriyle senkron tut (APK'da çalışır)
-  // — yazma sırasında spam olmasın diye gecikmeli, saat başı de tazele
+  // — yazma sırasında spam olmasın diye gecikmeli, saat başı de tazele.
+  // db objesi her mutation'da referans değiştirir; sadece gerçekten değişen
+  // alanları string'e çevirip dependency yapıyoruz — aynı içerikte spam olmasın.
+  const syncKey = JSON.stringify({
+    rem: db.settings.remindersEnabled,
+    remTime: db.settings.reminderTime,
+    examLead: db.settings.examLeadMinutes,
+    todoDays: db.settings.todoReminderDays,
+    examDays: db.settings.examReminderDays,
+    channels: db.settings.notifications,
+    water: db.settings.waterEnabled && [db.settings.waterFrom, db.settings.waterTo, db.settings.waterEveryHours],
+    workout: db.settings.workoutEnabled && db.settings.workoutTime,
+    // todo ve exam içeriklerinin parmak izi — tarih/durum değişiklikleri de sync tetikler
+    todosFp: db.todos.map((t) => [t.id, t.done, t.due, t.title].join('|')).join('~'),
+    examsFp: db.exams.map((e) => [e.id, e.date, e.time].join('|')).join('~'),
+    today: Object.keys(db.workouts).length,
+  });
   useEffect(() => {
-    const id = setTimeout(() => void syncReminders(db), 800);
-    const iv = setInterval(() => void syncReminders(getDB()), 60 * 60_000);
+    const id = setTimeout(() => {
+      const db = getDB();
+      void syncReminders(db);
+      void syncWidgetsFromDB(db);
+    }, 800);
+    const iv = setInterval(() => {
+      const db = getDB();
+      void syncReminders(db);
+      void syncWidgetsFromDB(db);
+    }, 60 * 60_000);
     return () => {
       clearTimeout(id);
       clearInterval(iv);
     };
-  }, [db]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncKey]);
 
   // Bildirim izni hiç istenmemişse açılışta bir kez sor
   useEffect(() => {
@@ -91,7 +129,7 @@ export default function App() {
     })();
   }, []);
 
-  // Sunucu bataryası düşükse client'ta uyar
+  // Server bataryası düşükse client'ta uyar
   useEffect(() => {
     if (!remindersAvailable()) return;
     void checkServerBattery();
@@ -102,9 +140,8 @@ export default function App() {
   const Page = PAGES[path] ?? Dashboard;
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-paper text-ink">
-      <Sidebar path={path} />
-
+    <div className="flex h-dvh flex-col overflow-hidden bg-paper text-ink">
+      <TopBar path={path} />
       <div className="relative flex min-w-0 flex-1 flex-col">
         <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
           <div key={path} className="min-h-full animate-[page-in_250ms_var(--ease-out)]">
@@ -112,8 +149,6 @@ export default function App() {
           </div>
         </div>
       </div>
-
-      <DockNav path={path} />
     </div>
   );
 }

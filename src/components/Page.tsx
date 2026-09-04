@@ -16,7 +16,7 @@ export function Page({
   wide?: boolean;
 }) {
   return (
-    <div className={`mx-auto w-full px-4 pb-32 pt-20 md:px-10 md:pb-16 md:pt-10 ${wide ? 'max-w-[1100px]' : 'max-w-[880px]'}`}>
+    <div className={`mx-auto w-full px-4 pb-32 pt-4 md:px-10 md:pb-16 md:pt-4 ${wide ? 'max-w-[1100px]' : 'max-w-[880px]'}`}>
       <header className="mb-6">
         {icon && <div className="mb-1 text-[26px] leading-none select-none md:text-[34px]">{icon}</div>}
         <div className="flex items-start justify-between gap-3">

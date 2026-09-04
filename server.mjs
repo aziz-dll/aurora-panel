@@ -105,6 +105,113 @@ async function handleApi(req, res, pathname) {
         return jsonReply(false);
       }
     }
+    case '/api/memory': {
+      const out = await run('cat', ['/proc/meminfo']);
+      if (!out) return jsonReply(false);
+      const grab = (key) => {
+        const m = out.match(new RegExp(`^${key}:\\s+(\\d+)\\s*kB`, 'm'));
+        return m ? Number(m[1]) : 0;
+      };
+      const totalKb = grab('MemTotal');
+      if (!totalKb) return jsonReply(false);
+      const freeKb = grab('MemFree');
+      const buffersKb = grab('Buffers');
+      const cachedKb = grab('Cached');
+      const toMB = (kb) => Math.round((kb / 1024) * 10) / 10;
+      return send(res, 200, {
+        total: toMB(totalKb),
+        free: toMB(freeKb + buffersKb + cachedKb),
+        used: toMB(totalKb - freeKb - buffersKb - cachedKb),
+      });
+    }
+    case '/api/disk': {
+      const out = await run('sh', ['-c', "df -k 2>/dev/null | tail -n +2"]);
+      if (!out) return jsonReply(false);
+      const rows = [];
+      for (const line of out.split('\n')) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 6) continue;
+        const [fs, total, used, free, pct, mount] = parts;
+        const t = Number(total), u = Number(used), f = Number(free);
+        if (!Number.isFinite(t) || t === 0) continue;
+        const toGB = (kb) => Math.round((kb / 1024 / 1024) * 100) / 100;
+        rows.push({
+          fs,
+          mount,
+          total: toGB(t),
+          used: toGB(u),
+          free: toGB(f),
+          pct: Number(String(pct).replace('%', '')) || 0,
+        });
+      }
+      return send(res, 200, rows);
+    }
+    case '/api/uptime': {
+      const out = await run('cat', ['/proc/uptime']);
+      if (!out) return jsonReply(false);
+      const sec = Math.floor(Number(out.trim().split(/\s+/)[0]) || 0);
+      return send(res, 200, { seconds: sec, bootISO: new Date(Date.now() - sec * 1000).toISOString() });
+    }
+    case '/api/info': {
+      const [model, manuf, android, sdk, host] = await Promise.all([
+        run('getprop', ['ro.product.model']),
+        run('getprop', ['ro.product.manufacturer']),
+        run('getprop', ['ro.build.version.release']),
+        run('getprop', ['ro.build.version.sdk']),
+        run('hostname', []),
+      ]);
+      if (!model && !manuf) return jsonReply(false);
+      return send(res, 200, {
+        model: (model || '').trim() || 'Bilinmiyor',
+        manufacturer: (manuf || '').trim() || 'Bilinmiyor',
+        android: (android || '').trim() || '?',
+        sdk: Number((sdk || '').trim()) || 0,
+        hostname: (host || '').trim() || 'localhost',
+      });
+    }
+    case '/api/cpu': {
+      const stat1 = await run('cat', ['/proc/stat']);
+      if (!stat1) return jsonReply(false);
+      await new Promise((r) => setTimeout(r, 1000));
+      const stat2 = await run('cat', ['/proc/stat']);
+      if (!stat2) return jsonReply(false);
+      const parse = (text) => {
+        const line = text.split('\n').find((l) => l.startsWith('cpu '));
+        if (!line) return null;
+        const parts = line.split(/\s+/).slice(1).map(Number);
+        const idle = (parts[3] || 0) + (parts[4] || 0);
+        const total = parts.reduce((a, b) => a + b, 0);
+        return { idle, total };
+      };
+      const a = parse(stat1), b = parse(stat2);
+      if (!a || !b) return jsonReply(false);
+      const totalDelta = b.total - a.total;
+      const idleDelta = b.idle - a.idle;
+      const usage = totalDelta > 0 ? Math.round(((totalDelta - idleDelta) / totalDelta) * 100) : 0;
+      const coresOut = await run('sh', ['-c', "grep -c '^processor' /proc/cpuinfo"]);
+      return send(res, 200, { usage, cores: Number(coresOut) || 1 });
+    }
+    case '/api/thermal': {
+      const out = await run('sh', ['-c', "for z in /sys/class/thermal/thermal_zone*; do [ -r \"$z/temp\" ] && echo \"$(basename $z)|$(cat $z/temp)\"; done"]);
+      if (!out) return jsonReply(false);
+      const zones = out
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((l) => {
+          const [name, raw] = l.split('|');
+          const milli = Number(raw);
+          return { name: name?.replace('thermal_zone', 'zone') || '?', tempC: Math.round((milli / 1000) * 10) / 10 };
+        });
+      return send(res, 200, { zones });
+    }
+    case '/api/wifi': {
+      const [ip, ssid] = await Promise.all([
+        run('sh', ['-c', "ip -4 addr show wlan0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1 | head -1"]),
+        run('sh', ['-c', "cmd wifi status 2>/dev/null | grep -oE 'SSID: .*' | head -1 | sed 's/^SSID: //'"]),
+      ]);
+      return send(res, 200, { ip: (ip || '').trim() || null, ssid: (ssid || '').trim() || null });
+    }
     case '/api/notify': {
       const { title = 'Aurora', content = '' } = await readBody(req);
       return jsonReply((await run('termux-notification', ['--title', String(title), '--content', String(content)])) !== null);

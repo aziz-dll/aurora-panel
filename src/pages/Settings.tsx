@@ -11,9 +11,9 @@ import { cx } from '../lib/utils';
 const ACCENTS = ['#2383e2', '#9065b0', '#0f7b6c', '#d9730d', '#e03e3e', '#c14c8a'];
 
 const THEMES: Array<{ key: ThemeMode; label: string }> = [
-  { key: 'system', label: 'Sistem' },
-  { key: 'light', label: 'Açık' },
-  { key: 'dark', label: 'Koyu' },
+  { key: 'system', label: 'System' },
+  { key: 'light', label: 'Light' },
+  { key: 'dark', label: 'Dark' },
 ];
 
 function Section({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
@@ -80,39 +80,39 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `aurora-yedek-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `aurora-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    flash('Yedek indirildi ✓');
+    flash('Backup downloaded ✓');
   };
 
   const doImport = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      if (importJSON(String(reader.result))) flash('Yedek geri yüklendi ✓');
-      else flash('Dosya okunamadı ✗');
+      if (importJSON(String(reader.result))) flash('Backup restored ✓');
+      else flash('Could not read file ✗');
     };
     reader.readAsText(file);
   };
 
   return (
-    <Page icon="⚙️" title="Ayarlar" subtitle={feedback || undefined}>
-      <Section icon="star" title="Profil">
+    <Page icon="⚙️" title="Settings" subtitle={feedback || undefined}>
+      <Section icon="star" title="Profile">
         <label className="flex items-center gap-3">
-          <span className="w-24 shrink-0 text-sm text-soft">Adın</span>
+          <span className="w-24 shrink-0 text-sm text-soft">Name</span>
           <input
             value={db.settings.studentName}
             onChange={(e) => patchSettings({ studentName: e.target.value })}
-            placeholder="örn. Ali"
+            placeholder="e.g. Alex"
             className="field"
           />
         </label>
       </Section>
 
-      <Section icon="sun" title="Görünüm">
+      <Section icon="sun" title="Appearance">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-sm text-soft">Tema</span>
+            <span className="w-24 shrink-0 text-sm text-soft">Theme</span>
             <div className="flex gap-1 rounded-lg bg-side p-1">
               {THEMES.map((t) => (
                 <button
@@ -129,13 +129,13 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-sm text-soft">Vurgu rengi</span>
+            <span className="w-24 shrink-0 text-sm text-soft">Accent</span>
             <div className="flex gap-2">
               {ACCENTS.map((c) => (
                 <button
                   key={c}
                   onClick={() => patchSettings({ accent: c })}
-                  aria-label={`Renk ${c}`}
+                  aria-label={`Color ${c}`}
                   className={cx(
                     'h-6 w-6 rounded-full transition-transform',
                     db.settings.accent === c ? 'scale-110 ring-2 ring-offset-2 ring-offset-paper' : 'opacity-60 hover:opacity-100',
@@ -148,11 +148,11 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="bell" title="Hatırlatıcılar">
+      <Section icon="bell" title="Reminders">
         <div className="space-y-4">
           {!remindersAvailable() && (
             <p className="rounded-lg bg-side px-3 py-2 text-xs text-soft">
-              Bildirimler APK'da çalışır — tarayıcıda bu bölüm etkisizdir.
+              Notifications work in the APK — in the browser this section has no effect.
             </p>
           )}
           <Toggle
@@ -161,62 +161,85 @@ export default function Settings() {
               patchSettings({ remindersEnabled: v });
               if (v) void requestReminderPermission();
             }}
-            label="Hatırlatıcılar açık"
-            hint="Ödev, yazılı, su ve spor bildirimleri"
+            label="Reminders on"
+            hint="Homework, exam, water and workout notifications"
           />
           {db.settings.remindersEnabled && (
             <button
               onClick={async () => {
                 const ok = await sendTestNotification();
-                flash(ok ? 'Test bildirimi gönderildi — 1-2 sn içinde düşecek ✓' : 'Bildirim izni yok ✗');
+                flash(ok ? 'Test notification sent — should arrive in 1-2 s ✓' : 'No notification permission ✗');
               }}
               className="btn btn-ghost border border-line justify-start"
             >
-              <Icon name="bell" size={14} /> Test bildirimi gönder
+              <Icon name="bell" size={14} /> Send test notification
             </button>
           )}
           {db.settings.remindersEnabled && permState === false && (
             <div className="rounded-lg bg-[#fae4e4] px-3 py-2.5 text-xs leading-relaxed text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
-              <p className="font-semibold">Bildirim izni kapalı 🔕</p>
+              <p className="font-semibold">Notification permission denied 🔕</p>
               <p className="mt-0.5">
-                Android bir kez reddedilince tekrar soramaz. Açmak için:{' '}
-                <b>Telefon Ayarları → Uygulamalar → Aurora → Bildirimler → İzin ver</b>
+                Once Android blocks the prompt it won't ask again. To enable:{' '}
+                <b>Phone Settings → Apps → Aurora → Notifications → Allow</b>
               </p>
               <button
                 onClick={async () => {
                   if (await requestReminderPermission()) setPermState(true);
-                  else setFeedback('Sistem izin penceresi vermiyor — telefon ayarlarından aç ✗');
+                  else setFeedback('System prompt is blocked — open phone settings to enable ✗');
                 }}
                 className="btn mt-2 border border-current px-2.5 py-1 text-xs font-medium"
               >
-                Tekrar dene
+                Try again
               </button>
             </div>
           )}
           <div className={cx('space-y-3', !db.settings.remindersEnabled && 'pointer-events-none opacity-40')}>
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1">
-                <span className="text-xs text-soft">Ödevi kaç gün önce hatırlat</span>
+                <span className="text-xs text-soft">Remind homework</span>
                 <select
                   value={db.settings.todoReminderDays}
                   onChange={(e) => patchSettings({ todoReminderDays: Number(e.target.value) })}
                   className="field"
                 >
-                  <option value={1}>1 gün önce</option>
-                  <option value={2}>2 gün önce</option>
-                  <option value={3}>3 gün önce</option>
+                  <option value={1}>1 day before</option>
+                  <option value={2}>2 days before</option>
+                  <option value={3}>3 days before</option>
                 </select>
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Yazılıyı kaç gün önce hatırlat</span>
+                <span className="text-xs text-soft">Remind exam</span>
                 <select
                   value={db.settings.examReminderDays}
                   onChange={(e) => patchSettings({ examReminderDays: Number(e.target.value) })}
                   className="field"
                 >
-                  <option value={3}>3 gün önce</option>
-                  <option value={7}>1 hafta önce</option>
-                  <option value={14}>2 hafta önce</option>
+                  <option value={3}>3 days before</option>
+                  <option value={7}>1 week before</option>
+                  <option value={14}>2 weeks before</option>
+                </select>
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs text-soft">Reminder time</span>
+                <input
+                  type="time"
+                  value={db.settings.reminderTime}
+                  onChange={(e) => patchSettings({ reminderTime: e.target.value })}
+                  className="field"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-xs text-soft">Lead time before exam</span>
+                <select
+                  value={db.settings.examLeadMinutes}
+                  onChange={(e) => patchSettings({ examLeadMinutes: Number(e.target.value) })}
+                  className="field"
+                >
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours</option>
                 </select>
               </label>
             </div>
@@ -224,18 +247,18 @@ export default function Settings() {
               <Toggle
                 checked={db.settings.waterEnabled}
                 onChange={(v) => patchSettings({ waterEnabled: v })}
-                label="💧 Su hatırlatması"
-                hint={`${db.settings.waterFrom}–${db.settings.waterTo} arası, ${db.settings.waterEveryHours} saatte bir`}
+                label="💧 Water reminder"
+                hint={`${db.settings.waterFrom}–${db.settings.waterTo}, every ${db.settings.waterEveryHours}h`}
               />
               <Toggle
                 checked={db.settings.workoutEnabled}
                 onChange={(v) => patchSettings({ workoutEnabled: v })}
-                label="🏋️ Spor hatırlatması"
-                hint={`Her gün ${db.settings.workoutTime} — o gün yaptıysan gelmez`}
+                label="🏋️ Workout reminder"
+                hint={`Every day at ${db.settings.workoutTime} — skipped if you already trained`}
               />
               <div className="grid grid-cols-2 gap-3">
                 <label className="space-y-1">
-                  <span className="text-xs text-soft">Spor saati</span>
+                  <span className="text-xs text-soft">Workout time</span>
                   <input
                     type="time"
                     value={db.settings.workoutTime}
@@ -244,27 +267,83 @@ export default function Settings() {
                   />
                 </label>
                 <label className="space-y-1">
-                  <span className="text-xs text-soft">Su kaç saatte bir</span>
+                  <span className="text-xs text-soft">Water every</span>
                   <select
                     value={db.settings.waterEveryHours}
                     onChange={(e) => patchSettings({ waterEveryHours: Number(e.target.value) })}
                     className="field"
                   >
-                    <option value={1}>1 saat</option>
-                    <option value={2}>2 saat</option>
-                    <option value={3}>3 saat</option>
-                    <option value={4}>4 saat</option>
+                    <option value={1}>1 hour</option>
+                    <option value={2}>2 hours</option>
+                    <option value={3}>3 hours</option>
+                    <option value={4}>4 hours</option>
                   </select>
                 </label>
               </div>
+              <div className="grid grid-cols-3 gap-3">
+                <label className="space-y-1">
+                  <span className="text-xs text-soft">Water from</span>
+                  <input
+                    type="time"
+                    value={db.settings.waterFrom}
+                    onChange={(e) => patchSettings({ waterFrom: e.target.value })}
+                    className="field"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs text-soft">Water until</span>
+                  <input
+                    type="time"
+                    value={db.settings.waterTo}
+                    onChange={(e) => patchSettings({ waterTo: e.target.value })}
+                    className="field"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs text-soft">All reminders at</span>
+                  <input
+                    type="time"
+                    value={db.settings.reminderTime}
+                    onChange={(e) => patchSettings({ reminderTime: e.target.value })}
+                    className="field"
+                  />
+                </label>
+              </div>
+            </div>
+            <div className="space-y-3 border-t border-line pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-faint">Notification channels</p>
+              <Toggle
+                checked={db.settings.notifications.examChannel}
+                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, examChannel: v } })}
+                label="📝 Exam reminders"
+                hint="High priority — before exam and on exam day"
+              />
+              <Toggle
+                checked={db.settings.notifications.todoChannel}
+                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, todoChannel: v } })}
+                label="⏳ Homework reminders"
+                hint="Approaching deadlines"
+              />
+              <Toggle
+                checked={db.settings.notifications.waterChannel}
+                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, waterChannel: v } })}
+                label="💧 Water reminder"
+                hint="Low priority — silent notification"
+              />
+              <Toggle
+                checked={db.settings.notifications.workoutChannel}
+                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, workoutChannel: v } })}
+                label="🏋️ Workout reminder"
+                hint="Notifies when it's workout time"
+              />
             </div>
           </div>
         </div>
       </Section>
 
-      <Section icon="clipboard" title="Entegrasyonlar">
+      <Section icon="clipboard" title="Integrations">
         <label className="space-y-1">
-          <span className="text-sm text-soft">FileBrowser adresi</span>
+          <span className="text-sm text-soft">FileBrowser URL</span>
           <input
             value={db.settings.filebrowserUrl}
             onChange={(e) => patchSettings({ filebrowserUrl: e.target.value })}
@@ -273,7 +352,7 @@ export default function Settings() {
             className="field"
           />
         </label>
-        <p className="mt-2 text-xs text-faint">«Dosyalar» sayfası bu adresteki FileBrowser'ı gömer.</p>
+        <p className="mt-2 text-xs text-faint">The «Files» page embeds the FileBrowser at this address.</p>
       </Section>
 
       <Section icon="zap" title="Termux API">
@@ -289,10 +368,10 @@ export default function Settings() {
                   )}
                 />
               </span>
-              {up === null ? 'Kontrol ediliyor…' : up ? 'Bağlı' : 'Bağlı değil'}
+              {up === null ? 'Checking…' : up ? 'Connected' : 'Not connected'}
               {battery && (
                 <span className="text-xs text-faint">
-                  · Batarya %{battery.percent ?? '?'}{battery.charging ? ' ⚡' : ''}
+                  · Battery {battery.percent ?? '?'}%{battery.charging ? ' ⚡' : ''}
                 </span>
               )}
             </div>
@@ -300,53 +379,53 @@ export default function Settings() {
 
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={async () => flash((await termux.toast('Merhaba Termux!')) ? 'Toast gösterildi ✓' : 'Termux bağlı değil ✗')}
+              onClick={async () => flash((await termux.toast('Hello Termux!')) ? 'Toast shown ✓' : 'Termux not connected ✗')}
               className="btn btn-ghost border border-line justify-start"
             >
-              <Icon name="alert" size={14} /> Toast testi
+              <Icon name="alert" size={14} /> Test toast
             </button>
             <button
-              onClick={async () => flash((await termux.vibrate(400)) ? 'Titredi ✓' : 'Termux bağlı değil ✗')}
+              onClick={async () => flash((await termux.vibrate(400)) ? 'Vibrated ✓' : 'Termux not connected ✗')}
               className="btn btn-ghost border border-line justify-start"
             >
-              <Icon name="zap" size={14} /> Titret
+              <Icon name="zap" size={14} /> Vibrate
             </button>
             <button
-              onClick={async () => flash((await termux.copy('Okul panelinden selamlar 👋')) ? 'Panoya kopyalandı ✓' : 'Termux bağlı değil ✗')}
+              onClick={async () => flash((await termux.copy('Greetings from the school panel 👋')) ? 'Copied ✓' : 'Termux not connected ✗')}
               className="btn btn-ghost border border-line justify-start"
             >
-              <Icon name="clipboard" size={14} /> Panoya yaz
+              <Icon name="clipboard" size={14} /> Copy to clipboard
             </button>
           </div>
 
           <p className="rounded-lg bg-side px-3 py-2.5 text-xs leading-relaxed text-soft">
-            Cihazda çalıştırmak için: <code className="rounded bg-hover px-1 py-0.5">pkg install termux-api</code> +{' '}
-            <b>Termux:API</b> uygulaması (F-Droid). Sonra sunucuyu başlat:{' '}
-            <code className="rounded bg-hover px-1 py-0.5">npm run build && npm run start</code> → tarayıcıdan{' '}
-            <code className="rounded bg-hover px-1 py-0.5">localhost:8788</code>
+            On the device, install: <code className="rounded bg-hover px-1 py-0.5">pkg install termux-api</code> +{' '}
+            the <b>Termux:API</b> app (F-Droid). Then start the server:{' '}
+            <code className="rounded bg-hover px-1 py-0.5">npm run build &amp;&amp; npm run start</code> → open{' '}
+            <code className="rounded bg-hover px-1 py-0.5">localhost:8788</code> in a browser.
           </p>
         </div>
       </Section>
 
-      <Section icon="download" title="Veri">
-        <p className="mb-3 text-xs text-soft">Her şey cihazında saklanır — hesap yok, bulut yok.</p>
+      <Section icon="download" title="Data">
+        <p className="mb-3 text-xs text-soft">Everything is stored on your device — no accounts, no cloud.</p>
         <div className="grid grid-cols-3 gap-2">
           <button onClick={doExport} className="btn btn-ghost border border-line justify-start">
-            <Icon name="download" size={14} /> Yedekle
+            <Icon name="download" size={14} /> Backup
           </button>
           <button onClick={() => fileRef.current?.click()} className="btn btn-ghost border border-line justify-start">
-            <Icon name="upload" size={14} /> Geri yükle
+            <Icon name="upload" size={14} /> Restore
           </button>
           <button
             onClick={() => {
-              if (confirm('Tüm veriler örnek verilere sıfırlanacak. Emin misin?')) {
+              if (confirm('All data will be reset to sample values. Are you sure?')) {
                 resetAll();
-                flash('Sıfırlandı');
+                flash('Reset complete');
               }
             }}
             className="btn justify-start text-[#e03e3e] hover:bg-[#fae4e4] dark:hover:bg-[#40222a]"
           >
-            <Icon name="trash" size={14} /> Sıfırla
+            <Icon name="trash" size={14} /> Reset
           </button>
         </div>
         <input

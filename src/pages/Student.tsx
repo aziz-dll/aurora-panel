@@ -51,22 +51,22 @@ export default function Student() {
   return (
     <Page
       icon="🎓"
-      title="Öğrenci Paneli"
-      subtitle="Notların, yazılıların ve sınav takvimin"
+      title="Student Dashboardi"
+      subtitle="Notesın, yazılıların ve sınav takvimin"
       actions={
         <button onClick={() => setCourseForm({ name: '', teacher: '' })} className="btn btn-primary">
-          <Icon name="plus" size={14} /> Ders
+          <Icon name="plus" size={14} /> Course
         </button>
       }
     >
       <div className="mb-8 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
-        <Stat label="Ortalama (100)" value={stats.avg100 !== null ? String(Math.round(stats.avg100 * 10) / 10) : '—'} />
+        <Stat label="Mediumlama (100)" value={stats.avg100 !== null ? String(Math.round(stats.avg100 * 10) / 10) : '—'} />
         <Stat label="5'lik not" value={stats.grade5 !== null ? String(stats.grade5) : '—'} />
-        <Stat label="Ders" value={String(stats.courseCount)} />
+        <Stat label="Course" value={String(stats.courseCount)} />
         <Stat label="Yaklaşan sınav" value={String(db.exams.filter((e) => e.date >= todayISO()).length)} />
       </div>
 
-      <h2 className="mb-2 text-sm font-semibold text-soft">Dersler</h2>
+      <h2 className="mb-2 text-sm font-semibold text-soft">Courses</h2>
       {db.courses.length === 0 ? (
         <Empty emoji="📚" text="Henüz ders eklenmedi." />
       ) : (
@@ -88,7 +88,7 @@ export default function Student() {
                       {c.teacher ? `${c.teacher} · ${c.assessments.length} not` : `${c.assessments.length} not girilmiş`}
                     </p>
                   </div>
-                  <button onClick={() => courseActions.remove(c.id)} className="btn btn-ghost p-1.5 text-faint hover:text-[#e03e3e]" aria-label="Dersi sil">
+                  <button onClick={() => courseActions.remove(c.id)} className="btn btn-ghost p-1.5 text-faint hover:text-[#e03e3e]" aria-label="Delete course">
                     <Icon name="trash" size={14} />
                   </button>
                 </div>
@@ -98,7 +98,7 @@ export default function Student() {
                     {c.assessments.map((a) => (
                       <span key={a.id} className="group flex items-center gap-1 rounded-full bg-hover py-1 pr-1.5 pl-2.5 text-xs">
                         {a.label}: <b>{a.score}</b>
-                        <button onClick={() => courseActions.removeAssessment(c.id, a.id)} className="text-faint hover:text-[#e03e3e]" aria-label={`Sil ${a.label}`}>
+                        <button onClick={() => courseActions.removeAssessment(c.id, a.id)} className="text-faint hover:text-[#e03e3e]" aria-label={`Delete ${a.label}`}>
                           <Icon name="x" size={11} />
                         </button>
                       </span>
@@ -110,7 +110,7 @@ export default function Student() {
                   <input
                     value={draft.label}
                     onChange={(e) => setAssessmentDraft({ ...assessmentDraft, [c.id]: { ...draft, label: e.target.value } })}
-                    placeholder="Yazılı / Performans…"
+                    placeholder="Exam / Performans…"
                     className="field flex-1"
                   />
                   <input
@@ -131,9 +131,9 @@ export default function Student() {
       )}
 
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-soft">Sınavlar</h2>
+        <h2 className="text-sm font-semibold text-soft">Examlar</h2>
         <button onClick={() => setExamForm({ title: '', date: '', time: '', courseId: '' })} className="btn btn-ghost text-xs text-accent">
-          <Icon name="plus" size={13} /> Sınav ekle
+          <Icon name="plus" size={13} /> Exam ekle
         </button>
       </div>
       {upcomingExams.length === 0 ? (
@@ -165,9 +165,9 @@ export default function Student() {
                           : 'bg-hover text-soft',
                   )}
                 >
-                  {diff < 0 ? 'Geçti' : diff === 0 ? 'Bugün!' : diff === 1 ? 'Yarın' : `${diff} gün`}
+                  {diff < 0 ? 'Geçti' : diff === 0 ? 'Today!' : diff === 1 ? 'Yarın' : `${diff} gün`}
                 </span>
-                <button onClick={() => examActions.remove(ex.id)} className="btn btn-ghost shrink-0 p-1 text-faint hover:text-[#e03e3e]" aria-label="Sınavı sil">
+                <button onClick={() => examActions.remove(ex.id)} className="btn btn-ghost shrink-0 p-1 text-faint hover:text-[#e03e3e]" aria-label="Examı sil">
                   <Icon name="trash" size={13} />
                 </button>
               </li>
@@ -178,11 +178,11 @@ export default function Student() {
 
       <Dialog open={courseForm !== null} onClose={() => setCourseForm(null)} title="Yeni ders">
         <form onSubmit={addCourse} className="space-y-3">
-          <input autoFocus value={courseForm?.name ?? ''} onChange={(e) => courseForm && setCourseForm({ ...courseForm, name: e.target.value })} placeholder="Ders adı" className="field" />
+          <input autoFocus value={courseForm?.name ?? ''} onChange={(e) => courseForm && setCourseForm({ ...courseForm, name: e.target.value })} placeholder="Course name" className="field" />
           <input value={courseForm?.teacher ?? ''} onChange={(e) => courseForm && setCourseForm({ ...courseForm, teacher: e.target.value })} placeholder="Öğretmen (opsiyonel)" className="field" />
           <div className="flex justify-end">
             <button type="submit" disabled={!courseForm?.name.trim()} className="btn btn-primary">
-              Ekle
+              Add
             </button>
           </div>
         </form>
@@ -190,9 +190,9 @@ export default function Student() {
 
       <Dialog open={examForm !== null} onClose={() => setExamForm(null)} title="Yeni sınav">
         <form onSubmit={addExam} className="space-y-3">
-          <input autoFocus value={examForm?.title ?? ''} onChange={(e) => examForm && setExamForm({ ...examForm, title: e.target.value })} placeholder="Sınav adı" className="field" />
+          <input autoFocus value={examForm?.title ?? ''} onChange={(e) => examForm && setExamForm({ ...examForm, title: e.target.value })} placeholder="Exam Name" className="field" />
           <select value={examForm?.courseId ?? ''} onChange={(e) => examForm && setExamForm({ ...examForm, courseId: e.target.value })} className="field">
-            <option value="">Ders seç (opsiyonel)</option>
+            <option value="">Select course (opsiyonel)</option>
             {db.courses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -205,7 +205,7 @@ export default function Student() {
           </div>
           <div className="flex justify-end">
             <button type="submit" disabled={!examForm?.title.trim() || !examForm?.date} className="btn btn-primary">
-              Ekle
+              Add
             </button>
           </div>
         </form>

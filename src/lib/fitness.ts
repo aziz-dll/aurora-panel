@@ -7,7 +7,7 @@ export interface Exercise {
   target: string;
 }
 
-export type Kind = 'guc' | 'kardiyo' | 'dinlenme';
+export type Kind = 'strength' | 'cardio' | 'recovery';
 
 export interface DayPlan {
   focus: string;
@@ -19,84 +19,84 @@ export interface DayPlan {
 
 export const PROGRAM: DayPlan[] = [
   {
-    focus: 'Üst Gövde & Karın',
-    kind: 'guc',
-    mins: '~25 dk',
-    tip: 'Setler arası 60–90 sn dinlan',
+    focus: 'Upper Body & Core',
+    kind: 'strength',
+    mins: '~25 min',
+    tip: 'Rest 60–90 s between sets',
     exs: [
-      { id: 'p1', name: 'Duvar pompası', target: '3 × 12' },
-      { id: 'p2', name: 'Masa kenarı pompası', target: '3 × 8' },
-      { id: 'p3', name: 'Diz üstü plank', target: '3 × 20 sn' },
-      { id: 'p4', name: 'Süperman', target: '3 × 12' },
-      { id: 'p5', name: 'Ayakta diz–dirsek teması', target: '3 × 16' },
+      { id: 'p1', name: 'Wall push-up', target: '3 × 12' },
+      { id: 'p2', name: 'Incline push-up (table edge)', target: '3 × 8' },
+      { id: 'p3', name: 'Knee plank', target: '3 × 20 s' },
+      { id: 'p4', name: 'Superman', target: '3 × 12' },
+      { id: 'p5', name: 'Standing knee-to-elbow', target: '3 × 16' },
     ],
   },
   {
-    focus: 'Tempolu Yürüyüş',
-    kind: 'kardiyo',
-    mins: '~35 dk',
-    tip: 'Telefonla konuşacak tempoda yürü',
+    focus: 'Brisk Walk',
+    kind: 'cardio',
+    mins: '~35 min',
+    tip: 'Walk at a pace where you can still chat on the phone',
     exs: [
-      { id: 'k1', name: 'Tempolu yürüyüş (dışarıda / yerinde)', target: '30 dk' },
-      { id: 'k2', name: 'Tam boy esneme', target: '5 dk' },
+      { id: 'k1', name: 'Brisk walk (outside or in place)', target: '30 min' },
+      { id: 'k2', name: 'Full-body stretch', target: '5 min' },
     ],
   },
   {
-    focus: 'Alt Gövde',
-    kind: 'guc',
-    mins: '~25 dk',
-    tip: 'Dizler ayak uçlarını geçmesin',
+    focus: 'Lower Body',
+    kind: 'strength',
+    mins: '~25 min',
+    tip: 'Knees should not pass the toes',
     exs: [
-      { id: 'a1', name: 'Sandalyeye otur-kalk', target: '3 × 10' },
-      { id: 'a2', name: 'Glute köprüsü', target: '3 × 15' },
-      { id: 'a3', name: 'Duvar oturması', target: '3 × 20 sn' },
-      { id: 'a4', name: 'Baldır kaldırma', target: '3 × 20' },
-      { id: 'a5', name: 'Yan bacak açma', target: '3 × 12 (her bacak)' },
+      { id: 'a1', name: 'Sit-to-stand from chair', target: '3 × 10' },
+      { id: 'a2', name: 'Glute bridge', target: '3 × 15' },
+      { id: 'a3', name: 'Wall sit', target: '3 × 20 s' },
+      { id: 'a4', name: 'Calf raise', target: '3 × 20' },
+      { id: 'a5', name: 'Side leg raise', target: '3 × 12 (each leg)' },
     ],
   },
   {
-    focus: 'Aktif Toparlanma',
-    kind: 'dinlenme',
-    mins: '~30 dk',
-    tip: 'Yarınki güç günü için hazırlık',
+    focus: 'Active Recovery',
+    kind: 'recovery',
+    mins: '~30 min',
+    tip: 'Prepare for tomorrow\'s strength day',
     exs: [
-      { id: 'r1', name: 'Rahat yürüyüş', target: '20 dk' },
-      { id: 'r2', name: 'Esneme rutini', target: '10 dk' },
+      { id: 'r1', name: 'Easy walk', target: '20 min' },
+      { id: 'r2', name: 'Stretch routine', target: '10 min' },
     ],
   },
   {
-    focus: 'Tüm Vücut',
-    kind: 'guc',
-    mins: '~30 dk',
-    tip: 'Hareketler arasında 45–60 sn dinlan',
+    focus: 'Full Body',
+    kind: 'strength',
+    mins: '~30 min',
+    tip: 'Rest 45–60 s between exercises',
     exs: [
-      { id: 'f1', name: 'Yerinde tempolu yürüyüş (diz yüksek)', target: '3 × 60 sn' },
-      { id: 'f2', name: 'Sandalyeye otur-kalk', target: '3 × 12' },
-      { id: 'f3', name: 'Eğik pompa', target: '3 × 10' },
-      { id: 'f4', name: 'Glute köprüsü', target: '3 × 15' },
-      { id: 'f5', name: 'Plank', target: '2 × 25 sn' },
+      { id: 'f1', name: 'High-knee march in place', target: '3 × 60 s' },
+      { id: 'f2', name: 'Sit-to-stand from chair', target: '3 × 12' },
+      { id: 'f3', name: 'Decline push-up', target: '3 × 10' },
+      { id: 'f4', name: 'Glute bridge', target: '3 × 15' },
+      { id: 'f5', name: 'Plank', target: '2 × 25 s' },
     ],
   },
   {
-    focus: 'Uzun Yürüyüş',
-    kind: 'kardiyo',
-    mins: '~50 dk',
-    tip: 'Tek seferde zorlanırsan 2 × 20 + 5 dk diye böl',
+    focus: 'Long Walk',
+    kind: 'cardio',
+    mins: '~50 min',
+    tip: 'Split as 2 × 20 + 5 min rest if 50 is too much at once',
     exs: [
-      { id: 'u1', name: 'Uzun yürüyüş', target: '45 dk' },
-      { id: 'u2', name: 'Bacak esneme', target: '5 dk' },
+      { id: 'u1', name: 'Long walk', target: '45 min' },
+      { id: 'u2', name: 'Leg stretch', target: '5 min' },
     ],
   },
   {
-    focus: 'Tam Dinlenme',
-    kind: 'dinlenme',
-    mins: '~10 dk',
-    tip: 'Kaslar dinlenirken gelişir — vücudunu dinle',
-    exs: [{ id: 'd1', name: 'Hafif esneme (istersen 10 dk yürüyüş)', target: '10 dk' }],
+    focus: 'Full Rest',
+    kind: 'recovery',
+    mins: '~10 min',
+    tip: 'Muscles grow while you rest — listen to your body',
+    exs: [{ id: 'd1', name: 'Light stretch (optional 10 min walk)', target: '10 min' }],
   },
 ];
 
-export const DAY_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+export const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export const isoOf = (d: Date): string => format(d, 'yyyy-MM-dd');
 

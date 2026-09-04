@@ -10,5 +10,7 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         // Uygulama durum çubuğu ve gesture barının altına taşmasın (edge-to-edge'i zorla kapat)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        // Custom Capacitor plugin: SharedPreferences-backed key/value store
+        registerPlugin(AuroraStoragePlugin.class);
     }
 }
