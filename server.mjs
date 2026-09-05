@@ -259,78 +259,35 @@ function serveStatic(res, pathname) {
 }
 
 
-// ── Notification Lab — 8700'te ayrı mini sunucu ──────────────────────────
-// Kategorili test bildirim arayüzü; web'te açılınca J7'nin ekranına
-// termux-notification ile gönderilir.
+// ── Lab kaldırıldı — bildirimler artık sadece APK native. ────────────────
+// Eski Lab J7'nin ekranına termux-notification gönderiyordu; bu
+// karışıklığa yol açtığı için tamamen devre dışı. 8700 portu hâlâ açık
+// (geriye uyumluluk), ama sadece statik bir "burada bir şey yok" sayfası
+// döndürüyor.
 const LAB_PORT = Number(process.env.LAB_PORT) || 8700;
 const labServer = http.createServer(async (req, res) => {
-  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
-  const pathname = url.pathname;
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
-    return res.end();
-  }
-  if (pathname === '/api/lab-notify' && req.method === 'POST') {
-    const body = await readBody(req);
-    const title = String(body.title || 'Aurora');
-    const content = '[' + String(body.category || 'general') + '] Tap to open this section in Aurora.';
-    const ok = (await run('termux-notification', ['--title', title, '--content', content])) !== null;
-    return send(res, ok ? 200 : 503, { ok });
-  }
-  const html = `<!doctype html>
-<html lang="en">
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(`<!doctype html>
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0a0a0a" />
-  <title>Aurora · Notification Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22%23161616%22%2F%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2212%22%20r%3D%226%22%20fill%3D%22%232383e2%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2220%22%20r%3D%227%22%20fill%3D%22%23a78bfa%22%2F%3E%3C%2Fsvg%3E" />
+  <title>Aurora · Lab kaldırıldı</title>
   <style>
     * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
-    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #f5f5f5; min-height: 100dvh; padding: 32px 20px; text-align: center; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: #f5f5f5; min-height: 100dvh; padding: 32px 20px; text-align: center; }
     h1 { font-size: 22px; letter-spacing: .1em; text-transform: uppercase; }
-    .sub { margin-top: 6px; font-size:  ️13px; color: #9d9d9d; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap:  ️12px; max-width: 420px; margin:  ️26px auto 0; }
-    .btn { display: flex; align-items: center; gap:  ️12px; padding: 16px 14px; text-align: left; background: #141414; border: 1px solid #262626; border-radius: 14px; color: #f5f5f5; font-size: 15px; font-weight: 600; cursor: pointer; }
-    .btn span { font-size:  ️22px; }
-    .btn.row { grid-column: 1 / -1; }
-    .btn:active { transform: scale(.97); }
-    .status { margin-top: 18px; font-size:  ️13px; color: #6a6a6a; min-height: 18px; }
+    p { margin-top: 14px; font-size: 14px; color: #9d9d9d; line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto; }
+    a { color: #2383e2; }
   </style>
 </head>
 <body>
-  <h1>Notification Lab</h1>
-  <p class="sub">Test a category notification — sent to J7's screen via Termux.</p>
-  <div class="grid">
-    <button class="btn" data-cat="todos"><span>✅</span>Tasks</button>
-    <button class="btn" data-cat="schedule"><span>📅</span>Schedule</button>
-    <button class="btn" data-cat="exams"><span>📝</span>Exams</button>
-    <button class="btn" data-cat="habits"><span>🔁</span>Habits</button>
-    <button class="btn" data-cat="fitness"><span>🏋️</span>Fitness</button>
-    <button class="btn" data-cat="notes"><span>📓</span>Notes</button>
-    <button class="btn" data-cat="files"><span>📂</span>Files</button>
-    <button class="btn" data-cat="server"><span>🖥️</span>Server</button>
-    <button class="btn row" data-cat="water"><span>💧</span>Drink water</button>
-    <button class="btn row" data-cat="workout"><span>🏋️</span>Workout time</button>
-  </div>
-  <p class="status" id="st"></p>
-  <script>
-    var TITLES = { todos: '✅ Tasks', schedule: '📅 Schedule', exams: '📝 Exams', habits: '🔁 Habits', fitness: '🏋️ Fitness', notes: '📓 Notes', files: '📂 Files', server: '🖥️ Server', water: '💧 Drink water', workout: '🏋️ Workout time' };
-    var L = '/api/lab-notify';
-    document.querySelectorAll('.btn').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var cat = b.getAttribute('data-cat');
-        var title = TITLES[cat] || 'Aurora';
-        fetch(L, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ category: cat, title: title }) })
-          .then(function (r) { return r.json(); })
-          .then(function (d) { document.getElementById('st').textContent = d.ok ? 'Notification sent ✓' : 'Termux not available ✗'; })
-          .catch(function () { document.getElementById('st').textContent = 'Server unreachable ✗'; });
-      });
-    });
-  </script>
+  <h1>Lab kaldırıldı</h1>
+  <p>Bildirimler artık sadece <b>APK native</b> tarafında geliyor (J7'ye değil). Hatırlatıcıları kontrol etmek için APK'yı aç, sağ alttaki <b>🔔 Test bildirimi</b> butonuna dokun. Lab'ı yanlışlıkla burada aradıysan, sunucu tarafında bildirim gönderimi tamamen kapatıldı.</p>
 </body>
-</html>`;
-  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(html);
+</html>`);
 });
 
 labServer.listen(LAB_PORT, HOST, () => {

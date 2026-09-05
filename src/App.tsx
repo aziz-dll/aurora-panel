@@ -110,13 +110,13 @@ export default function App() {
     const id = setTimeout(() => {
       const db = getDB();
       void syncReminders(db);
-      void syncWidgetsFromDB(db);
+      syncWidgetsFromDB(db);
     }, 800);
     const iv = setInterval(() => {
       const db = getDB();
       void syncReminders(db);
-      void syncWidgetsFromDB(db);
-    }, 60 * 60_000);
+      syncWidgetsFromDB(db);
+    }, 5 * 60_000); // her 5 dakikada tazele — saatlik stale kalıyordu
     return () => {
       clearTimeout(id);
       clearInterval(iv);

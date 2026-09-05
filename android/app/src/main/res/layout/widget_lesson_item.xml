@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lesson row: time (accent) + subject + room -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_lesson_item_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <TextView
+        android:id="@+id/widget_lesson_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#2383E2"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/widget_lesson_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:textSize="14sp"
+        android:textColor="@color/widget_text"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_lesson_room"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textSize="11sp"
+        android:textColor="@color/widget_sub"
+        android:singleLine="true" />
+</LinearLayout>

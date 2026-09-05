@@ -66,7 +66,7 @@ export function TopBar({ path }: { path: string }) {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 text-base font-bold tracking-tight"
               >
-                <span className="text-xl">🌌</span> Aurora
+                Aurora
               </a>
               <button
                 onClick={() => setOpen(false)}

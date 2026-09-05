@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget palette (light) — shared by all home-screen widgets -->
+<resources>
+    <color name="widget_card">#FFFFFF</color>
+    <color name="widget_stroke">#E8E8EC</color>
+    <color name="widget_title">#8A8A93</color>
+    <color name="widget_text">#1C1C22</color>
+    <color name="widget_sub">#9A9AA3</color>
+</resources>

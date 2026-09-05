@@ -1,9 +1,15 @@
 package com.gh0st.okulpaneli;
 
+import android.app.AlarmManager;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.os.PowerManager;
+import android.provider.Settings;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -14,6 +20,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.gh0st.okulpaneli.widgets.BatteryWidget;
 import com.gh0st.okulpaneli.widgets.ScheduleWidget;
 import com.gh0st.okulpaneli.widgets.TodosWidget;
+import com.gh0st.okulpaneli.widgets.ExamsWidget;
+import com.gh0st.okulpaneli.widgets.QuickNoteWidget;
+import com.gh0st.okulpaneli.widgets.Habit30Widget;
 
 @CapacitorPlugin(name = "AuroraStorage")
 public class AuroraStoragePlugin extends Plugin {
@@ -64,28 +73,99 @@ public class AuroraStoragePlugin extends Plugin {
     @PluginMethod
     public void notifyWidgets(PluginCall call) {
         Context ctx = getContext();
-        // Widget'lara gerçekten onUpdate gönder — notifyAppWidgetViewDataChanged
-        // RemoteViews (statik text) kullanan widget'larda görünmüyor.
-
-
-        broadcastUpdate(ctx, TodosWidget.class);
-        broadcastUpdate(ctx, BatteryWidget.class);
-        broadcastUpdate(ctx, ScheduleWidget.class);
-        broadcastUpdate(ctx, HabitWidget.class);
+        AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
+        if (mgr != null) {
+            // En güvenilir yol: her provider'ın onUpdate() metodunu doğrudan
+            // çağır. Broadcast yapsak bile Android 12+ exported=false
+            // receiver'da implicit broadcast reddedebilir; doğrudan çağrı
+            // sınırlamalardan etkilenmez.
+            updateProvider(ctx, mgr, TodosWidget.class);
+            updateProvider(ctx, mgr, BatteryWidget.class);
+            updateProvider(ctx, mgr, ScheduleWidget.class);
+            updateProvider(ctx, mgr, HabitWidget.class);
+            updateProvider(ctx, mgr, ExamsWidget.class);
+            updateProvider(ctx, mgr, QuickNoteWidget.class);
+            updateProvider(ctx, mgr, Habit30Widget.class);
+        }
         call.resolve();
     }
 
-    private void broadcastUpdate(Context ctx, Class<?> cls) {
+    private void updateProvider(Context ctx, AppWidgetManager mgr, Class<? extends android.appwidget.AppWidgetProvider> cls) {
         try {
+            android.appwidget.AppWidgetProvider provider = cls.getDeclaredConstructor().newInstance();
             ComponentName name = new ComponentName(ctx, cls);
-            AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
             int[] ids = mgr.getAppWidgetIds(name);
             if (ids != null && ids.length > 0) {
-                android.content.Intent intent = new android.content.Intent(ctx, cls);
-                intent.setAction(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-                intent.putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
-                ctx.sendBroadcast(intent);
+                provider.onUpdate(ctx, mgr, ids);
             }
         } catch (Exception ignored) {}
+    }
+
+    /* ── Notification reliability helpers ────────────────────────────────
+       The APK schedules reminders with AlarmManager (exact alarms). On some
+       devices the alarms never fire because 1) POST_NOTIFICATIONS is denied,
+       2) the vendor's battery manager kills the app in deep sleep, or
+       3) the "Alarms & reminders" special access was revoked. The loader
+       polls these methods and surfaces a tap-to-fix toast instead of dying
+       silently. */
+
+    @PluginMethod
+    public void canScheduleExact(PluginCall call) {
+        boolean ok = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager am = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+            ok = am != null && am.canScheduleExactAlarms();
+        }
+        JSObject ret = new JSObject();
+        ret.put("value", ok);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void openExactAlarmSettings(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.parse("package:" + getContext().getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("settings screen unavailable");
+        }
+    }
+
+    @PluginMethod
+    public void isBatteryOptimized(PluginCall call) {
+        PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+        boolean optimized = pm != null
+                && !pm.isIgnoringBatteryOptimizations(getContext().getPackageName());
+        JSObject ret = new JSObject();
+        ret.put("value", optimized);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void openBatterySettings(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("settings screen unavailable");
+        }
+    }
+
+    @PluginMethod
+    public void openNotificationSettings(PluginCall call) {
+        try {
+            Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            i.putExtra(Settings.EXTRA_APP_PACKAGE, getContext().getPackageName());
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(i);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("settings screen unavailable");
+        }
     }
 }

@@ -68,12 +68,46 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_habit_info" />
         </receiver>
+        <receiver android:name=".widgets.ExamsWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_exams_info" />
+        </receiver>
+        <receiver android:name=".widgets.QuickNoteWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quicknote_info" />
+        </receiver>
+        <receiver android:name=".widgets.Habit30Widget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_habit30_info" />
+        </receiver>
+        <receiver android:name=".AuroraAlarmReceiver" android:exported="false" />
+        <receiver android:name=".AuroraBootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />

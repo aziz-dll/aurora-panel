@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Task row: colored priority dot + title + due meta -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_todo_item_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <TextView
+        android:id="@+id/widget_todo_bullet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="●"
+        android:textSize="8sp"
+        android:paddingRight="7dp" />
+
+    <TextView
+        android:id="@+id/widget_todo_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="14sp"
+        android:textColor="@color/widget_text"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_todo_due"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textSize="11sp"
+        android:textColor="@color/widget_sub"
+        android:singleLine="true" />
+</LinearLayout>

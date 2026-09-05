@@ -8,8 +8,9 @@
     android:elevation="2dp"
     android:paddingLeft="14dp"
     android:paddingRight="14dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="12dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="10dp">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,55 +19,45 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="—"
-            android:textColor="#4c9fef"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.2" />
+            android:text="●"
+            android:textColor="#2383E2"
+            android:textSize="9sp" />
         <TextView
             android:id="@+id/widget_habit_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:textSize="14sp"
+            android:layout_marginStart="5dp"
+            android:text="HABITS"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:textColor="#c9bdf5"
+            android:letterSpacing="0.08"
+            android:textColor="@color/widget_title"
             android:fontFamily="sans-serif-medium"
             android:singleLine="true"
             android:ellipsize="end" />
+        <TextView
+            android:id="@+id/widget_habit_meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="@color/widget_sub"
+            android:singleLine="true" />
     </LinearLayout>
-    <TextView
-        android:id="@+id/widget_habit_1"
+
+    <LinearLayout
+        android:id="@+id/widget_habit_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textColor="#e9e6e0"
-        android:layout_marginTop="8dp"
-        android:singleLine="true"
-        android:ellipsize="end" />
-    <TextView
-        android:id="@+id/widget_habit_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textColor="#e9e6e0"
-        android:singleLine="true"
-        android:ellipsize="end" />
-    <TextView
-        android:id="@+id/widget_habit_3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textColor="#e9e6e0"
-        android:singleLine="true"
-        android:ellipsize="end" />
+        android:orientation="vertical"
+        android:layout_marginTop="8dp" />
+
     <TextView
         android:id="@+id/widget_habit_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="12sp"
-        android:textColor="#8b897f"
         android:layout_marginTop="6dp"
-        android:singleLine="true" />
+        android:textSize="12sp"
+        android:textColor="@color/widget_sub"
+        android:gravity="center" />
 </LinearLayout>

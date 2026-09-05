@@ -1,123 +1,103 @@
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { AuroraNotification, type AuroraNotificationDraft } from './auroraNotifications';
 import type { DB } from './types';
 import { daysUntil, todayISO } from './utils';
 
+/** JS tarafı stableId ile aynı — Java'daki stableId ile birebir. */
+function hashId(prefix: string, raw: string): string {
+  let h = 0 >>> 0;
+  const s = prefix + raw;
+  for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+  if (h === 0) h = 1;
+  return String(h % 2_000_000_000);
+}
+
 export function remindersAvailable(): boolean {
-  return Capacitor.isNativePlatform();
+  return Capacitor.isNativePlatform() || (typeof window !== 'undefined' && 'Notification' in window);
 }
 
 export async function requestReminderPermission(): Promise<boolean> {
-  if (!remindersAvailable()) return false;
-  const cur = await LocalNotifications.checkPermissions();
-  if (cur.display === 'granted') return true;
-  const req = await LocalNotifications.requestPermissions();
-  return req.display === 'granted';
+  const r = await AuroraNotification.requestPermission();
+  return r.granted;
 }
 
 export async function hasReminderPermission(): Promise<boolean> {
-  if (!remindersAvailable()) return true;
-  const cur = await LocalNotifications.checkPermissions();
-  return cur.display === 'granted';
+  const r = await AuroraNotification.requestPermission();
+  return r.granted;
 }
 
-/** Sends a test notification immediately (~1.5s). */
 export async function sendTestNotification(): Promise<boolean> {
-  if (window.parent !== window) {
-    window.parent.postMessage({ type: 'aurora-test' }, '*');
+  // Iframe'den geldiyse: parent'a postMessage ile ilet (loader native çağırır)
+  if (typeof window !== 'undefined' && window.parent !== window) {
+    window.parent.postMessage({ type: 'aurora-notif-test' }, '*');
     return true;
   }
   if (!remindersAvailable()) return false;
   if (!(await hasReminderPermission())) {
     if (!(await requestReminderPermission())) return false;
   }
-  await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: 987654321,
-        title: '🔔 Aurora test notification',
-        body: 'Notifications work! Homework, exam, water and workout reminders will look like this.',
-        schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true },
-      },
-    ],
+  const r = await AuroraNotification.sendTest({
+    title: '🔔 Aurora test notification',
+    body: 'Bildirimler çalışıyor — ödev, sınav, su ve antrenman hatırlatıcıları bu şekilde gelecek.',
+    route: '/',
   });
-  return true;
+  return r.id > 0;
 }
 
-function hashId(prefix: string, raw: string): string {
-  let h = 0;
-  for (let i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;
-  return `${prefix}${h % 100000}`;
-}
-
-function atTime(dateISO: string, hhmm: string): Date {
+function atTimeISO(dateISO: string, hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number);
-  return new Date(`${dateISO}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
+  return `${dateISO}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
 }
 
 function plusDaysISO(n: number): string {
-  // Local-temel tarih (UTC değil) — gece yarısı civarı 3-saat kayma bug'ını önler.
   const d = new Date();
   d.setDate(d.getDate() + n);
-  const p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return p;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-interface Draft {
-  id: string;
-  title: string;
-  body: string;
-  at?: Date;
-  on?: { hour: number; minute: number };
+function nextOccurrence(hhmm: string): Date {
+  const [h, m] = hhmm.split(':').map(Number);
+  const now = new Date();
+  const c = new Date(now);
+  c.setHours(h, m, 0, 0);
+  if (c.getTime() <= now.getTime()) c.setDate(c.getDate() + 1);
+  return c;
 }
 
 /**
- * Called whenever data changes: cancels all scheduled notifications and
- * re-schedules based on settings + current todo/exam list.
- *
- * Two execution paths:
- *  - Iframe (APK shell): postMessage to parent (APK shell schedules natively).
- *  - Native: schedule directly via LocalNotifications.
- *
- * Both paths receive the SAME state shape: settings hoisted to the root
- * alongside todos/exams/workouts. This avoids the previous bug where
- * APK shell expected `st.waterEnabled` but payload had it at `st.settings.waterEnabled`.
+ * Tüm hatırlatıcıları yeniden planla. Iframe'de çalışıyorsa state'i parent'a
+ * postMessage ile gönderir (loader native çağırır), aksi halde direkt kendi planlar.
  */
 export async function syncReminders(db: DB): Promise<void> {
-  // If we're inside the APK shell's iframe, hand off to the parent.
-  if (window.parent !== window) {
+  if (typeof window !== 'undefined' && window.parent !== window) {
     postStateToParent(db);
     return;
   }
   if (!remindersAvailable()) return;
   const s = db.settings;
   if (!s.remindersEnabled) {
-    await clearAll();
+    await AuroraNotification.cancelAll();
     return;
   }
-  const perm = await LocalNotifications.checkPermissions();
-  if (perm.display !== 'granted') return;
-
+  if (!(await hasReminderPermission())) {
+    // İzin yoksa sessizce iptal et — UI toast'ları loader üzerinden zaten çıkıyor
+    return;
+  }
   const drafts = buildDrafts(db, s);
-  await clearAll();
-  if (drafts.length === 0) return;
-  await LocalNotifications.schedule({
-    notifications: drafts.map((d) => ({
-      id: strId(d.id),
-      title: d.title,
-      body: d.body,
-      schedule: d.at
-        ? { at: d.at, allowWhileIdle: true }
-        : { on: d.on!, allowWhileIdle: true },
-    })),
-  });
+  try {
+    await AuroraNotification.cancelAll();
+    if (drafts.length === 0) return;
+    await AuroraNotification.schedule({ notifications: drafts });
+  } catch (e) {
+    console.warn('schedule failed', e);
+  }
 }
 
-/** Builds the list of notification drafts. Pure function — used by both native and iframe paths. */
-export function buildDrafts(db: DB, s: DB['settings']): Draft[] {
-  const drafts: Draft[] = [];
+/** Her kategori için bildirim taslağı üret. Saf fonksiyon — test edilebilir. */
+export function buildDrafts(db: DB, s: DB['settings']): AuroraNotificationDraft[] {
+  const drafts: AuroraNotificationDraft[] = [];
 
-  // Water reminder
+  // 1) Su hatırlatıcıları — günlük tekrar
   if (s.waterEnabled) {
     const fromH = Number(s.waterFrom.split(':')[0]) || 8;
     const toH = Number(s.waterTo.split(':')[0]) || 22;
@@ -125,27 +105,30 @@ export function buildDrafts(db: DB, s: DB['settings']): Draft[] {
     for (let h = fromH; h <= toH; h += step) {
       drafts.push({
         id: hashId('w', String(h)),
-        title: '💧 Time to drink water',
-        body: 'Have a glass of water — your brain needs it too.',
-        on: { hour: h, minute: 0 },
+        title: '💧 Su içme zamanı',
+        body: 'Bir bardak su iç — beyninin de buna ihtiyacı var.',
+        route: '/fitness',
+        everyDay: { hour: h, minute: 0 },
       });
     }
   }
 
-  // Workout reminder
+  // 2) Antrenman hatırlatıcısı — bugün yapılmadıysa tek seferlik
   if (s.workoutEnabled) {
-    const doneToday = (db.workouts[todayISO()]?.length ?? 0) > 0;
+    const today = todayISO();
+    const doneToday = (db.workouts[today]?.length ?? 0) > 0;
     if (!doneToday) {
       drafts.push({
-        id: 'wo',
-        title: '🏋️ Workout time',
-        body: "Today's training is still waiting. Come on, 30 minutes is enough!",
-        at: nextOccurrence(s.workoutTime),
+        id: hashId('wo', 'today'),
+        title: '🏋️ Antrenman zamanı',
+        body: "Bugünkü antrenman hâlâ bekliyor. 30 dakika yeter, hadi başla!",
+        route: '/fitness',
+        at: nextOccurrence(s.workoutTime).toISOString(),
       });
     }
   }
 
-  // Todo reminder (toggle kapalıysa atla)
+  // 3) Todo (ödev) hatırlatıcıları
   if (s.notifications.todoChannel !== false) {
     const openTodos = db.todos
       .filter((x) => !x.done && x.due && daysUntil(x.due) >= s.todoReminderDays)
@@ -153,18 +136,17 @@ export function buildDrafts(db: DB, s: DB['settings']): Draft[] {
       .slice(0, 32);
     for (const todo of openTodos) {
       const fireDate = plusDaysISO(daysUntil(todo.due!) - s.todoReminderDays);
-      const at = atTime(fireDate, s.reminderTime);
-      if (at.getTime() <= Date.now()) continue;
       drafts.push({
         id: hashId('t', todo.id),
-        title: '⏳ Homework reminder',
-        body: `«${todo.title}» — ${s.todoReminderDays} day(s) left. Start today, don't leave it for the last night.`,
-        at,
+        title: '⏳ Ödev hatırlatıcı',
+        body: `«${todo.title}» — ${s.todoReminderDays} gün kaldı. Bugün başla, son geceye bırakma.`,
+        route: '/todos',
+        at: atTimeISO(fireDate, s.reminderTime),
       });
     }
   }
 
-  // Exam reminder (toggle kapalıysa atla)
+  // 4) Sınav hatırlatıcıları + bugünkü sınav için N dk önce uyarı
   if (s.notifications.examChannel !== false) {
     const exams = db.exams
       .filter((e) => daysUntil(e.date) >= s.examReminderDays)
@@ -172,72 +154,47 @@ export function buildDrafts(db: DB, s: DB['settings']): Draft[] {
       .slice(0, 32);
     for (const ex of exams) {
       const fireDate = plusDaysISO(daysUntil(ex.date) - s.examReminderDays);
-      const at = atTime(fireDate, s.reminderTime);
-      if (at.getTime() <= Date.now()) continue;
       drafts.push({
         id: hashId('e', ex.id),
-        title: '📝 Exam reminder',
-        body: `«${ex.title}» is on ${ex.date} — ${s.examReminderDays} day(s) left, make a study plan.`,
-        at,
+        title: '📝 Sınav hatırlatıcı',
+        body: `«${ex.title}» sınavı ${ex.date} — ${s.examReminderDays} gün kaldı, çalışma planı yap.`,
+        route: '/student',
+        at: atTimeISO(fireDate, s.reminderTime),
       });
     }
-
-    // Exam bugün ve saati varsa sınav saatinden N dk önce
     const today = todayISO();
-    const todayExams = db.exams.filter((e) => e.date === today && e.time);
-    for (const ex of todayExams) {
-      const examAt = atTime(ex.date, ex.time!);
+    for (const ex of db.exams.filter((e) => e.date === today && e.time)) {
+      const examAt = new Date(atTimeISO(ex.date, ex.time!));
       const at = new Date(examAt.getTime() - s.examLeadMinutes * 60_000);
       if (at.getTime() <= Date.now()) continue;
       drafts.push({
         id: hashId('e30', ex.id),
-        title: '⏰ Exam approaching',
-        body: `«${ex.title}» starts in ${s.examLeadMinutes} minutes (${ex.time}). Do your final prep!`,
-        at,
+        title: '⏰ Sınav yaklaşıyor',
+        body: `«${ex.title}» sınavına ${s.examLeadMinutes} dakika kaldı (${ex.time}). Son hazırlığını yap!`,
+        route: '/student',
+        at: at.toISOString(),
       });
     }
   }
 
-  // Habit reminders
+  // 5) Habit hatırlatıcıları — her gün aynı saatte
   for (const h of db.habits ?? []) {
     if (h.archived || !h.reminderTime) continue;
-    const at = atTime(todayISO(), h.reminderTime);
-    if (at.getTime() <= Date.now()) continue;
+    const [hh, mm] = h.reminderTime.split(':').map(Number);
     drafts.push({
       id: hashId('hb', h.id),
-      title: h.type === 'quit' ? '🚭 Stay strong' : `🔁 ${h.title}`,
-      body: h.type === 'quit' ? 'You\'re doing great — keep it up!' : 'Time to check in on your habit.',
-      at,
+      title: h.type === 'quit' ? '🚭 Devam, güçlü ol' : `🔁 ${h.title}`,
+      body: h.type === 'quit' ? 'Harika gidiyorsun, böyle devam et!' : 'Alışkanlığını kontrol etme zamanı.',
+      route: '/habits',
+      everyDay: { hour: hh || 9, minute: mm || 0 },
     });
   }
 
   return drafts;
 }
 
-function nextOccurrence(hhmm: string): Date {
-  const [h, m] = hhmm.split(':').map(Number);
-  const now = new Date();
-  const candidate = new Date(now);
-  candidate.setHours(h, m, 0, 0);
-  if (candidate.getTime() <= now.getTime()) candidate.setDate(candidate.getDate() + 1);
-  return candidate;
-}
-
-function strId(raw: string): number {
-  let n = 0;
-  for (let i = 0; i < raw.length; i++) n = (n * 31 + raw.charCodeAt(i)) % 2147483647;
-  return n + 1;
-}
-
-async function clearAll(): Promise<void> {
-  await LocalNotifications.cancelAll();
-}
-
-/** Sends the current DB state to the parent (APK shell). */
 export function postStateToParent(db: DB): void {
-  if (window.parent === window) return;
-  // Hoist settings fields to the root so the shell can read them directly
-  // (avoids the previous `s.waterEnabled` undefined bug).
+  if (typeof window === 'undefined' || window.parent === window) return;
   const flat = {
     ...db.settings,
     todos: db.todos,

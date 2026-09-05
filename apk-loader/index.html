@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0a" />
+  <link rel="icon" type="image/png" href="favicon.png" />
   <title>Aurora</title>
   <style>
     * { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
@@ -61,9 +62,7 @@
     .page-in { animation: pageIn .4s cubic-bezier(.22,1,.36,1) both; }
     @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } }
 
-    /* Panel frame — fills the whole screen once connected.
-       Opens fullscreen (edge-to-edge); status bar + gesture bar
-       insets are handled via CSS safe-area(native fitsSystemWindows off. */
+    /* Panel frame — fills the whole screen once connected. */
     #shell {
       display: none; position: fixed; left: 0; right: 0; top: env(safe-area-inset-top); bottom: env(safe-area-inset-bottom);
       background: #0a0a0a;
@@ -71,7 +70,7 @@
     #shell.on { display: block; }
     #panel { width: 100%; height: 100%; border: 0; }
 
-    /* Notification Lab */
+    /* Toast — tıklanabilir (aksiyon) veya sade bilgi */
     #toast {
       position: fixed; left: 50%; top: 14px; transform: translateX(-50%);
       z-index: 9999; max-width: min(92vw, 460px);
@@ -84,48 +83,24 @@
     #toast.on { opacity: 1; }
     #toast.err { color: #ff9e9e; border-color: #5a1f1f; }
     #toast.warn { color: #ffd28a; border-color: #5a451f; }
-    #lab {
-      display: none; position: fixed; left: 0; right: 0; top: env(safe-area-inset-top); bottom: env(safe-area-inset-bottom);
-      background: #0a0a0a; overflow-y: auto; padding: 32px 20px; text-align: center;
+    #toast.actionable { pointer-events: auto; cursor: pointer; }
+
+    /* Test bildirimi butonu — sağ alt köşede yarı saydam, hızlı erişim */
+    #test-btn {
+      position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 16px);
+      z-index: 9998; padding: 10px 14px; font-size: 13px; font-weight: 600;
+      color: #f5f5f5; background: #1a1a1acc; border: 1px solid #2a2a2a;
+      border-radius: 999px; backdrop-filter: blur(8px); cursor: pointer;
     }
-    #lab.on { display: block; }
-    .lab-head { max-width: 420px; margin: 0 auto 22px; }
-    .lab-logo { width: 64px; height:  ️64px; margin: 0 auto 12px; display: grid; place-items: center; background: #161616; border-radius: 18px; overflow: hidden; }
-    .lab-logo img { width: 100%; height: 100%; display: block; }
-    #lab h1 { font-size: 22px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-    .lab-sub { margin-top: 6px; font-size: 13px; color: #9d9d9d; line-height: 1.5; }
-    .lab-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap:  ️10px; max-width: 420px; margin:  ️0 auto; }
-    .lab-btn {
-      display: flex; align-items: center; gap:  ️12px; padding: 16px 14px; text-align: left;
-      background: #141414; border: 1px solid #262626; border-radius: 14px; color: #f5f5f5;
-      font-size:  ️15px; font-weight: 600; cursor: pointer; transition: transform .12s, border-color .15s, opacity .15s;
-    }
-    .lab-btn span { font-size:  ️22px; }
-    .lab-btn.row { grid-column: 1 / -1; }
-    .lab-btn:hover { border-color: #3a3a3a; }
-    .lab-btn:active { transform: scale(.97); }
-    .lab-btn.disabled { opacity: .45; pointer-events: none; }
-    .lab-status { margin-top: 18px; font-size: 13px; color: #6a6a6a; min-height: 18px; line-height: 1.5; }
+    #test-btn:active { transform: scale(.96); }
   </style>
   <script src="native-bridge.js"></script>
   <script src="capacitor-exports.js"></script>
   <script>
-    // capacitor-exports.js (UMD) window.Capacitor'u kurmaz — factory sonucunu
-    // global `capacitorExports`'te bırakır. Bridge + plugin'ler window.Capacitor'a bağlı.
-
-
     if (typeof capacitorExports === 'function') {
       var _core = capacitorExports({});
       window.Capacitor = _core.Capacitor;
     }
-    // @capacitor/local-notifications ESM bundle'ı bare specifier'larla tarayıcıda
-    // çözülemez → onu kullanmıyoruz. Java'daki LocalNotificationsPlugin zaten
-    // register; core'un registerPlugin'i native proxy'yi otomatik kurar (callPluginMethod).
-    try {
-      if (window.Capacitor && window.Capacitor.registerPlugin) {
-        window.Capacitor.registerPlugin('LocalNotifications');
-      }
-    } catch (e) {}
   </script>
 </head>
 <body>
@@ -151,28 +126,7 @@
   <div id="shell">
     <div id="toast" class="toast"></div>
     <iframe id="panel" title="Panel"></iframe>
-  </div>
-
-  <div id="lab">
-    <div class="lab-head">
-      <div class="lab-logo"><img src="aurora.svg" alt="" /></div>
-      <h1>Notification Lab</h1>
-      <p class="lab-sub">Tap a category — the app sends a real notification with a tap-through link to that section.</p>
-    </div>
-    <div class="lab-grid">
-      <button class="lab-btn" data-cat="todos"><span>✅</span>Tasks</button>
-      <button class="lab-btn" data-cat="schedule"><span>📅</span>Schedule</button>
-      <button class="lab-btn" data-cat="exams"><span>📝</span>Exams</button>
-      <button class="lab-btn" data-cat="habits"><span>🔁</span>Habits</button>
-      <button class="lab-btn" data-cat="fitness"><span>🏋️</span>Fitness</button>
-      <button class="lab-btn" data-cat="student"><span>🎓</span>Student</button>
-      <button class="lab-btn" data-cat="notes"><span>📓</span>Notes</button>
-      <button class="lab-btn" data-cat="files"><span>📂</span>Files</button>
-      <button class="lab-btn" data-cat="server"><span>🖥️</span>Server</button>
-      <button class="lab-btn row" data-cat="water"><span>💧</span>Drink water</button>
-      <button class="lab-btn row" data-cat="workout"><span>🏋️</span>Workout time</button>
-    </div>
-    <p class="lab-status" id="lab-status"></p>
+    <button id="test-btn" style="display:none">🔔 Test bildirimi</button>
   </div>
 
   <script>
@@ -180,224 +134,34 @@
     var $input = document.getElementById('addr');
     var $btn = document.getElementById('go');
     var $status = document.getElementById('status');
-    var flashTimer = null;
-    var $toast = document.getElementById('toast');
-    function flash(msg, kind) {
-      if (!$toast) return;
-      $toast.textContent = msg;
-      $toast.className = 'toast' + (kind === 'err' ? ' err' : kind === 'warn' ? ' warn' : '');
-      $toast.classList.add('on');
-      if (flashTimer) clearTimeout(flashTimer);
-      flashTimer = setTimeout(function () { $toast.classList.remove('on'); }, 6000);
-    }
     var $form = document.getElementById('form');
     var $shell = document.getElementById('shell');
     var $panel = document.getElementById('panel');
+    var $toast = document.getElementById('toast');
     var KEY = 'serverUrl';
     var DEFAULT = 'http://192.168.1.200:8788';
+
     var IS_NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-    var LN = (IS_NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications)
-            ? window.Capacitor.Plugins.LocalNotifications : null;
+    var AS = (IS_NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.AuroraStorage) || null;
+    var AN = (IS_NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.AuroraNotification) || null;
 
-    /* ---------- notification engine (APK native — no request goes to the server) ---------- */
-
-    function hashId(prefix, raw) {
-      var h = 0;
-      for (var i = 0; i < raw.length; i++) h = (h * 31 + raw.charCodeAt(i)) >>> 0;
-      return (h % 100000) + 1;
+    /* Toast helpers */
+    var flashTimer = null;
+    var flashAction = null;
+    function flash(msg, kind, action) {
+      if (!$toast) return;
+      flashAction = action || null;
+      $toast.textContent = msg;
+      $toast.className = 'toast' + (kind === 'err' ? ' err' : kind === 'warn' ? ' warn' : '') + (flashAction ? ' actionable' : '');
+      $toast.classList.add('on');
+      if (flashTimer) clearTimeout(flashTimer);
+      flashTimer = setTimeout(function () { $toast.classList.remove('on'); flashAction = null; }, flashAction ? 12000 : 6000);
     }
-    function plusDaysISO(n) {
-      var d = new Date();
-      d.setDate(d.getDate() + n);
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-    function atTime(dateISO, hhmm) {
-      var p = hhmm.split(':');
-      return new Date(dateISO + 'T' + p[0] + ':' + p[1] + ':00');
-    }
-    function nextOccurrence(hhmm) {
-      var p = hhmm.split(':');
-      var c = new Date();
-      c.setHours(+p[0], +p[1], 0, 0);
-      if (c.getTime() <= Date.now()) c.setDate(c.getDate() + 1);
-      return c;
-    }
-    function todayISO() {
-      var d = new Date();
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
-    function daysUntil(iso) {
-      var a = new Date(iso + 'T00:00:00');
-      var b = new Date();
-      b.setHours(0, 0, 0, 0);
-      return Math.round((a - b) / 86400000);
-    }
-
-    async function requestPerm() {
-      if (!LN) { flash('✗ Capacitor bridge not ready — plugin not found', 'err'); return false; }
-      try {
-        var cur = await LN.checkPermissions();
-        if (cur.display === 'granted') { flash('✓ Notification permission OK'); return true; }
-        flash('🔕 Allow notification permission to see test alerts', 'warn');
-        var req = await LN.requestPermissions();
-        if (req && req.display === 'granted') { flash('✓ Notification permission granted'); return true; }
-        flash('✗ Permission denied — enable in phone settings (Apps → Aurora → Notifications)', 'err');
-        return false;
-      } catch (err) { flash('✗ Permission check failed: ' + (err && err.message ? err.message : ''), 'err'); return false; }
-    }
-
-    async function scheduleAll(st) {
-      if (!LN) return;
-      // postStateToParent hoists settings to the root ({...db.settings, todos, ...});
-      // legacy payloads nest them under .settings — support both shapes.
-      var s = (st && st.settings) || st || {};
-      if (s.remindersEnabled === false) { await LN.cancelAll(); return; }
-      var perm = await LN.checkPermissions();
-      if (perm.display !== 'granted') return;
-
-      var drafts = [];
-      var t = todayISO();
-      var notif = s.notifications || {};
-      var reminderTime = s.reminderTime || '18:00';
-      var todoDays = s.todoReminderDays || 2;
-      var examDays = s.examReminderDays || 7;
-      var leadMin = Math.max(5, Math.min(180, s.examLeadMinutes || 30));
-
-      if (s.waterEnabled !== false) {
-        var fromH = parseInt((s.waterFrom || '08:00').split(':')[0], 10) || 8;
-        var toH = parseInt((s.waterTo || '22:00').split(':')[0], 10) || 22;
-        var step = Math.max(1, Math.min(6, s.waterEveryHours || 2));
-        for (var h = fromH; h <= toH; h += step) {
-          drafts.push({ id: hashId('w', '' + h), title: '💧 Time to drink water', body: 'Have a glass of water — your brain needs it too.', schedule: { on: { hour: h, minute: 0 }, allowWhileIdle: true } });
-        }
-      }
-
-      var doneToday = (st.workouts && st.workouts[t] && st.workouts[t].length > 0);
-      if (s.workoutEnabled !== false && !doneToday) {
-        drafts.push({ id: 900001, title: '🏋️ Workout time', body: "Today's training is still waiting. Come on, 30 minutes is enough!", schedule: { at: nextOccurrence(s.workoutTime || '17:30'), allowWhileIdle: true } });
-      }
-
-      if (notif.todoChannel !== false) {
-        var todos = (st.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= todoDays; })
-          .sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); }).slice(0, 32);
-        todos.forEach(function (todo) {
-          var at = atTime(plusDaysISO(daysUntil(todo.due) - todoDays), reminderTime);
-          if (at.getTime() <= Date.now()) return;
-          drafts.push({ id: hashId('t', todo.id), title: '⏳ Homework reminder', body: '«' + todo.title + '» — ' + todoDays + ' day(s) left. Start today, don’t leave it for the last night.', schedule: { at: at, allowWhileIdle: true } });
-        });
-      }
-
-      if (notif.examChannel !== false) {
-        var exams = (st.exams || []).filter(function (e) { return daysUntil(e.date) >= examDays; })
-          .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); }).slice(0, 32);
-        exams.forEach(function (ex) {
-          var at = atTime(plusDaysISO(daysUntil(ex.date) - examDays), reminderTime);
-          if (at.getTime() <= Date.now()) return;
-          drafts.push({ id: hashId('e', ex.id), title: '📝 Exam reminder', body: '«' + ex.title + '» is on ' + ex.date + ' — ' + examDays + ' day(s) left, make a study plan.', schedule: { at: at, allowWhileIdle: true } });
-        });
-
-        // Sınav bugün ve saati varsa: sınav saatinden N dk önce ek bildirim
-        var todayExams = (st.exams || []).filter(function (e) { return e.date === t && e.time; });
-        todayExams.forEach(function (ex) {
-          var examAt = atTime(ex.date, ex.time);
-          var at = new Date(examAt.getTime() - leadMin * 60000);
-          if (at.getTime() <= Date.now()) return;
-          drafts.push({ id: hashId('e30', ex.id), title: '⏰ Exam approaching', body: '«' + ex.title + '» starts in ' + leadMin + ' minutes (' + ex.time + '). Do your final prep!', schedule: { at: at, allowWhileIdle: true } });
-        });
-      }
-
-      // Habit reminders
-      (st.habits || []).forEach(function (h) {
-        if (h.archived || !h.reminderTime) return;
-        var at = atTime(todayISO(), h.reminderTime);
-        if (at.getTime() <= Date.now()) return;
-        var title = h.type === 'quit' ? '🚭 Stay strong' : ('🔁 ' + h.title);
-        var body = h.type === 'quit' ? "You're doing great — keep it up!" : 'Time to check in on your habit.';
-        drafts.push({ id: hashId('hb', h.id), title: title, body: body, schedule: { at: at, allowWhileIdle: true } });
-      });
-
-      await LN.cancelAll();
-      if (drafts.length) await LN.schedule({ notifications: drafts });
-    }
-
-    /* Server battery: below 25% + not charging → APK notification */
-    var batteryLast = 0;
-    async function checkServerBattery(origin) {
-      if (!LN) return;
-      try {
-        var r = await fetch(origin + '/api/battery', { cache: 'no-store' });
-        if (!r.ok) return;
-        var b = await r.json();
-        if (b.percent === null || b.percent === undefined) return;
-        var low = b.percent <= 25 && !b.charging;
-        if (!low) { localStorage.removeItem('batteryAlertAt'); return; }
-        var last = Number(localStorage.getItem('batteryAlertAt') || 0);
-        if (Date.now() - last < 3600000) return;
-        localStorage.setItem('batteryAlertAt', String(Date.now()));
-        await LN.schedule({ notifications: [{ id: 555001, title: '🔋 Server battery low', body: 'J7 Prime battery at ' + b.percent + '% — plug it in, don\'t let the panel die.', schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true } }] });
-      } catch (e) { /* server unreachable — skip silently */ }
-    }
-
-    /* Panel iframe'den gelen durum mesajları → native planlama
-       Sadece panel'in yüklendiği origin'den gelen mesajları kabul et. */
-    var $currentOrigin = null;
-    function trustedOrigin() {
-      if ($currentOrigin) return $currentOrigin;
-      try {
-        var saved = localStorage.getItem(KEY);
-        if (saved) $currentOrigin = new URL(saved).origin;
-      } catch (e) {}
-      return $currentOrigin;
-    }
-    window.addEventListener('message', function (e) {
-      if (!e.data) return;
-      var origin = trustedOrigin();
-      // origin tespit edilemediyse ya da eşleşmiyorsa reddet
-      if (origin && e.origin !== origin) return;
-      if (e.data.type === 'aurora-state') {
-        try { localStorage.setItem('lastState', JSON.stringify(e.data.payload)); } catch (err) {}
-        scheduleAll(e.data.payload);
-      } else if (e.data.type === 'aurora-widget-data') {
-        // Panel iframe'inden gelen widget snapshot'ı → native AuroraStorage
-        // (SharedPreferences) + widget'ları güncelle. Iframe'de window.Capacitor
-        // yok, o yüzden veri buraya postMessage ile gelir.
-        var AS = (IS_NATIVE && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AuroraStorage);
-        if (AS) {
-          try {
-            AS.set({ key: 'widget-data', value: JSON.stringify(e.data.payload) }).then(function () {
-              return AS.notifyWidgets();
-            }).catch(function (err) { console.warn('widget write failed', err); });
-          } catch (err) { console.warn('widget write failed', err); }
-        }
-      } else if (e.data.type === 'aurora-test') {
-        (async function () {
-          if (!(await requestPerm())) return;
-          try {
-            await LN.schedule({ notifications: [{ id: 987654321, title: '🔔 Aurora test notification', body: 'Notifications work! Homework, exam, water, and workout reminders will look like this.', schedule: { at: new Date(Date.now() + 1500), allowWhileIdle: true } }] });
-            flash('✓ Test notification scheduled — arrives in 1-2 s');
-          } catch (err) {
-            flash('✗ Schedule failed: ' + (err && err.message ? err.message : ''), 'err');
-          }
-        })();
-      }
+    $toast.addEventListener('click', function () {
+      if (flashAction) { var fn = flashAction; flashAction = null; $toast.classList.remove('on'); try { fn(); } catch (e) {} }
     });
 
-    function enterShell(origin) {
-      $splash.style.display = 'none';
-      $shell.classList.add('on');
-      $panel.src = origin;
-      if (IS_NATIVE) {
-        requestPerm().then(function (granted) { if (granted) scheduleAll(readCachedState()); });
-        setInterval(function () { checkServerBattery(origin); }, 60000);
-        checkServerBattery(origin);
-      }
-    }
-    function readCachedState() {
-      try { return JSON.parse(localStorage.getItem('lastState') || '{}'); } catch (e) { return {}; }
-    }
-
-    /* ---------- connection flow ---------- */
-
+    /* Connection flow */
     function setStatus(msg, isErr, busy) {
       $status.className = 'status' + (isErr ? ' err' : '');
       $status.innerHTML = (busy ? '<span class="spinner"></span>' : '') + msg;
@@ -452,79 +216,243 @@
       showForm();
     }
 
-    /* ---------- Notification Lab ---------- */
-    var $lab = document.getElementById('lab');
-    var $labStatus = document.getElementById('lab-status');
-    var LAB_ROUTES = {
-      todos: '/todos', schedule: '/schedule', exams: '/student', habits: '/habits',
-      fitness: '/fitness', student: '/student', notes: '/notes', files: '/files',
-      server: '/server', water: '/fitness', workout: '/fitness',
-    };
-    var LAB_TITLES = {
-      todos: '✅ Tasks', schedule: '📅 Schedule', exams: '📝 Exams', habits: '🔁 Habits',
-      fitness: '🏋️ Fitness', student: '🎓 Student', notes: '📓 Notes', files: '📂 Files',
-      server: '🖥️ Server', water: '💧 Drink water', workout: '🏋️ Workout time',
-    };
-    function openLab() {
-      $splash.style.display = 'none';
-      $shell.classList.remove('on');
-      $lab.classList.add('on');
-      $labStatus.textContent = '';
+    /* Notification / widget pipeline — APK shell (parent frame) */
+    var $currentOrigin = null;
+    function trustedOrigin() {
+      if ($currentOrigin) return $currentOrigin;
+      try {
+        var saved = localStorage.getItem(KEY);
+        if (saved) $currentOrigin = new URL(saved).origin;
+      } catch (e) {}
+      return $currentOrigin;
     }
-    // Open the lab from outside via hash: #lab
-    if (location.hash === '#lab') openLab();
-    window.addEventListener('hashchange', function () {
-      if (location.hash === '#lab') openLab();
-      else if (!$lab.classList.contains('on')) return;
-    });
+    function readCachedState() {
+      try { return JSON.parse(localStorage.getItem('lastState') || '{}'); } catch (e) { return {}; }
+    }
 
-    // Notification tap → open that category inside the iframe.
+    async function ensurePerm() {
+      if (!AN) return false;
+      const r = await AN.requestPermission();
+      if (!r.granted) {
+        flash('🔕 Bildirim izni yok — buraya dokunup ayarlardan aç', 'warn', function () {
+          if (AN.openSettings) AN.openSettings();
+        });
+      }
+      return r.granted;
+    }
 
-    if (IS_NATIVE && LN && window.Capacitor.Plugins.LocalNotifications.addListener) {
-      window.Capacitor.Plugins.LocalNotifications.addListener('localNotificationActionPerformed', function (e) {
-        var route = e && (e.actionId || (e.notification && e.notification.extra && e.notification.extra.route));
+    async function applyPendingRoute() {
+      if (!AS || !AS.get) return;
+      try {
+        var r = await AS.get({ key: 'pending-route' });
+        var route = r && r.value;
         if (route && $shell.classList.contains('on')) {
           $panel.src = trustedOrigin() + '/#' + route;
+          await AS.remove({ key: 'pending-route' });
         }
-      });
+      } catch (e) {}
     }
 
-    var labId = 700000;
-    document.querySelectorAll('.lab-btn').forEach(function (btn) {
-      btn.addEventListener('click', async function () {
-        if (!IS_NATIVE || !LN) {
-          var m0 = 'Open this in the Aurora APK to send real notifications.';
-          $labStatus.textContent = m0; flash(m0, 'warn');
-          return;
+    async function syncNative(state) {
+      if (!AN) return;
+      const ok = await ensurePerm();
+      if (!ok) return;
+      try {
+        const drafts = buildNativeDrafts(state);
+        await AN.cancelAll();
+        if (drafts.length) await AN.schedule({ notifications: drafts });
+        flash('✓ Hatırlatıcılar güncellendi (' + drafts.length + ' bildirim)');
+      } catch (e) {
+        flash('✗ Hatırlatıcı kurulamadı: ' + (e && e.message ? e.message : ''), 'err');
+      }
+    }
+
+    /* Hatırlatıcı taslakları — TS buildDrafts ile aynı mantık, sadece tarih
+       hesabı lokal. (Iframe postMessage payload'ı zaten buraya gelir.) */
+    function buildNativeDrafts(s) {
+      if (!s) s = {};
+      if (s.remindersEnabled === false) return [];
+      var drafts = [];
+      var today = todayISO();
+      var remTime = s.reminderTime || '18:00';
+      var todoDays = s.todoReminderDays || 2;
+      var examDays = s.examReminderDays || 7;
+      var leadMin = Math.max(5, Math.min(180, s.examLeadMinutes || 30));
+      var notif = s.notifications || {};
+
+      // 1) Su — günlük
+      if (s.waterEnabled !== false) {
+        var fromH = parseInt((s.waterFrom || '08:00').split(':')[0], 10) || 8;
+        var toH = parseInt((s.waterTo || '22:00').split(':')[0], 10) || 22;
+        var step = Math.max(1, Math.min(6, s.waterEveryHours || 2));
+        for (var h = fromH; h <= toH; h += step) {
+          drafts.push({ id: hashId('w', '' + h), title: '💧 Su içme zamanı', body: 'Bir bardak su iç — beyninin de buna ihtiyacı var.', route: '/fitness', everyDay: { hour: h, minute: 0 } });
         }
-        var cat = btn.getAttribute('data-cat');
-        var route = LAB_ROUTES[cat] || '/';
-        var title = LAB_TITLES[cat] || 'Aurora';
-        var ok = await requestPerm();
-        if (!ok) {
-          var m1 = 'Notification permission denied — enable it in Android settings.';
-          $labStatus.textContent = m1; flash(m1, 'err');
-          return;
+      }
+
+      // 2) Antrenman — bugün yapılmadıysa
+      if (s.workoutEnabled !== false) {
+        var doneToday = (s.workouts && s.workouts[today] && s.workouts[today].length > 0);
+        if (!doneToday) {
+          drafts.push({ id: hashId('wo', 'today'), title: '🏋️ Antrenman zamanı', body: "Bugünkü antrenman hâlâ bekliyor. 30 dakika yeter, hadi başla!", route: '/fitness', at: nextOccurrence(s.workoutTime || '17:30').toISOString() });
         }
-        try {
-          await LN.schedule({
-            notifications: [{
-              id: labId++,
-              title: title,
-              body: 'Tap to open „' + title + '“ in Aurora.',
-              extra: { route: route },
-              schedule: { at: new Date(Date.now() + 800), allowWhileIdle: true },
-            }],
-          });
-          var m2 = 'Sent — tap the notification to jump to ' + title + '.';
-          $labStatus.textContent = m2; flash(m2);
-        } catch (err) {
-          var m3 = 'Schedule failed: ' + (err && err.message ? err.message : '');
-          $labStatus.textContent = m3; flash(m3, 'err');
-        }
+      }
+
+      // 3) Todo — sınavdan/görevden X gün önce
+      if (notif.todoChannel !== false) {
+        var todos = (s.todos || []).filter(function (x) { return !x.done && x.due && daysUntil(x.due) >= todoDays; })
+          .sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); }).slice(0, 32);
+        todos.forEach(function (todo) {
+          var fireDate = plusDaysISO(daysUntil(todo.due) - todoDays);
+          drafts.push({ id: hashId('t', todo.id), title: '⏳ Ödev hatırlatıcı', body: '«' + todo.title + '» — ' + todoDays + ' gün kaldı. Bugün başla.', route: '/todos', at: atTimeISO(fireDate, remTime) });
+        });
+      }
+
+      // 4) Sınav
+      if (notif.examChannel !== false) {
+        var exams = (s.exams || []).filter(function (e) { return daysUntil(e.date) >= examDays; })
+          .sort(function (a, b) { return a.date.localeCompare(b.date); }).slice(0, 32);
+        exams.forEach(function (ex) {
+          var fireDate = plusDaysISO(daysUntil(ex.date) - examDays);
+          drafts.push({ id: hashId('e', ex.id), title: '📝 Sınav hatırlatıcı', body: '«' + ex.title + '» sınavı ' + ex.date + ' — ' + examDays + ' gün kaldı.', route: '/student', at: atTimeISO(fireDate, remTime) });
+        });
+        var todayExams = (s.exams || []).filter(function (e) { return e.date === today && e.time; });
+        todayExams.forEach(function (ex) {
+          var examAt = new Date(atTimeISO(ex.date, ex.time));
+          var at = new Date(examAt.getTime() - leadMin * 60000);
+          if (at.getTime() <= Date.now()) return;
+          drafts.push({ id: hashId('e30', ex.id), title: '⏰ Sınav yaklaşıyor', body: '«' + ex.title + '» ' + leadMin + ' dakika sonra (' + ex.time + ').', route: '/student', at: at.toISOString() });
+        });
+      }
+
+      // 5) Habit
+      (s.habits || []).forEach(function (h) {
+        if (h.archived || !h.reminderTime) return;
+        var p = h.reminderTime.split(':');
+        drafts.push({ id: hashId('hb', h.id), title: h.type === 'quit' ? '🚭 Devam, güçlü ol' : ('🔁 ' + h.title), body: h.type === 'quit' ? 'Harika gidiyorsun!' : 'Alışkanlığını kontrol etme zamanı.', route: '/habits', everyDay: { hour: +p[0] || 9, minute: +p[1] || 0 } });
       });
+
+      return drafts;
+    }
+
+    function todayISO() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function plusDaysISO(n) {
+      var d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function atTimeISO(dateISO, hhmm) {
+      var p = hhmm.split(':');
+      return dateISO + 'T' + String(+p[0]).padStart(2, '0') + ':' + String(+p[1]).padStart(2, '0') + ':00';
+    }
+    function daysUntil(iso) {
+      var a = new Date(iso + 'T00:00:00');
+      var b = new Date();
+      b.setHours(0, 0, 0, 0);
+      return Math.round((a - b) / 86400000);
+    }
+    function nextOccurrence(hhmm) {
+      var p = hhmm.split(':');
+      var c = new Date();
+      c.setHours(+p[0], +p[1], 0, 0);
+      if (c.getTime() <= Date.now()) c.setDate(c.getDate() + 1);
+      return c;
+    }
+    /* TS tarafıyla bire bir aynı: ((h * 31) + char) >>> 0; pozitif int. */
+    function hashId(prefix, raw) {
+      var h = 0 >>> 0;
+      var s = prefix + raw;
+      for (var i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+      if (h === 0) h = 1;
+      return h % 2000000000;
+    }
+
+    /* Sunucu bataryası — düşükse uyar */
+    var batteryLast = 0;
+    async function checkServerBattery(origin) {
+      if (!AN) return;
+      try {
+        var r = await fetch(origin + '/api/battery', { cache: 'no-store' });
+        if (!r.ok) return;
+        var b = await r.json();
+        if (b.percent == null) return;
+        if (!(b.percent <= 25 && !b.charging)) { try { localStorage.removeItem('batteryAlertAt'); } catch (e) {} return; }
+        var last = Number(localStorage.getItem('batteryAlertAt') || 0);
+        if (Date.now() - last < 3600000) return;
+        localStorage.setItem('batteryAlertAt', String(Date.now()));
+        try {
+          await AN.schedule({ notifications: [{ id: 'server-battery', title: '🔋 Sunucu bataryası az', body: 'J7 Prime bataryası %' + b.percent + ' — şarja tak.', route: '/server', at: new Date(Date.now() + 500).toISOString() }] });
+        } catch (e) {}
+      } catch (e) {}
+    }
+
+    /* postMessage — iframe'den panelden gelen state/widget verisi */
+    window.addEventListener('message', async function (e) {
+      if (!e.data) return;
+      var origin = trustedOrigin();
+      if (origin && e.origin !== origin) return;
+      if (e.data.type === 'aurora-state') {
+        try { localStorage.setItem('lastState', JSON.stringify(e.data.payload)); } catch (err) {}
+        syncNative(e.data.payload);
+      } else if (e.data.type === 'aurora-widget-data') {
+        if (AS) {
+          try {
+            await AS.set({ key: 'widget-data', value: JSON.stringify(e.data.payload) });
+            await AS.notifyWidgets();
+          } catch (err) { console.warn('widget write failed', err); }
+        }
+      } else if (e.data.type === 'aurora-notif-test') {
+        if (!AN) { flash('Bu özellik sadece APK\'da çalışır', 'warn'); return; }
+        var ok = await ensurePerm();
+        if (!ok) return;
+        try {
+          await AN.sendTest({ title: '🔔 Aurora test', body: 'Bildirimler çalışıyor — hatırlatıcılar bu şekilde gelecek.', route: '/' });
+          flash('✓ Test bildirimi gönderildi — 1-2 sn içinde gelecek');
+        } catch (err) {
+          flash('✗ Test gönderilemedi: ' + (err && err.message ? err.message : ''), 'err');
+        }
+      }
     });
 
+    function enterShell(origin) {
+      $currentOrigin = origin;
+      $splash.style.display = 'none';
+      $shell.classList.add('on');
+      $panel.src = origin;
+      if (IS_NATIVE) {
+        document.getElementById('test-btn').style.display = 'block';
+        setTimeout(applyPendingRoute, 600);
+        setTimeout(function () { syncNative(readCachedState()); }, 1200);
+        setInterval(function () { checkServerBattery(origin); }, 60000);
+        checkServerBattery(origin);
+        // Uygulama öne gelince yeniden planla (deep-link geldikten sonra da)
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState !== 'visible') return;
+          applyPendingRoute();
+          syncNative(readCachedState());
+        });
+      }
+    }
+
+    /* Tek test butonu — sağ alt köşede, native bildirim gönderir */
+    document.getElementById('test-btn').addEventListener('click', async function () {
+      if (!AN) { flash('Bu özellik sadece APK\'da çalışır', 'warn'); return; }
+      const ok = await ensurePerm();
+      if (!ok) return;
+      try {
+        await AN.sendTest({
+          title: '🔔 Aurora test',
+          body: 'Bildirimler çalışıyor — hatırlatıcılar bu şekilde gelecek.',
+          route: '/',
+        });
+        flash('✓ Test bildirimi gönderildi — 1-2 sn içinde gelecek');
+      } catch (err) {
+        flash('✗ Gönderilemedi: ' + (err && err.message ? err.message : ''), 'err');
+      }
+    });
   </script>
 </body>
 </html>
