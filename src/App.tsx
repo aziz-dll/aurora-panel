@@ -6,6 +6,7 @@ import { getDB, useDB } from './lib/store';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
 import { checkServerBattery } from './lib/serverBattery';
 import { syncWidgetsFromDB } from './lib/widgetSync';
+import { useSystemStats } from './lib/useSystemStats';
 import Dashboard from './pages/Dashboard';
 import Todos from './pages/Todos';
 import Schedule from './pages/Schedule';
@@ -60,6 +61,8 @@ export default function App() {
   const { path } = useHashRoute();
   const scrollRef = useRef<HTMLDivElement>(null);
   const db = useDB();
+  // Server istatistiklerini uygulama boyunca topla — widget'lar taze veri alsın
+  useSystemStats();
   const settings = db.settings;
 
   useEffect(() => {

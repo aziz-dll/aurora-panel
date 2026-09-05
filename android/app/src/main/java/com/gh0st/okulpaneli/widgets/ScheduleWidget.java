@@ -51,7 +51,7 @@ public class ScheduleWidget extends AppWidgetProvider {
                         String start = l.optString("start", "");
                         String end = l.optString("end", "");
                         String room = l.optString("room", "");
-                        lines[slot] = "• " + start + "–" + end + " " + name + (room.isEmpty() ? "" : " (" + room + ")");
+                        lines[slot] = "• " + start + "–" + end + "  " + name + (room.isEmpty() ? "" : "  (" + room + ")");
                         slot++;
                         found = true;
                     }
@@ -61,7 +61,7 @@ public class ScheduleWidget extends AppWidgetProvider {
 
         for (int id : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_schedule);
-            views.setTextViewText(R.id.widget_schedule_title, "Aurora · Today");
+            views.setTextViewText(R.id.widget_schedule_title, "Today");
             views.setTextViewText(R.id.widget_schedule_1, lines[0]);
             views.setTextViewText(R.id.widget_schedule_2, lines[1]);
             views.setTextViewText(R.id.widget_schedule_3, lines[2]);

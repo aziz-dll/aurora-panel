@@ -45,7 +45,7 @@ public class BatteryWidget extends AppWidgetProvider {
                         int pct = battery.optInt("percent", -1);
                         if (pct >= 0) {
                             boolean charging = battery.optBoolean("charging", false);
-                            batteryText = charging ? "🔌 " + pct + "%" : "🔋 " + pct + "%";
+                            batteryText = pct + "%" + (charging ? "  ·  charging" : "");
                         }
                     }
                     JSONObject memory = server.optJSONObject("memory");
@@ -79,7 +79,7 @@ public class BatteryWidget extends AppWidgetProvider {
 
         for (int id : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_battery);
-            views.setTextViewText(R.id.widget_battery_title, "Aurora · Server");
+            views.setTextViewText(R.id.widget_battery_title, "Server");
             views.setTextViewText(R.id.widget_battery_pct, batteryText);
             views.setTextViewText(R.id.widget_battery_ram, ramText);
             views.setTextViewText(R.id.widget_battery_storage, storageText);

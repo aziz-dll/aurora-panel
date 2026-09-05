@@ -45,8 +45,8 @@ public class HabitWidget extends AppWidgetProvider {
                         String title = h.optString("title", "?");
                         int streak = h.optInt("streak", 0);
                         String type = h.optString("type", "build");
-                        String mark = type.equals("quit") ? "🚭" : "🔁";
-                        lines[slot] = mark + " " + title + " · " + streak + "d";
+                        String mark = type.equals("quit") ? "✕" : "•";
+                        lines[slot] = mark + " " + title + "  ·  " + streak + "d";
                         slot++;
                         found = true;
                     }
@@ -56,7 +56,7 @@ public class HabitWidget extends AppWidgetProvider {
 
         for (int id : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_habit);
-            views.setTextViewText(R.id.widget_habit_title, "Aurora · Habits");
+            views.setTextViewText(R.id.widget_habit_title, "Habits");
             views.setTextViewText(R.id.widget_habit_1, lines[0]);
             views.setTextViewText(R.id.widget_habit_2, lines[1]);
             views.setTextViewText(R.id.widget_habit_3, lines[2]);

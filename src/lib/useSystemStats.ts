@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { updateServerStats } from './widgetSync';
 import {
   termux,
+  type BatteryInfo,
   type CpuSample,
   type DiskInfo,
   type MemoryInfo,
@@ -20,6 +21,7 @@ export interface SystemStats {
   cpu: CpuSample | null;
   thermal: ThermalInfo | null;
   wifi: WifiInfo | null;
+  battery: BatteryInfo | null;
 }
 
 const INITIAL: SystemStats = {
@@ -31,44 +33,70 @@ const INITIAL: SystemStats = {
   cpu: null,
   thermal: null,
   wifi: null,
+  battery: null,
 };
 
+// Singleton: birden fazla bileşen aynı hook'u çağırırsa tek bir polling interval
+// çalışsın (useTermuxStatus ile aynı desen). Böylece widget verileri her sayfada
+// (yalnızca Server sekmesi değil) güncel kalır.
+let sharedStats: SystemStats = INITIAL;
+const statSubs = new Set<() => void>();
+let statTimer: ReturnType<typeof setInterval> | null = null;
+
+function notifyStats() {
+  for (const fn of statSubs) fn();
+}
+
+function setStats(next: SystemStats) {
+  sharedStats = next;
+  notifyStats();
+}
+
+async function refreshStats() {
+  const ping = await termux.ping();
+  const up = ping?.termux === true;
+  if (!up) { setStats({ ...INITIAL }); return; }
+  const [memory, disk, uptime, info, cpu, thermal, wifi, battery] = await Promise.all([
+    termux.memory(),
+    termux.disk(),
+    termux.uptime(),
+    termux.info(),
+    termux.cpu(),
+    termux.thermal(),
+    termux.wifi(),
+    termux.battery(),
+  ]);
+  setStats({ connected: true, memory, disk, uptime, info, cpu, thermal, wifi, battery });
+  // Push server stats to AuroraStorage so widgets render fresh data
+  updateServerStats({ battery, memory, disk: disk ?? [], cpu, thermal });
+}
+
+function ensureStatsPolling(pollMs: number) {
+  if (statTimer) return;
+  void refreshStats();
+  statTimer = setInterval(() => void refreshStats(), pollMs);
+}
+
+function maybeStopStatsPolling() {
+  if (statSubs.size === 0 && statTimer) {
+    clearInterval(statTimer);
+    statTimer = null;
+  }
+}
+
 export function useSystemStats(pollMs = 15_000): SystemStats {
-  const [stats, setStats] = useState<SystemStats>(INITIAL);
+  const [snap, setSnap] = useState<SystemStats>(sharedStats);
 
   useEffect(() => {
-    let alive = true;
-
-    async function refresh() {
-      const ping = await termux.ping();
-      if (!alive) return;
-      const up = ping?.termux === true;
-      if (!up) {
-        setStats({ ...INITIAL });
-        return;
-      }
-      const [memory, disk, uptime, info, cpu, thermal, wifi] = await Promise.all([
-        termux.memory(),
-        termux.disk(),
-        termux.uptime(),
-        termux.info(),
-        termux.cpu(),
-        termux.thermal(),
-        termux.wifi(),
-      ]);
-      if (!alive) return;
-      setStats({ connected: true, memory, disk, uptime, info, cpu, thermal, wifi });
-      // Push server stats to AuroraStorage so BatteryWidget renders fresh data
-      updateServerStats({ battery: null, memory, disk: disk ?? [], cpu, thermal });
-    }
-
-    void refresh();
-    const t = setInterval(refresh, pollMs);
+    const sub = () => setSnap(sharedStats);
+    statSubs.add(sub);
+    ensureStatsPolling(pollMs);
+    sub(); // mount'ta güncel state'i çek
     return () => {
-      alive = false;
-      clearInterval(t);
+      statSubs.delete(sub);
+      maybeStopStatsPolling();
     };
   }, [pollMs]);
 
-  return stats;
+  return snap;
 }

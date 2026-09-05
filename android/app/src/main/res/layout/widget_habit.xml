@@ -5,23 +5,44 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_bg"
-    android:padding="12dp">
-    <TextView
-        android:id="@+id/widget_habit_title"
+    android:elevation="2dp"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="12dp">
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="#37352f"
-        android:singleLine="true"
-        android:ellipsize="end" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="—"
+            android:textColor="#4c9fef"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.2" />
+        <TextView
+            android:id="@+id/widget_habit_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#c9bdf5"
+            android:fontFamily="sans-serif-medium"
+            android:singleLine="true"
+            android:ellipsize="end" />
+    </LinearLayout>
     <TextView
         android:id="@+id/widget_habit_1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="13sp"
-        android:textColor="#37352f"
-        android:layout_marginTop="6dp"
+        android:textColor="#e9e6e0"
+        android:layout_marginTop="8dp"
         android:singleLine="true"
         android:ellipsize="end" />
     <TextView
@@ -29,7 +50,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="13sp"
-        android:textColor="#37352f"
+        android:textColor="#e9e6e0"
         android:singleLine="true"
         android:ellipsize="end" />
     <TextView
@@ -37,7 +58,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="13sp"
-        android:textColor="#37352f"
+        android:textColor="#e9e6e0"
         android:singleLine="true"
         android:ellipsize="end" />
     <TextView
@@ -45,7 +66,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="12sp"
-        android:textColor="#787774"
+        android:textColor="#8b897f"
         android:layout_marginTop="6dp"
         android:singleLine="true" />
 </LinearLayout>

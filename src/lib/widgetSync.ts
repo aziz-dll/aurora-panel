@@ -78,16 +78,37 @@ function buildFromDB(db: DB): WidgetData {
   };
 }
 
-let lastData: WidgetData | null = null;
+let lastData : WidgetData | null = null;
+
+/**
+ * In the APK the panel runs inside an iframe hosted by the loader page.
+
+ * The loader (top frame) owns the native Capacitor bridge; the iframe
+ * does NOT have `window.Capacitor`, so a direct `AuroraStorage` call would
+ * silently fall back to the web (localStorage) implementation and the
+ * homescreen widgets would never see fresh data. Route through the parent
+ * instead — same pattern as reminders (`postStateToParent`).
+ */
+function isIframe(): boolean {
+  return typeof window !== 'undefined' && window.parent !== window;
+}
+
+function writeWidgetData(data: WidgetData): Promise<void> {
+  if (isIframe()) {
+    window.parent.postMessage({ type: 'aurora-widget-data', payload: data }, '*');
+    return Promise.resolve();
+  }
+  return AuroraStorage.set({ key: KEY, value: JSON.stringify(data) }).then(() => AuroraStorage.notifyWidgets());
+}
 
 export async function syncWidgetsFromDB(db: DB): Promise<void> {
   const data = buildFromDB(db);
   // Preserve last known server stats if any (set via updateServerStats)
   if (lastData) data.server = lastData.server;
+
   lastData = data;
   try {
-    await AuroraStorage.set({ key: KEY, value: JSON.stringify(data) });
-    await AuroraStorage.notifyWidgets();
+    await writeWidgetData(data)
   } catch {
     /* web dev or plugin not registered — silently skip */
   }
@@ -100,8 +121,14 @@ export function updateServerStats(stats: {
   cpu: CpuSample | null;
   thermal: ThermalInfo | null;
 }): void {
-  // Polling'de henüz DB snapshot'ı yazılmamış olsa bile server stats'ı
-  // AuroraStorage'a yaz — ağırlık widget'ı her zaman taze veri görsün.
+  // Polling'de henuz DB snapshot'i yazilmamis olsa bile server stats'i
+
+
+  // AuroraStorage'a yaz — agirlik widget'i her zaman taze veri görsün.
+
+
+
+
 
   if (!lastData) {
     lastData = {
@@ -115,6 +142,5 @@ export function updateServerStats(stats: {
     lastData.server = stats;
     lastData.updatedAt = Date.now();
   }
-  AuroraStorage.set({ key: KEY, value: JSON.stringify(lastData) }).catch(() => {});
-  AuroraStorage.notifyWidgets().catch(() => {});
+  void writeWidgetData(lastData).catch(() => {});
 }

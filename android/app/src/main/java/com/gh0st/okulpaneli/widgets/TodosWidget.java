@@ -32,7 +32,7 @@ public class TodosWidget extends AppWidgetProvider {
         WidgetData data = readData(context);
         for (int id : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_todos);
-            views.setTextViewText(R.id.widget_todos_title, "Aurora · Tasks");
+            views.setTextViewText(R.id.widget_todos_title, "Tasks");
             views.setTextViewText(R.id.widget_todos_1, "");
             views.setTextViewText(R.id.widget_todos_2, "");
             views.setTextViewText(R.id.widget_todos_3, "");
