@@ -272,11 +272,13 @@ export default function Todos() {
 
           {doneList.length > 0 && (
             <section>
-              <button onClick={() => setShowDone(!showDone)} className="btn btn-ghost mb-1 px-2 text-xs text-soft">
-                <Icon name={showDone ? 'chevronDown' : 'chevronRight'} size={12} />
-                Tamamlanan ({doneList.length})
-              </button>
-              {showDone && <ul className="space-y-0.5">{doneList.map(row)}</ul>}
+              {filter !== 'done' && (
+                <button onClick={() => setShowDone(!showDone)} className="btn btn-ghost mb-1 px-2 text-xs text-soft">
+                  <Icon name={showDone ? 'chevronDown' : 'chevronRight'} size={12} />
+                  Tamamlanan ({doneList.length})
+                </button>
+              )}
+              {(showDone || filter === 'done') && <ul className="space-y-0.5">{doneList.map(row)}</ul>}
             </section>
           )}
         </div>

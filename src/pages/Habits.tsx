@@ -83,7 +83,7 @@ function HabitCard({
 }) {
   const db = useDB();
   const today = todayISO();
-  const done = habitCompletedOn(db.habitLog, habit, today);
+  const done = habitExpectedOn(db.habitLog, habit, today) && habitCompletedOn(db.habitLog, habit, today);
   const streak = habitStreak(db.habitLog, habit, today);
   const rate = habitRate(db.habitLog, habit, today, 30);
   const isBuilt = habit.type === 'build' && streak >= BUILT_THRESHOLD;

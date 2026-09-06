@@ -240,7 +240,7 @@ export default function Dashboard() {
           <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
             🗓️ Upcoming exams
             <a href="#/student" className="text-xs font-medium text-accent hover:underline">
-              Dashboard →
+              All →
             </a>
           </h2>
           {nextExams.length === 0 ? (

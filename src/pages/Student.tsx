@@ -23,7 +23,9 @@ export default function Student() {
   const [assessmentDraft, setAssessmentDraft] = useState<Record<string, { label: string; score: string }>>({});
 
   const stats = overallStats(db.courses);
-  const upcomingExams = [...db.exams].sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
+  const upcomingExams = [...db.exams]
+    .filter((e) => e.date >= todayISO())
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
 
   const addCourse = (e: FormEvent) => {
     e.preventDefault();

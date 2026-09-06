@@ -98,7 +98,7 @@ export function buildDrafts(db: DB, s: DB['settings']): AuroraNotificationDraft[
   const drafts: AuroraNotificationDraft[] = [];
 
   // 1) Su hatırlatıcıları — günlük tekrar
-  if (s.waterEnabled) {
+  if (s.waterEnabled && s.notifications.waterChannel !== false) {
     const fromH = Number(s.waterFrom.split(':')[0]) || 8;
     const toH = Number(s.waterTo.split(':')[0]) || 22;
     const step = Math.max(1, Math.min(6, s.waterEveryHours || 2));
@@ -114,17 +114,20 @@ export function buildDrafts(db: DB, s: DB['settings']): AuroraNotificationDraft[
   }
 
   // 2) Antrenman hatırlatıcısı — bugün yapılmadıysa tek seferlik
-  if (s.workoutEnabled) {
+  if (s.workoutEnabled && s.notifications.workoutChannel !== false) {
     const today = todayISO();
-    const doneToday = (db.workouts[today]?.length ?? 0) > 0;
-    if (!doneToday) {
-      drafts.push({
-        id: hashId('wo', 'today'),
-        title: '🏋️ Antrenman zamanı',
-        body: "Bugünkü antrenman hâlâ bekliyor. 30 dakika yeter, hadi başla!",
-        route: '/fitness',
-        at: nextOccurrence(s.workoutTime).toISOString(),
-      });
+    const doneTodayUp = (db.workouts[today]?.length ?? 0) > 0;
+    if (!doneTodayUp) {
+      const wAt = nextOccurrence(s.workoutTime);
+      if (wAt.getTime() > Date.now()) {
+        drafts.push({
+          id: hashId('wo', 'today'),
+          title: '🏋️ Antrenman zamanı',
+          body: "Bugünkü antrenman hâlâ bekliyor. 30 dakika yeter, hadi başla!",
+          route: '/fitness',
+          at: wAt.toISOString(),
+        });
+      }
     }
   }
 
@@ -136,12 +139,14 @@ export function buildDrafts(db: DB, s: DB['settings']): AuroraNotificationDraft[
       .slice(0, 32);
     for (const todo of openTodos) {
       const fireDate = plusDaysISO(daysUntil(todo.due!) - s.todoReminderDays);
+      const fireAt = new Date(atTimeISO(fireDate, s.reminderTime));
+      if (fireAt.getTime() <= Date.now()) continue;
       drafts.push({
         id: hashId('t', todo.id),
         title: '⏳ Ödev hatırlatıcı',
         body: `«${todo.title}» — ${s.todoReminderDays} gün kaldı. Bugün başla, son geceye bırakma.`,
         route: '/todos',
-        at: atTimeISO(fireDate, s.reminderTime),
+        at: fireAt.toISOString(),
       });
     }
   }
@@ -154,12 +159,14 @@ export function buildDrafts(db: DB, s: DB['settings']): AuroraNotificationDraft[
       .slice(0, 32);
     for (const ex of exams) {
       const fireDate = plusDaysISO(daysUntil(ex.date) - s.examReminderDays);
+      const fireAt = new Date(atTimeISO(fireDate, s.reminderTime));
+      if (fireAt.getTime() <= Date.now()) continue;
       drafts.push({
         id: hashId('e', ex.id),
         title: '📝 Sınav hatırlatıcı',
         body: `«${ex.title}» sınavı ${ex.date} — ${s.examReminderDays} gün kaldı, çalışma planı yap.`,
         route: '/student',
-        at: atTimeISO(fireDate, s.reminderTime),
+        at: fireAt.toISOString(),
       });
     }
     const today = todayISO();

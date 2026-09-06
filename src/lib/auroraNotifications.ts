@@ -47,25 +47,60 @@ export interface AuroraNotificationPlugin {
  * Web fallback: web Notification API'sini kullanır (dev/test için).
  */
 export const AuroraNotification = registerPlugin<AuroraNotificationPlugin>('AuroraNotification', {
-  web: () => ({
-    async schedule({ notifications }: { notifications: AuroraNotificationDraft[] }) {
-      const ids: number[] = [];
-      for (const n of notifications) {
-        if (typeof window === 'undefined' || !('Notification' in window)) continue;
-        if (Notification.permission === 'default') {
-          try { await Notification.requestPermission(); } catch { /* yoksay */ }
-        }
-        if (Notification.permission !== 'granted') continue;
-        try {
-          const notif = new Notification(n.title, { body: n.body });
-          notif.onclick = () => { if (n.route) location.hash = n.route; };
-          ids.push(typeof n.id === 'number' ? n.id : Date.now() & 0x7fffffff);
-        } catch { /* yoksay */ }
+  web: () => {
+    const timers = new Map<string | number, ReturnType<typeof setTimeout>>();
+    const fire = (n: AuroraNotificationDraft) => {
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        void Notification.requestPermission().catch(() => {});
       }
-      return { scheduled: ids };
-    },
-    async cancel() { /* no-op */ },
-    async cancelAll() { /* no-op */ },
+      if (Notification.permission !== 'granted') return;
+      try {
+        const notif = new Notification(n.title, { body: n.body });
+        notif.onclick = () => {
+          if (n.route) {
+            const hash = n.route.startsWith('#') ? n.route : `#${n.route}`;
+            location.hash = hash;
+          }
+          window.focus();
+        };
+      } catch { /* yoksay */ }
+    };
+    const clear = (id: string | number) => {
+      const t = timers.get(id);
+      if (t) { clearTimeout(t); timers.delete(id); }
+    };
+    return {
+      async schedule({ notifications }: { notifications: AuroraNotificationDraft[] }) {
+        const ids: (string | number)[] = [];
+        for (const n of notifications) {
+          if (typeof window === 'undefined' || !('Notification' in window)) continue;
+          const key = n.id ?? `${n.title}:${n.body}`;
+          clear(key);
+          let target: Date | null = null;
+          if (n.everyDay) {
+            target = new Date();
+            target.setHours(n.everyDay.hour, n.everyDay.minute, 0, 0);
+            if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+          } else if (typeof n.at === 'string' || typeof n.at === 'number') {
+            target = new Date(n.at);
+          } else if (typeof n.delayMinutes === 'number') {
+            target = new Date(Date.now() + n.delayMinutes *   60_000);
+          }
+          if (!target || target.getTime() <= Date.now()) continue;
+          const delay = target.getTime() - Date.now();
+          timers.set(key, setTimeout(() => { timers.delete(key); fire(n); }, delay));
+          ids.push(key);
+        }
+        return { scheduled: ids };
+      },
+      async cancel({ ids }: { ids: (string | number)[] }) {
+        for (const id of ids) clear(id);
+      },
+      async cancelAll() {
+        for (const t of timers.values()) clearTimeout(t);
+        timers.clear();
+      },
     async requestPermission() {
       if (typeof window === 'undefined' || !('Notification' in window)) return { granted: false };
       if (Notification.permission === 'default') {
@@ -84,5 +119,6 @@ export const AuroraNotification = registerPlugin<AuroraNotificationPlugin>('Auro
       }
       return { id: Date.now() & 0x7fffffff };
     },
-  }),
+  };
+},
 });

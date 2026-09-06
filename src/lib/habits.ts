@@ -16,21 +16,23 @@ export function isoFromDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Returns true if the habit is expected to be done on the given date. */
-export function habitExpectedOn(log: HabitLog, habit: Habit, iso: string): boolean {
+/** Returns true if this date is a scheduled slot for the habit frequency (no counting logic). */
+function habitScheduledOn(habit: Habit, iso: string): boolean {
   if (habit.frequency === 'daily') return true;
   if (habit.frequency === 'weekly') {
     const d = new Date(iso + 'T00:00:00');
     const dow = (d.getDay() + 6) % 7; // 0=Mon ... 6=Sun
     return habit.weekdays?.includes(dow) ?? false;
   }
-  if (habit.frequency === 'x-per-week') {
-    return !habitWeekCompleted(habit, iso, log);
-  }
-  if (habit.frequency === 'x-per-month') {
-    return !habitMonthCompleted(habit, iso, log);
-  }
-  return false;
+  // x-per-week / x-per-month: any day is a candidate until the target is met
+  return true;
+}
+
+/** Returns true if the habit is expected to be done on the given date. */
+export function habitExpectedOn(log: HabitLog, habit: Habit, iso: string): boolean {
+  if (habit.frequency === 'x-per-week') return !habitWeekCompleted(habit, iso, log);
+  if (habit.frequency === 'x-per-month') return !habitMonthCompleted(habit, iso, log);
+  return habitScheduledOn(habit, iso);
 }
 
 /** Build habits: true if marked done. Quit habits: true if marked slipped (means you did NOT slip). */
@@ -61,7 +63,7 @@ function habitWeekCompleted(habit: Habit, iso: string, log: HabitLog): boolean {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + i);
     const dayIso = isoFromDate(day);
-    if (habitExpectedOn(log, habit, dayIso) && habitCompletedOn(log, habit, dayIso)) count++;
+    if (habitScheduledOn(habit, dayIso) && habitCompletedOn(log, habit, dayIso)) count++;
   }
   return count >= target;
 }
@@ -76,7 +78,7 @@ function habitMonthCompleted(habit: Habit, iso: string, log: HabitLog): boolean 
     const test = new Date(year, month, day);
     if (test.getMonth() !== month) break;
     const dayIso = isoFromDate(test);
-    if (habitExpectedOn(log, habit, dayIso) && habitCompletedOn(log, habit, dayIso)) count++;
+    if (habitScheduledOn(habit, dayIso) && habitCompletedOn(log, habit, dayIso)) count++;
   }
   return count >= target;
 }

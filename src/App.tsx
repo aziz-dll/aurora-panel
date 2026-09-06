@@ -104,7 +104,10 @@ export default function App() {
     // todo ve exam içeriklerinin parmak izi — tarih/durum değişiklikleri de sync tetikler
     todosFp: db.todos.map((t) => [t.id, t.done, t.due, t.title].join('|')).join('~'),
     examsFp: db.exams.map((e) => [e.id, e.date, e.time].join('|')).join('~'),
-    today: Object.keys(db.workouts).length,
+    workoutsFp: Object.keys(db.workouts)
+      .sort()
+      .map((k) => `${k}:${(db.workouts[k] ?? []).sort().join(',')}`)
+      .join('~'),
   });
   useEffect(() => {
     const id = setTimeout(() => {

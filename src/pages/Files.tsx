@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../lib/icons';
 import { patchSettings, useDB } from '../lib/store';
 
@@ -8,14 +8,17 @@ export default function Files() {
   const [url, setUrl] = useState(db.settings.filebrowserUrl);
   // URL değişince 5 sn timeout ile "yüklenemedi" durumunu sıfırla
   const [failed, setFailed] = useState(false);
+  const failTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUrl = db.settings.filebrowserUrl;
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      setFailed(true);
-    }, 5000);
+    setFailed(false);
+    if (failTimer.current) clearTimeout(failTimer.current);
+    if (!currentUrl.trim()) return;
+    failTimer.current = setTimeout(() => setFailed(true), 5000);
     return () => {
-      clearTimeout(t);
-      setFailed(false);
+      if (failTimer.current) clearTimeout(failTimer.current);
+      failTimer.current = null;
     };
   }, [currentUrl]);
 
@@ -84,6 +87,11 @@ export default function Files() {
               key={db.settings.filebrowserUrl}
               src={db.settings.filebrowserUrl}
               title="FileBrowser"
+              onLoad={() => {
+                if (failTimer.current) clearTimeout(failTimer.current);
+                failTimer.current = null;
+                setFailed(false);
+              }}
               className={failed ? 'pointer-events-none invisible h-0 w-0' : 'h-full w-full border-0'}
               sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox"
             />
