@@ -146,6 +146,29 @@ async function handleApi(req, res, pathname) {
       }
       return send(res, 200, rows);
     }
+    case '/api/storage': {
+      // Termux'un gerçekten yaşadığı partition (öncelik sırasıyla): Termux
+      // kökü, /data, /storage/emulated. "/" (rootfs) SAHTE — %1 gösterip
+      // kullanıcının gerçek doluluğunu gizliyordu.
+      const out = await run('sh', ['-c',
+        "df -k /data/data/com.termux /data /storage/emulated 2>/dev/null | tail -n +2"]);
+      if (!out) return jsonReply(false);
+      const parse = (line) => {
+        const p = line.trim().split(/\s+/);
+        if (p.length < 6) return null;
+        const t = Number(p[1]), u = Number(p[2]), f = Number(p[3]);
+        if (!Number.isFinite(t) || t === 0) return null;
+        const toGB = (kb) => Math.round((kb / 1024 / 1024) * 100) / 100;
+        return { total: toGB(t), used: toGB(u), free: toGB(f), pct: Math.round(u / t * 100) };
+      };
+      let storage = null;
+      for (const line of out.split('\n')) {
+        const sv = parse(line);
+        if (sv) { storage = sv; break; } // df sırası: istenen hedefler sırayla gelir
+      }
+      if (!storage) return jsonReply(false);
+      return send(res, 200, storage);
+    }
     case '/api/uptime': {
       const out = await run('cat', ['/proc/uptime']);
       if (!out) return jsonReply(false);

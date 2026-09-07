@@ -6,6 +6,7 @@ import {
   type CpuSample,
   type DiskInfo,
   type MemoryInfo,
+  type StorageInfo,
   type SystemInfo,
   type ThermalInfo,
   type UptimeInfo,
@@ -16,6 +17,7 @@ export interface SystemStats {
   connected: boolean;
   memory: MemoryInfo | null;
   disk: DiskInfo[] | null;
+  storage: StorageInfo | null;
   uptime: UptimeInfo | null;
   info: SystemInfo | null;
   cpu: CpuSample | null;
@@ -28,6 +30,7 @@ const INITIAL: SystemStats = {
   connected: false,
   memory: null,
   disk: null,
+  storage: null,
   uptime: null,
   info: null,
   cpu: null,
@@ -56,9 +59,10 @@ async function refreshStats() {
   const ping = await termux.ping();
   const up = ping?.termux === true;
   if (!up) { setStats({ ...INITIAL }); return; }
-  const [memory, disk, uptime, info, cpu, thermal, wifi, battery] = await Promise.all([
+  const [memory, disk, storage, uptime, info, cpu, thermal, wifi, battery] = await Promise.all([
     termux.memory(),
     termux.disk(),
+    termux.storage(),
     termux.uptime(),
     termux.info(),
     termux.cpu(),
@@ -66,9 +70,9 @@ async function refreshStats() {
     termux.wifi(),
     termux.battery(),
   ]);
-  setStats({ connected: true, memory, disk, uptime, info, cpu, thermal, wifi, battery });
+  setStats({ connected: true, memory, disk, storage, uptime, info, cpu, thermal, wifi, battery });
   // Push server stats to AuroraStorage so widgets render fresh data
-  updateServerStats({ battery, memory, disk: disk ?? [], cpu, thermal });
+  updateServerStats({ battery, memory, disk: disk ?? [], storage, cpu, thermal });
 }
 
 function ensureStatsPolling(pollMs: number) {

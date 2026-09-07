@@ -13,13 +13,17 @@ import com.gh0st.okulpaneli.widgets.Habit30Widget;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Custom Capacitor plugins — super.onCreate() bridge'i KURAR ve
+        // registerAllPlugins() ile kayıtları bitirir; registerPlugin bu yüzden
+        // super'den ÖNCE çağrılmalı. Sonradan çağrılırsa "unable to find plugin"
+        // hatasıyla tüm custom plugin çağrıları reddedilir (bildirim + widget
+        // köprüsünün hiç çalışmamasının kök nedeni).
+        registerPlugin(AuroraStoragePlugin.class);
+        registerPlugin(AuroraNotificationPlugin.class);
         super.onCreate(savedInstanceState);
         // WebView tam ekran açılsın; status bar altından başlamasın (aşağıdaki
         // safe-area insets'i CSS'te tek kaynak olarak uygulanıyor — çifte boşluk olmasın)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        // Custom Capacitor plugins
-        registerPlugin(AuroraStoragePlugin.class);
-        registerPlugin(AuroraNotificationPlugin.class);
         handleTapIntent(getIntent());
         // Uygulama açıldığında widget'ı tazele — kullanıcı uygulamayı
         // son açtığından beri DB değişmiş olabilir.
@@ -55,6 +59,9 @@ public class MainActivity extends BridgeActivity {
                     com.gh0st.okulpaneli.widgets.HabitWidget.class,
                     com.gh0st.okulpaneli.widgets.ExamsWidget.class,
                     com.gh0st.okulpaneli.widgets.QuickNoteWidget.class,
+                    com.gh0st.okulpaneli.widgets.HabitTodayWidget.class,
+                    com.gh0st.okulpaneli.widgets.HabitWeekWidget.class,
+                    com.gh0st.okulpaneli.widgets.HabitStatsWidget.class,
                     Habit30Widget.class}) {
                 ComponentName name = new ComponentName(this, c);
                 int[] ids = mgr.getAppWidgetIds(name);

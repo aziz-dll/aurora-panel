@@ -27,7 +27,7 @@ import java.util.Locale;
  *
  * Reads {@code widget-data.exams} from AuroraStorage.
  */
-public class ExamsWidget extends AppWidgetProvider {
+public class ExamsWidget extends AuroraWidgetBase {
 
     private static final String PREFS = "aurora_storage";
     private static final String KEY = "widget-data";
@@ -40,7 +40,7 @@ public class ExamsWidget extends AppWidgetProvider {
     private static final int GRAY = 0xFF9A9AA3;
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
+    protected void renderSafe(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
         JSONArray exams = readExams(context);
         int n = exams == null ? 0 : exams.length();
 
@@ -150,12 +150,4 @@ public class ExamsWidget extends AppWidgetProvider {
         }
     }
 
-    static PendingIntent openAppPendingIntent(Context context, String route) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setData(Uri.parse("aurora://app" + route));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        return PendingIntent.getActivity(
-                context, route.hashCode(), intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-    }
 }

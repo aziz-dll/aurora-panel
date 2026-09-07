@@ -70,6 +70,26 @@ public class AuroraStoragePlugin extends Plugin {
         call.resolve(ret);
     }
 
+    /**
+     * Home-screen widget dokunuş kuyruğunu atomik boşalt: [{habitId, iso, at}]
+     * döner ve kuyruk temizlenir. Loader 5 sn'lik poll ile çağırıp
+     * postMessage ile panelin DB'sine işletir; panel widget-data'yı
+     * yeniden yazınca widget yetkili duruma döner.
+     */
+    @PluginMethod
+    public void drainHabitQueue(PluginCall call) {
+        SharedPreferences sp = prefs();
+        String raw = sp.getString("habit-toggle-queue", "[]");
+        sp.edit().remove("habit-toggle-queue").apply();
+        JSObject ret = new JSObject();
+        try {
+            ret.put("items", JSArray.from(raw));
+        } catch (Exception e) {
+            try { ret.put("items", JSArray.from("[]")); } catch (Exception ignored) {}
+        }
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void notifyWidgets(PluginCall call) {
         Context ctx = getContext();
@@ -86,6 +106,9 @@ public class AuroraStoragePlugin extends Plugin {
             updateProvider(ctx, mgr, ExamsWidget.class);
             updateProvider(ctx, mgr, QuickNoteWidget.class);
             updateProvider(ctx, mgr, Habit30Widget.class);
+            updateProvider(ctx, mgr, com.gh0st.okulpaneli.widgets.HabitTodayWidget.class);
+            updateProvider(ctx, mgr, com.gh0st.okulpaneli.widgets.HabitWeekWidget.class);
+            updateProvider(ctx, mgr, com.gh0st.okulpaneli.widgets.HabitStatsWidget.class);
         }
         call.resolve();
     }

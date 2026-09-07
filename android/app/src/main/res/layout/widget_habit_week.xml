@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HabitKit Week widget: tek alışkanlığın son 7 günü — her gün bir dikey
+     çubuk (yükseklik = haftanın günü doluluğu yerine done/slip durumu) +
+     gün harfi. Satırlar Java'da RemoteViews olarak eklenir. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_habit_week_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <View
+            android:id="@+id/widget_habit_week_dot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/widget_habit30_dot" />
+
+        <TextView
+            android:id="@+id/widget_habit_week_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="WEEK"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_habit_week_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#F59E0B"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_habit_week_bars"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="10dp"
+        android:gravity="bottom"
+        android:orientation="horizontal" />
+
+    <TextView
+        android:id="@+id/widget_habit_week_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="12dp"
+        android:text="No active habit yet — open Aurora"
+        android:textColor="@color/widget_sub"
+        android:textSize="12sp"
+        android:visibility="gone" />
+</LinearLayout>

@@ -25,7 +25,7 @@ import {
   tileStatus,
 } from './habits';
 import { todayISO } from './utils';
-import type { MemoryInfo, DiskInfo, CpuSample, BatteryInfo, ThermalInfo } from './termux';
+import type { MemoryInfo, DiskInfo, StorageInfo, CpuSample, BatteryInfo, ThermalInfo } from './termux';
 
 export interface WidgetTodo {
   id: string;
@@ -85,16 +85,25 @@ export interface WidgetNote {
 
 export interface WidgetData {
   todos: WidgetTodo[];
+  /** Gösterilmeyen açık görev sayısı — widget ""+N" footer'ı için. */
+  todosTotalOpen?: number;
   lessons: WidgetLesson[];
   habits: WidgetHabit[];
-  /** 30-day habit picker widget verisi: en iyi streak yapan habit. */
+  /** Bugünün ISO tarihi — Today widget toggle'ları bu günü işaretler. */
+  today?: string;
+  /** 30-day habit picker widget verisi: en iyi streak yapan habit (eski alan). */
   habit30: WidgetHabit30 | null;
+  /** Habit30 ÇOKLU widget: HER aktif alışkanlık için 30 günlük veri —
+   *  birden çok 30D widget farklı alışkanlıkları gösterebilsin diye. */
+  habit30all?: WidgetHabit30[];
   exams: WidgetExam[];
   notes: WidgetNote[];
   server: {
     battery: BatteryInfo | null;
     memory: MemoryInfo | null;
     disk: DiskInfo[];
+    /** Termux'un gerçek partition'ı — "/" mount'ı sahte düşük değer verdiğinden ayrı tutuldu. */
+    storage: StorageInfo | null;
     cpu: CpuSample | null;
     thermal: ThermalInfo | null;
   };
@@ -102,6 +111,41 @@ export interface WidgetData {
 }
 
 const KEY = 'widget-data';
+
+/** Bir alışkanlık için HabitKit 30-gün widget verisi üret (eski→yeni günler). */
+function buildHabit30(
+  habit: DB['habits'][number],
+  streak: number,
+  rate: number,
+  doneToday: boolean,
+  db: DB,
+): WidgetHabit30 {
+  const t = todayISO();
+  const dates = lastNDates(t, 30);
+  const days: WidgetHabitDay[] = dates.map((iso) => ({
+    iso,
+    status: tileStatus(habit, iso, db.habitLog ?? {}),
+  }));
+  const totalExpected = days.filter((d) => d.status !== 'skip').length;
+  const totalDone = days.filter((d) => d.status === 'done').length;
+  return {
+    habit: {
+      id: habit.id,
+      title: habit.title,
+      type: habit.type,
+      streak,
+      rate,
+      color: habit.color,
+      icon: habit.icon,
+      done: doneToday,
+    },
+    days,
+    rate,
+    streak,
+    totalExpected,
+    totalDone,
+  };
+}
 
 function buildFromDB(db: DB): WidgetData {
   const t = todayISO();
@@ -111,7 +155,7 @@ function buildFromDB(db: DB): WidgetData {
 
   const widgetsHabits: WidgetHabit[] = habits
     .filter((h) => habitExpectedOn(db.habitLog ?? {}, h, t))
-    .slice(0, 6)
+    .slice(0, 8)
     .map((h) => ({
       id: h.id,
       title: h.title,
@@ -141,31 +185,14 @@ function buildFromDB(db: DB): WidgetData {
 
   let habit30: WidgetHabit30 | null = null;
   if (pick) {
-    const dates = lastNDates(t, 30);
-    const days: WidgetHabitDay[] = dates.map((iso) => ({
-      iso,
-      status: tileStatus(pick.habit, iso, db.habitLog ?? {}),
-    }));
-    const totalExpected = days.filter((d) => d.status !== 'skip').length;
-    const totalDone = days.filter((d) => d.status === 'done').length;
-    habit30 = {
-      habit: {
-        id: pick.habit.id,
-        title: pick.habit.title,
-        type: pick.habit.type,
-        streak: pick.streak,
-        rate: pick.rate,
-        color: pick.habit.color,
-        icon: pick.habit.icon,
-        done: pick.done,
-      },
-      days,
-      rate: pick.rate,
-      streak: pick.streak,
-      totalExpected,
-      totalDone,
-    };
+    habit30 = buildHabit30(pick.habit, pick.streak, pick.rate, pick.done, db);
   }
+
+  // Habit30 ÇOKLU widget: HER aktif alışkanlık için ayrı 30-gün verisi —
+  // kullanıcı kaç tane 30D widget eklerse her biri farklı alışkanlık gösterebilir.
+  const habit30all: WidgetHabit30[] = active
+    .slice(0, 12)
+    .map((a) => buildHabit30(a.habit, a.streak, a.rate, a.done, db));
 
   return {
     todos: db.todos
@@ -178,7 +205,9 @@ function buildFromDB(db: DB): WidgetData {
       .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start))
       .slice(0, 12),
     habits: widgetsHabits,
+    today: t,
     habit30,
+    habit30all,
     exams: db.exams
       .filter((e) => e.date && new Date(e.date + 'T00:00:00').getTime() >= Date.now() - 86_400_000)
       .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
@@ -189,7 +218,7 @@ function buildFromDB(db: DB): WidgetData {
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
       .slice(0, 3)
       .map((n) => ({ id: n.id, title: n.title ?? '', body: n.body ?? '', updatedAt: Date.parse(n.updatedAt) || 0 })),
-    server: { battery: null, memory: null, disk: [], cpu: null, thermal: null },
+    server: { battery: null, memory: null, disk: [], storage: null, cpu: null, thermal: null },
     updatedAt: Date.now(),
   };
 }
@@ -234,6 +263,7 @@ export function updateServerStats(stats: {
   battery: BatteryInfo | null;
   memory: MemoryInfo | null;
   disk: DiskInfo[];
+  storage: StorageInfo | null;
   cpu: CpuSample | null;
   thermal: ThermalInfo | null;
 }): void {

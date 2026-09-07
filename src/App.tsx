@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import { TopBar } from './components/TopBar';
 
-import { getDB, useDB } from './lib/store';
+import { getDB, updateDB, useDB } from './lib/store';
+import { toggleDay } from './lib/habits';
 import { hasReminderPermission, requestReminderPermission, remindersAvailable, syncReminders } from './lib/reminders';
 import { checkServerBattery } from './lib/serverBattery';
 import { syncWidgetsFromDB } from './lib/widgetSync';
@@ -141,6 +142,25 @@ export default function App() {
     void checkServerBattery();
     const iv = setInterval(() => void checkServerBattery(), 60_000);
     return () => clearInterval(iv);
+  }, []);
+
+  // Habit30/Today home-screen widget'larından gelen gün-işaretleme istekleri.
+  // Loader kuyruğu boşaltıp postMessage ile iletir: {type, habitId, iso}
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      // Sadece kendi origin'imizden (loader iletir) — başka frame DB yazamaz
+      if (e.origin !== location.origin) return;
+      const d = e.data;
+      if (!d || d.type !== 'aurora-widget-toggle-habit') return;
+      const db = getDB();
+      const habit = (db.habits ?? []).find((h) => h.id === d.habitId);
+      if (!habit) return;
+      updateDB((draft) => {
+        draft.habitLog = toggleDay(habit, String(d.iso), draft.habitLog).log;
+      });
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
   }, []);
 
   const Page = PAGES[path] ?? Dashboard;

@@ -6,4 +6,7 @@
     <color name="widget_title">#8A8A93</color>
     <color name="widget_text">#1C1C22</color>
     <color name="widget_sub">#9A9AA3</color>
+    <!-- Habit30 "skip" hücreleri (light tema): sol gri dolgu + çerçeve -->
+    <color name="widget_habit30_skip_fill">#ECECEF</color>
+    <color name="widget_habit30_skip_stroke">#D5D5DB</color>
 </resources>

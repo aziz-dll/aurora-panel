@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Week widget tek gün kolonu: dikey çubuk (duruma göre renk/yükseklik) +
+     altında gün harfi. Çubuk: 0dp-yükseklik layout_weight ile boş alan,
+     içteki fill view Java'da setViewLayoutHeight benzeri yöntemle... RemoteViews
+     yükseklik ayarlayamadığı için yaklaşım: sabit 3 kademeli çubuk (done=full,
+     slip=half-alpha, skip=track) — her kademe ayrı View, görünürlük ile seçilir. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_habit_week_col"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:layout_marginEnd="4dp"
+    android:gravity="bottom|center_horizontal"
+    android:orientation="vertical">
+
+    <!-- done çubuğu: tam yükseklik -->
+    <View
+        android:id="@+id/widget_habit_week_bar_done"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:visibility="gone" />
+
+    <!-- slip çubuğu: yarı yükseklik -->
+    <View
+        android:id="@+id/widget_habit_week_bar_slip"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <!-- skip: nokta kadar -->
+    <View
+        android:id="@+id/widget_habit_week_bar_skip"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widget_habit_week_day"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="10sp"
+        android:textColor="@color/widget_sub"
+        android:singleLine="true" />
+</LinearLayout>

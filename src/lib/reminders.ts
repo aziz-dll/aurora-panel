@@ -16,9 +16,33 @@ export function remindersAvailable(): boolean {
   return Capacitor.isNativePlatform() || (typeof window !== 'undefined' && 'Notification' in window);
 }
 
-export async function requestReminderPermission(): Promise<boolean> {
-  const r = await AuroraNotification.requestPermission();
-  return r.granted;
+export function requestReminderPermission(): Promise<boolean> {
+  // Iframe'deysek parent (loader) native diyaloğu açar ve sonucu
+  // 'aurora-perm-result' mesajıyla geri gönderir
+  if (typeof window !== 'undefined' && window.parent !== window) {
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (v: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        resolve(v);
+      };
+      const onMsg = (ev: MessageEvent) => {
+        if (ev.data?.type === 'aurora-perm-result') finish(!!ev.data.granted);
+      };
+      // 60 sn cevap gelmezse (eski APK) olumsuz say — dialog takılı kalmasın
+      const timer = setTimeout(() => finish(false), 60_000);
+      window.addEventListener('message', onMsg);
+      try {
+        window.parent.postMessage({ type: 'aurora-notif-permission' }, '*');
+      } catch {
+        finish(false);
+      }
+    });
+  }
+  return AuroraNotification.requestPermission().then((r) => r.granted);
 }
 
 export async function hasReminderPermission(): Promise<boolean> {

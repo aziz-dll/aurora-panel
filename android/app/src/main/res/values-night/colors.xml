@@ -6,4 +6,7 @@
     <color name="widget_title">#8F8F98</color>
     <color name="widget_text">#F0F0F4</color>
     <color name="widget_sub">#77777F</color>
+    <!-- Habit30 "skip" hücreleri (dark tema) -->
+    <color name="widget_habit30_skip_fill">#1B1B1F</color>
+    <color name="widget_habit30_skip_stroke">#2A2A31</color>
 </resources>

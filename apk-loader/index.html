@@ -85,14 +85,6 @@
     #toast.warn { color: #ffd28a; border-color: #5a451f; }
     #toast.actionable { pointer-events: auto; cursor: pointer; }
 
-    /* Test bildirimi butonu — sağ alt köşede yarı saydam, hızlı erişim */
-    #test-btn {
-      position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 16px);
-      z-index: 9998; padding: 10px 14px; font-size: 13px; font-weight: 600;
-      color: #f5f5f5; background: #1a1a1acc; border: 1px solid #2a2a2a;
-      border-radius: 999px; backdrop-filter: blur(8px); cursor: pointer;
-    }
-    #test-btn:active { transform: scale(.96); }
   </style>
   <script src="native-bridge.js"></script>
   <script src="capacitor-exports.js"></script>
@@ -126,7 +118,6 @@
   <div id="shell">
     <div id="toast" class="toast"></div>
     <iframe id="panel" title="Panel"></iframe>
-    <button id="test-btn" style="display:none">🔔 Test bildirimi</button>
   </div>
 
   <script>
@@ -179,10 +170,17 @@
     function connect(origin, remember) {
       setStatus('Connecting…', false, true);
       $btn.disabled = true;
-      var ctrl = new AbortController();
-      var timer = setTimeout(function () { ctrl.abort(); }, 4000);
-      fetch(origin + '/api/ping', { signal: ctrl.signal, cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      /* AbortController Chrome 66+ — J7 Prime'daki WebView 64'te yok.
+         Manuel timeout yarışı kullan. Asılı fetch'te buton ölmesin. */
+      var timedOut = false;
+      var timer = setTimeout(function () {
+        timedOut = true;
+        $btn.disabled = false;
+        setStatus('Can\'t reach the server — timed out', true);
+        showForm();
+      }, 4000);
+      fetch(origin + '/api/ping', { cache: 'no-store' })
+        .then(function (r) { return r.ok && !timedOut ? r.json() : Promise.reject(); })
         .then(function (data) {
           clearTimeout(timer);
           if (!data || data.ok !== true) return Promise.reject();
@@ -230,25 +228,80 @@
       try { return JSON.parse(localStorage.getItem('lastState') || '{}'); } catch (e) { return {}; }
     }
 
+    /* İzin durumu — dialog açıkken de doğru cevap için önbellek + tek dialog */
+    var permInFlight = null;
     async function ensurePerm() {
-      if (!AN) return false;
-      const r = await AN.requestPermission();
-      if (!r.granted) {
-        flash('🔕 Bildirim izni yok — buraya dokunup ayarlardan aç', 'warn', function () {
-          if (AN.openSettings) AN.openSettings();
-        });
-      }
-      return r.granted;
+      if (permInFlight) return permInFlight;
+      permInFlight = (async function () {
+        if (!IS_NATIVE) return false;
+        var permGranted = null;
+        try {
+          // status: { granted } — diyalog AÇMADAN bakar
+          var st = await window.Capacitor.nativePromise('AuroraNotification', 'permissionStatus', {});
+          permGranted = !!(st && st.granted);
+          if (!permGranted) {
+            // Dialog açılır; promise kullanıcı cevaplayınca resolve olur.
+            var r = await window.Capacitor.nativePromise('AuroraNotification', 'requestPermission', {});
+            permGranted = !!(r && r.granted);
+          }
+        } catch (e) {
+          /* permissionStatus eski APK'da yok → UNIMPLEMENTED. Ölümcül değil:
+             bilinmiyor say ve devam et; gerçek hata schedule'da görünür. */
+          permGranted = null;
+        }
+        if (permGranted === false) {
+          flash('🔕 Bildirim izni yok — buraya dokunup ayarlardan aç', 'warn', function () {
+            try { window.Capacitor.nativePromise('AuroraNotification', 'openSettings', {}); } catch (e2) {}
+          });
+        }
+        return permGranted !== false;
+      })();
+      try { return await permInFlight; } finally { permInFlight = null; }
+    }
+
+    /* Uygulama ilk açıldığında sistem izin diyaloğunu bir kez göster. */
+    function firstLaunchPermissionAsk() {
+      if (!IS_NATIVE) return;
+      ensurePerm();
+    }
+
+    /* İzin/alarm ortamı kontrolü — dokunulabilir uyarılar */
+    function checkExactAlarmAndBattery() {
+      if (!IS_NATIVE) return;
+      window.Capacitor.nativePromise('AuroraNotification', 'diagnostics', {})
+        .then(function (d) {
+          if (!d) return;
+          if (d.notificationsEnabled === false) {
+            flash('🔕 Bildirim izni yok — dokun ve ayarlardan aç', 'warn', function () {
+              try { window.Capacitor.nativePromise('AuroraNotification', 'openSettings', {}); } catch (e) {}
+            });
+          } else if (d.channelBlocked) {
+            flash('🔕 "Aurora reminders" kanalı kapalı — bildirim ayarlarından aç', 'warn', function () {
+              try { window.Capacitor.nativePromise('AuroraNotification', 'openSettings', {}); } catch (e) {}
+            });
+          }
+          if (d.exactAlarms === false) {
+            flash('⏰ Tam zamanlı alarm izni kapalı — dokun ve aç', 'warn', function () {
+              try { window.Capacitor.nativePromise('AuroraStorage', 'openExactAlarmSettings', {}); } catch (e) {}
+            });
+          }
+          if (d.batteryOptimized === true) {
+            flash('🔋 Pil optimizasyonu alarmları erteliyor — dokun ve muafiyet ver', 'warn', function () {
+              try { window.Capacitor.nativePromise('AuroraStorage', 'openBatterySettings', {}); } catch (e) {}
+            });
+          }
+        })
+        .catch(function () {});
     }
 
     async function applyPendingRoute() {
       if (!AS || !AS.get) return;
       try {
-        var r = await AS.get({ key: 'pending-route' });
+        var r = await window.Capacitor.nativePromise('AuroraStorage', 'get', { key: 'pending-route' });
         var route = r && r.value;
         if (route && $shell.classList.contains('on')) {
           $panel.src = trustedOrigin() + '/#' + route;
-          await AS.remove({ key: 'pending-route' });
+          await window.Capacitor.nativePromise('AuroraStorage', 'remove', { key: 'pending-route' });
         }
       } catch (e) {}
     }
@@ -259,9 +312,9 @@
       if (!ok) return;
       try {
         const drafts = buildNativeDrafts(state);
-        await AN.cancelAll();
-        if (drafts.length) await AN.schedule({ notifications: drafts });
-        flash('✓ Hatırlatıcılar güncellendi (' + drafts.length + ' bildirim)');
+        await window.Capacitor.nativePromise('AuroraNotification', 'cancelAll', {});
+        if (drafts.length) await window.Capacitor.nativePromise('AuroraNotification', 'schedule', { notifications: drafts });
+        /* Sessiz senkron — her güncellemede toast spam'i rahatsız ediyordu */
       } catch (e) {
         flash('✗ Hatırlatıcı kurulamadı: ' + (e && e.message ? e.message : ''), 'err');
       }
@@ -384,7 +437,7 @@
         if (Date.now() - last < 3600000) return;
         localStorage.setItem('batteryAlertAt', String(Date.now()));
         try {
-          await AN.schedule({ notifications: [{ id: 'server-battery', title: '🔋 Sunucu bataryası az', body: 'J7 Prime bataryası %' + b.percent + ' — şarja tak.', route: '/server', at: new Date(Date.now() + 500).toISOString() }] });
+          await window.Capacitor.nativePromise('AuroraNotification', 'schedule', { notifications: [{ id: 'server-battery', title: '🔋 Sunucu bataryası az', body: 'J7 Prime bataryası %' + b.percent + ' — şarja tak.', route: '/server', at: new Date(Date.now() + 500).toISOString() }] });
         } catch (e) {}
       } catch (e) {}
     }
@@ -395,13 +448,19 @@
       var origin = trustedOrigin();
       if (origin && e.origin !== origin) return;
       if (e.data.type === 'aurora-state') {
-        try { localStorage.setItem('lastState', JSON.stringify(e.data.payload)); } catch (err) {}
-        syncNative(e.data.payload);
+        scheduleSync(e.data.payload);
+      } else if (e.data.type === 'aurora-perm-result') {
+        /* noop: panel kendi dinliyor */
+      } else if (e.data.type === 'aurora-notif-permission') {
+        /* Iframe (panel) izin durumunu soruyor → native diyaloğu parent açar,
+           sonucu panel'e geri gönderir (Settings "Try again" gerçek sonucu alır) */
+        var granted = await ensurePerm();
+        try { $panel.contentWindow.postMessage({ type: 'aurora-perm-result', granted: granted }, trustedOrigin()); } catch (err) {}
       } else if (e.data.type === 'aurora-widget-data') {
         if (AS) {
           try {
-            await AS.set({ key: 'widget-data', value: JSON.stringify(e.data.payload) });
-            await AS.notifyWidgets();
+            await window.Capacitor.nativePromise('AuroraStorage', 'set', { key: 'widget-data', value: JSON.stringify(e.data.payload) });
+            await window.Capacitor.nativePromise('AuroraStorage', 'notifyWidgets', {});
           } catch (err) { console.warn('widget write failed', err); }
         }
       } else if (e.data.type === 'aurora-notif-test') {
@@ -417,42 +476,65 @@
       }
     });
 
+    /* Panel hazır bayrağı: iframe load olmadan postMessage kuyruğu sessizce
+       kaybolur (about:blank'a gider). Drain ancak panel hazırken çalışsın. */
+    var panelReady = false;
+    var syncTimer = null;
+    /* Her state değişiminde cancelAll+schedule fırtınası alarmları tam
+       tetiklenecek sırada iptal edebiliyordu — trailing debounce ile sakinleştir */
+    function scheduleSync(state) {
+      try { localStorage.setItem('lastState', JSON.stringify(state)); } catch (e) {}
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(function () { syncTimer = null; syncNative(state); }, 1500);
+    }
+
+    /* Widget dokunuş kuyruğu → panel DB. Kuyruk boşken işlemsiz (native çağrı
+       ucuz); doluysa panelin postMessage kanalına aktarılır. */
+    async function drainHabitQueue() {
+      if (!IS_NATIVE || !panelReady || !$shell.classList.contains('on')) return;
+      try {
+        var r = await window.Capacitor.nativePromise('AuroraStorage', 'drainHabitQueue', {});
+        var items = r && r.items;
+        if (!items || !items.length) return;
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          try {
+            $panel.contentWindow.postMessage({
+              type: 'aurora-widget-toggle-habit',
+              habitId: it.habitId,
+              iso: it.iso,
+            }, trustedOrigin());
+          } catch (e) {}
+        }
+      } catch (e) { /* eski APK'da metot yok — sessiz */ }
+    }
+
     function enterShell(origin) {
       $currentOrigin = origin;
       $splash.style.display = 'none';
       $shell.classList.add('on');
+      panelReady = false;
       $panel.src = origin;
       if (IS_NATIVE) {
-        document.getElementById('test-btn').style.display = 'block';
+        firstLaunchPermissionAsk();
         setTimeout(applyPendingRoute, 600);
         setTimeout(function () { syncNative(readCachedState()); }, 1200);
         setInterval(function () { checkServerBattery(origin); }, 60000);
         checkServerBattery(origin);
+        // Widget dokunuş kuyruğu: home-screen widget'ına dokunulduğunda native
+        // kuyruğa yazılır; panel hazırken 5 sn'de bir boşaltılıp DB'ye işletilir.
+        setInterval(drainHabitQueue, 5000);
+        $panel.addEventListener('load', function () { panelReady = true; drainHabitQueue(); });
         // Uygulama öne gelince yeniden planla (deep-link geldikten sonra da)
         document.addEventListener('visibilitychange', function () {
           if (document.visibilityState !== 'visible') return;
           applyPendingRoute();
+          if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
           syncNative(readCachedState());
+          drainHabitQueue();
         });
       }
     }
-
-    /* Tek test butonu — sağ alt köşede, native bildirim gönderir */
-    document.getElementById('test-btn').addEventListener('click', async function () {
-      if (!AN) { flash('Bu özellik sadece APK\'da çalışır', 'warn'); return; }
-      const ok = await ensurePerm();
-      if (!ok) return;
-      try {
-        await AN.sendTest({
-          title: '🔔 Aurora test',
-          body: 'Bildirimler çalışıyor — hatırlatıcılar bu şekilde gelecek.',
-          route: '/',
-        });
-        flash('✓ Test bildirimi gönderildi — 1-2 sn içinde gelecek');
-      } catch (err) {
-        flash('✗ Gönderilemedi: ' + (err && err.message ? err.message : ''), 'err');
-      }
-    });
   </script>
 </body>
 </html>

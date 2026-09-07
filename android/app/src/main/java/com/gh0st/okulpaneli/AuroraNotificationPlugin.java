@@ -11,6 +11,7 @@ import android.os.Build;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -154,6 +155,51 @@ public class AuroraNotificationPlugin extends Plugin {
         call.resolve();
     }
 
+    /** Tek noktadan izin kontrolü — Android 13+ runtime izni ve ayarlardan
+     *  kapatılma durumunu (tüm sürümler) kapsar. */
+    static boolean notifEnabled(Context ctx) {
+        return androidx.core.app.NotificationManagerCompat.from(ctx).areNotificationsEnabled();
+    }
+
+    /**
+     * Mevcut izin durumunu döner — diyalog AÇMADAN bakmak için.
+     * loader önce bunu çağırır, granted=false ise requestPermission'ı dener.
+     */
+    @PluginMethod
+    public void permissionStatus(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("granted", notifEnabled(getContext()));
+        call.resolve(ret);
+    }
+
+    /**
+     * Tek noktadan teşhis: izin, kanal durumu, exact-alarm ve pil optimizasyonu.
+     */
+    @PluginMethod
+    public void diagnostics(PluginCall call) {
+        Context ctx = getContext();
+        JSObject ret = new JSObject();
+        ret.put("sdk", Build.VERSION.SDK_INT);
+        ret.put("notificationsEnabled", notifEnabled(ctx));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+            ret.put("exactAlarms", am != null && am.canScheduleExactAlarms());
+        } else {
+            ret.put("exactAlarms", true);
+        }
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && nm != null) {
+            NotificationChannel ch = nm.getNotificationChannel(CHANNEL_ID);
+            ret.put("channelExists", ch != null);
+            ret.put("channelBlocked", ch != null && ch.getImportance() == NotificationManager.IMPORTANCE_NONE);
+        } else {
+            ret.put("channelExists", true);
+            ret.put("channelBlocked", false);
+        }
+        ret.put("scheduledAlarms", ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getAll().size());
+        call.resolve(ret);
+    }
+
     @PluginMethod
     public void requestPermission(PluginCall call) {
         // Android 13+ için runtime POST_NOTIFICATIONS izni diyaloğu.
@@ -193,8 +239,9 @@ public class AuroraNotificationPlugin extends Plugin {
             String title = call.getString("title", "🔔 Aurora test");
             String body = call.getString("body", "Bildirimler çalışıyor.");
             String route = call.getString("route", "/");
-            // 1500 ms sonra göster
-            scheduleInternal(id, title, body, route, System.currentTimeMillis() + 1500L, -1, -1, 0);
+            // AlarmManager'a hiç uğramadan anında göster — test yolu kanal + izin
+            // zincirini tek başına sınar; alarm gecikmesi/devri testi bulanıklaştırmasın.
+            showNow(id, title, body, route);
             Log.d(TAG, "sendTest id=" + id + " title=\"" + title + "\"");
             JSObject ret = new JSObject();
             ret.put("id", id);
@@ -202,6 +249,28 @@ public class AuroraNotificationPlugin extends Plugin {
         } catch (Exception e) {
             call.reject(e.getMessage());
         }
+    }
+
+    /** Test bildirimini beklemeden göster (kanal + izin zincirini sınar). */
+    private void showNow(int id, String title, String body, String route) {
+        Context ctx = getContext();
+        Intent tap = new Intent(ctx, MainActivity.class);
+        tap.setData(android.net.Uri.parse("aurora://app" + route));
+        tap.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent contentPi = PendingIntent.getActivity(ctx, (id % 900_000) + 10_000, tap,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder b = new NotificationCompat.Builder(ctx, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                .setContentIntent(contentPi)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setDefaults(NotificationCompat.DEFAULT_ALL);
+        androidx.core.app.NotificationManagerCompat.from(ctx).notify(id, b.build());
     }
 
     /* ── Internal ─────────────────────────────────────────────────── */

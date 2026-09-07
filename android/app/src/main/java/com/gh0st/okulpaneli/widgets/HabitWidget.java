@@ -25,7 +25,7 @@ import org.json.JSONObject;
  * Reads {@code widget-data.habits} from AuroraStorage (written by
  * widgetSync.ts via the loader bridge).
  */
-public class HabitWidget extends AppWidgetProvider {
+public class HabitWidget extends AuroraWidgetBase {
 
     private static final String PREFS = "aurora_storage";
     private static final String KEY = "widget-data";
@@ -36,7 +36,7 @@ public class HabitWidget extends AppWidgetProvider {
     private static final int SUB_TEXT_COLOR = 0xFF9A9AA3; // zero streak
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
+    protected void renderSafe(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
         JSONArray habits = readHabits(context);
 
         for (int id : appWidgetIds) {
@@ -141,13 +141,4 @@ public class HabitWidget extends AppWidgetProvider {
         }
     }
 
-    static PendingIntent openAppPendingIntent(Context context, String route) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setData(Uri.parse("aurora://app" + route));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        // FLAG_UPDATE_CURRENT: aynı route için tek PendingIntent; extras değişse bile tazele.
-        return PendingIntent.getActivity(
-                context, route.hashCode(), intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-    }
 }

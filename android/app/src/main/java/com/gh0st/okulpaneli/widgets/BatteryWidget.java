@@ -23,7 +23,7 @@ import java.util.Locale;
  * storage % — reads server stats from {@code widget-data.server} in
  * AuroraStorage.
  */
-public class BatteryWidget extends AppWidgetProvider {
+public class BatteryWidget extends AuroraWidgetBase {
 
     private static final String PREFS = "aurora_storage";
     private static final String KEY = "widget-data";
@@ -33,7 +33,7 @@ public class BatteryWidget extends AppWidgetProvider {
     private static final int RED = 0xFFDC2626;
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
+    protected void renderSafe(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String raw = sp.getString(KEY, null);
 
@@ -114,12 +114,4 @@ public class BatteryWidget extends AppWidgetProvider {
 
     private static final int GRAY = 0xFF9A9AA3;
 
-    static PendingIntent openAppPendingIntent(Context context, String route) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setData(Uri.parse("aurora://app" + route));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        return PendingIntent.getActivity(
-                context, route.hashCode(), intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-    }
 }

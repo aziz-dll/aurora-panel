@@ -26,7 +26,7 @@ import java.util.Calendar;
  * Reads lessons from {@code widget-data.lessons}; day-of-week convention is
  * Monday=0 ... Sunday=6, matching the app.
  */
-public class ScheduleWidget extends AppWidgetProvider {
+public class ScheduleWidget extends AuroraWidgetBase {
 
     private static final String PREFS = "aurora_storage";
     private static final String KEY = "widget-data";
@@ -35,7 +35,7 @@ public class ScheduleWidget extends AppWidgetProvider {
     private static final int NOW_COLOR = 0xFF16A34A;
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
+    protected void renderSafe(Context context, AppWidgetManager mgr, int[] appWidgetIds) {
         int todayDow = (Calendar.getInstance().get(Calendar.DAY_OF_WEEK) + 5) % 7; // Mon=0..Sun=6
         SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String raw = sp.getString(KEY, null);
@@ -119,12 +119,4 @@ public class ScheduleWidget extends AppWidgetProvider {
         }
     }
 
-    static PendingIntent openAppPendingIntent(Context context, String route) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setData(Uri.parse("aurora://app" + route));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        return PendingIntent.getActivity(
-                context, route.hashCode(), intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-    }
 }

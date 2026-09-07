@@ -93,6 +93,32 @@
                 android:resource="@xml/widget_habit30_info" />
         </receiver>
         <receiver android:name=".AuroraAlarmReceiver" android:exported="false" />
+        <receiver android:name=".AuroraWidgetActionReceiver" android:exported="false" />
+        <receiver android:name=".widgets.Habit30CycleReceiver" android:exported="false" />
+        <receiver android:name=".widgets.HabitTodayWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_habit_today_info" />
+        </receiver>
+        <receiver android:name=".widgets.HabitWeekWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_habit_week_info" />
+        </receiver>
+        <receiver android:name=".widgets.HabitStatsWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_habit_stats_info" />
+        </receiver>
         <receiver android:name=".AuroraBootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

@@ -19,6 +19,14 @@ export interface DiskInfo {
   pct: number; // 0..100
 }
 
+/** Termux'un gerçekten yaşadığı partition — /api/storage (rootfs sahte %1 verir). */
+export interface StorageInfo {
+  total: number; // GB
+  used: number; // GB
+  free: number; // GB
+  pct: number; // 0..100
+}
+
 export interface UptimeInfo {
   seconds: number;
   bootISO: string;
@@ -79,6 +87,9 @@ export const termux = {
   },
   disk(): Promise<DiskInfo[] | null> {
     return req<DiskInfo[]>('/api/disk');
+  },
+  storage(): Promise<StorageInfo | null> {
+    return req<StorageInfo>('/api/storage');
   },
   uptime(): Promise<UptimeInfo | null> {
     return req<UptimeInfo>('/api/uptime');

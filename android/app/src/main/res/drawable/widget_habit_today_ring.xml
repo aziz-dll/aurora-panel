@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today widget bekleyen-check: renk Java'dan setBackgroundColor ile basılır. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <stroke android:width="2dp" android:color="#2383E2" />
+    <solid android:color="#00000000" />
+</shape>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HabitKit tarzı Stats widget: alışkanlık adı + büyük streak + rate +
+     total done. Köşeli kart, 2x2 boyutunda. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_habit_stats_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <View
+            android:id="@+id/widget_habit_stats_dot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/widget_habit30_dot" />
+
+        <TextView
+            android:id="@+id/widget_habit_stats_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text"
+            android:singleLine="true"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_habit_stats_streak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="#F59E0B"
+                android:fontFamily="sans-serif-light" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="STREAK"
+                android:textSize="10sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/widget_title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_habit_stats_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_text"
+                android:fontFamily="sans-serif-light" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RATE"
+                android:textSize="10sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/widget_title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_habit_stats_total"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_text"
+                android:fontFamily="sans-serif-light" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30D DONE"
+                android:textSize="10sp"
+                android:letterSpacing="0.08"
+                android:textColor="@color/widget_title" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

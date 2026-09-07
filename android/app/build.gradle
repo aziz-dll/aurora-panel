@@ -61,3 +61,20 @@ try {
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
+
+// JDK 17 ile derlemek için Capacitor'un Java 21 gereksinimini downlevel et.
+// (Kütüphane Java 21 ister ama kod Java 17 uyumlu derleniyor.)
+gradle.projectsEvaluated {
+    subprojects { sub ->
+        if (sub.name == 'capacitor-android' || sub.name == 'capacitor-cordova-android-plugins') {
+            sub.plugins.withId('com.android.library') {
+                sub.android {
+                    compileOptions {
+                        sourceCompatibility JavaVersion.VERSION_17
+                        targetCompatibility JavaVersion.VERSION_17
+                    }
+                }
+            }
+        }
+    }
+}
