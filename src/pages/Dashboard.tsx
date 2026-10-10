@@ -1,33 +1,39 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Icon } from '../lib/icons';
+import { Icon, type IconName } from '../lib/icons';
 import { todos as todoActions, lessonsOfDay } from '../lib/actions';
 import { PROGRAM, computeStreak, wdOf } from '../lib/fitness';
 import { useDB } from '../lib/store';
 import { termux, type BatteryInfo } from '../lib/termux';
+import { trToday } from '../lib/tr';
 import type { TodoCategory } from '../lib/types';
-import { cx, daysUntil, hhmmToMin, longDate, nowMin, shortDate, todayISO } from '../lib/utils';
+import { cx, daysUntil, hhmmToMin, nowMin, shortDate, todayISO } from '../lib/utils';
 
-const CATS: Array<{ key: TodoCategory; emoji: string; label: string }> = [
-  { key: 'school', emoji: '🏫', label: 'School' },
-  { key: 'personal', emoji: '👤', label: 'Personal' },
-  { key: 'sport', emoji: '🏋️', label: 'Fitness' },
+const CATS: Array<{ key: TodoCategory; label: string }> = [
+  { key: 'school', label: 'Okul' },
+  { key: 'personal', label: 'Kişisel' },
+  { key: 'sport', label: 'Spor' },
 ];
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 6) return 'Good night';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good day';
-  return 'Good evening';
+  if (h < 6) return 'İyi geceler';
+  if (h < 12) return 'Günaydın';
+  if (h < 18) return 'İyi günler';
+  return 'İyi akşamlar';
 }
 
 function BatteryRing({ percent, charging }: { percent: number | null; charging: boolean }) {
   const p = Math.max(0, Math.min(100, percent ?? 0));
-  const color = p <= 15 ? '#e03e3e' : charging ? '#0f7b6c' : 'var(--accent)';
+  const color =
+    p <= 15
+      ? 'var(--md-sys-color-error)'
+      : charging
+        ? 'var(--md-sys-color-tertiary)'
+        : 'var(--md-sys-color-primary)';
   return (
     <div className="relative h-16 w-16">
       <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-        <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--line)" strokeWidth="3.5" />
+        <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--md-sys-color-surface-container-highest)" strokeWidth="3.5" />
         <circle
           cx="18"
           cy="18"
@@ -43,8 +49,40 @@ function BatteryRing({ percent, charging }: { percent: number | null; charging: 
       <span className="absolute inset-0 grid place-items-center text-sm font-bold tabular-nums">
         {percent !== null ? `%${p}` : '?'}
       </span>
-      {charging && <span className="absolute -right-1 -top-1 text-xs">⚡</span>}
+      {charging && (
+        <Icon name="batteryChargingFull" size={16} className="absolute -right-1 -top-1 text-tertiary" />
+      )}
     </div>
+  );
+}
+
+function StatCard({
+  icon,
+  value,
+  label,
+  href,
+  tone,
+}: {
+  icon: IconName;
+  value: string;
+  label: string;
+  href: string;
+  tone: 'primary' | 'secondary' | 'tertiary' | 'error';
+}) {
+  const toneCls = {
+    primary: 'bg-primary-container text-on-primary-container',
+    secondary: 'bg-secondary-container text-on-secondary-container',
+    tertiary: 'bg-tertiary-container text-on-tertiary-container',
+    error: 'bg-error-container text-on-error-container',
+  }[tone];
+  return (
+    <a href={href} className="m3-card m3-card-interactive m3-state block">
+      <span className={cx('m3-list-avatar mb-2', toneCls)}>
+        <Icon name={icon} size={20} />
+      </span>
+      <p className="headline-small truncate leading-tight tabular-nums">{value}</p>
+      <p className="body-small mt-0.5 truncate text-on-surface-variant">{label}</p>
+    </a>
   );
 }
 
@@ -100,100 +138,96 @@ export default function Dashboard() {
     setQuick('');
   };
 
-  const stats = [
-    { icon: '📅', value: String(todayLessons.length), label: 'Today', href: '#/schedule' },
-    { icon: '✅', value: String(openTotal), label: 'Open task', href: '#/todos' },
-    { icon: '🔥', value: `${streak} g`, label: 'Workout streak', href: '#/fitness' },
-    {
-      icon: '🗓️',
-      value: nextExamIn === null ? '—' : `${nextExamIn} g`,
-      label: nextExams.length ? nextExams[0].title : 'No exams',
-      href: '#/student',
-    },
-  ];
-
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pb-32 pt-20 md:px-10 md:pb-16">
-      <header className="mb-8">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1 text-[11.5px] font-medium text-soft shadow-[var(--shadow-card)]">
-          <Icon name="calendar" size={11} /> {longDate(new Date())}
+    <div className="mx-auto w-full max-w-[880px] px-4 pb-32 pt-6 md:px-10 md:pb-16">
+      {/* Selamlama */}
+      <header className="mb-6">
+        <span className="m3-chip m3-chip-input mb-3 select-none" role="note">
+          <Icon name="calendarDays" size={14} />
+          {trToday(new Date())}
         </span>
-        <h1 className="mt-3 font-display text-[26px] font-bold tracking-tight md:text-[40px]">
+        <h1 className="headline-medium tracking-tight">
           {greeting()}
           {name ? (
             <>
               {', '}
               <span className="aurora-text">{name}</span>
             </>
-          ) : null}{' '}
-          👋
+          ) : null}
         </h1>
-        <form onSubmit={quickAdd} className="mt-4 space-y-2">
-          <div className="flex gap-2">
-            <input
-              value={quick}
-              onChange={(e) => setQuick(e.target.value)}
-              placeholder="Quick add task…"
-              className="field flex-1"
-            />
-            <button type="submit" disabled={!quick.trim()} className="btn btn-primary px-4" aria-label="Add">
-              <Icon name="plus" size={15} /> Add
-            </button>
-          </div>
-          <div className="flex gap-1 rounded-lg bg-side p-0.5">
-            {CATS.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                onClick={() => setQuickCat(c.key)}
-                className={cx(
-                  'flex-1 rounded-md px-2 py-1 text-[11px] transition-colors',
-                  quickCat === c.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-                )}
-                aria-pressed={quickCat === c.key}
-              >
-                {c.emoji} {c.label}
-              </button>
-            ))}
-          </div>
-        </form>
       </header>
 
-      <div className="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
-        {stats.map((s) => (
-          <a key={s.label} href={s.href} className="card card-lift block p-3.5">
-            <span className="text-base select-none md:text-lg">{s.icon}</span>
-            <p className="mt-1.5 truncate text-xl font-bold leading-tight tracking-tight tabular-nums md:text-2xl">{s.value}</p>
-            <p className="truncate text-[11px] font-medium text-soft">{s.label}</p>
-          </a>
-        ))}
+      {/* Hızlı görev ekleme */}
+      <form onSubmit={quickAdd} className="m3-card m3-card-outlined mb-5 space-y-3 p-3">
+        <div className="flex gap-2">
+          <input
+            value={quick}
+            onChange={(e) => setQuick(e.target.value)}
+            placeholder="Hızlı görev ekle…"
+            className="field flex-1"
+            aria-label="Hızlı görev ekleme"
+          />
+          <button type="submit" disabled={!quick.trim()} className="m3-btn m3-btn-filled px-4" aria-label="Ekle">
+            <Icon name="plus" size={18} />
+          </button>
+        </div>
+        <div className="m3-segmented w-full">
+          {CATS.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setQuickCat(c.key)}
+              className={cx('m3-segmented-btn flex-1', quickCat === c.key && 'm3-segmented-selected')}
+              aria-pressed={quickCat === c.key}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </form>
+
+      {/* Özet kartları */}
+      <div className="mb-5 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
+        <StatCard icon="calendarDays" value={String(todayLessons.length)} label="Bugünkü ders" href="#/schedule" tone="primary" />
+        <StatCard icon="checkSquare" value={String(openTotal)} label="Açık görev" href="#/todos" tone="secondary" />
+        <StatCard icon="localFireDepartment" value={`${streak} g`} label="Antrenman serisi" href="#/fitness" tone="tertiary" />
+        <StatCard
+          icon="event"
+          value={nextExamIn === null ? '—' : `${nextExamIn} g`}
+          label={nextExams.length ? nextExams[0].title : 'Sınav yok'}
+          href="#/student"
+          tone="error"
+        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-soft">📅 Today's classes</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Bugünün dersleri */}
+        <section className="m3-card p-3 md:p-4">
+          <h2 className="title-medium mb-3 text-on-surface-variant">Bugünün dersleri</h2>
           {todayLessons.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">No classes today 🎉</p>
+            <p className="body-medium py-3 text-center text-on-surface-variant">Bugün ders yok 🎉</p>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="space-y-1">
               {todayLessons.map((l) => {
                 const isNow = hhmmToMin(l.start) <= now && now < hhmmToMin(l.end);
                 return (
                   <li
                     key={l.id}
-                    className={cx('flex items-center gap-2.5 rounded-lg border-l-[3px] bg-side px-2.5 py-2', isNow && 'ring-1 ring-accent')}
-                    style={{ borderColor: l.color }}
+                    className={cx('m3-list-item-static min-h-[3rem] bg-surface-container-low', isNow && 'ring-2 ring-primary')}
+                    style={{ borderLeft: `3px solid ${l.color}`, borderRadius: 'var(--md-shape-md)' }}
                   >
-                    <span className="w-[86px] shrink-0 text-xs tabular-nums text-soft">
+                    <span className="w-[86px] shrink-0 body-small tabular-nums text-on-surface-variant">
                       {l.start}–{l.end}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</span>
+                    <span className="m3-list-lines">
+                      <span className="m3-list-headline body-medium font-medium">{l.name}</span>
+                    </span>
                     {isNow ? (
-                      <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> Şimdi
+                      <span className="m3-list-trailing gap-1 font-semibold text-tertiary">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" /> Şimdi
                       </span>
                     ) : (
-                      l.room && <span className="shrink-0 text-[11px] text-faint">{l.room}</span>
+                      l.room && <span className="m3-list-trailing">{l.room}</span>
                     )}
                   </li>
                 );
@@ -202,31 +236,36 @@ export default function Dashboard() {
           )}
         </section>
 
-        <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            ✅ Tasks
-            <a href="#/todos" className="text-xs font-medium text-accent hover:underline">
-              All →
+        {/* Görevler */}
+        <section className="m3-card p-3 md:p-4">
+          <h2 className="title-medium mb-3 flex items-center justify-between text-on-surface-variant">
+            Görevler
+            <a href="#/todos" className="label-large text-primary hover:underline">
+              Tümü →
             </a>
           </h2>
-          <div className="mb-2 flex gap-1.5 text-[11px]">
-            <span className="rounded-full bg-hover px-2 py-0.5 text-soft">{dueToday} today</span>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            <span className="m3-chip m3-chip-input h-7">{dueToday} bugün</span>
             {overdue > 0 && (
-              <span className="rounded-full bg-[#fae4e4] px-2 py-0.5 font-medium text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
-                {overdue} geciken
-              </span>
+              <span className="m3-chip m3-chip-selected h-7 bg-error-container text-on-error-container">{overdue} geciken</span>
             )}
           </div>
           {openTodos.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">All clear! 🌟</p>
+            <p className="body-medium py-3 text-center text-on-surface-variant">Her şey tamamlandı 🌟</p>
           ) : (
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {openTodos.map((todo) => (
-                <li key={todo.id} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-hover">
-                  <button onClick={() => todoActions.toggle(todo.id)} aria-label="Tamamla" className="todo-check h-4 w-4 rounded-full" />
-                  <span className="min-w-0 flex-1 truncate text-sm">{todo.title}</span>
+                <li key={todo.id} className="m3-list-item-static min-h-[2.5rem] px-1">
+                  <button
+                    onClick={() => todoActions.toggle(todo.id)}
+                    aria-label="Tamamla"
+                    className="todo-check h-[18px] w-[18px]"
+                  />
+                  <span className="m3-list-lines">
+                    <span className="m3-list-headline body-medium">{todo.title}</span>
+                  </span>
                   {todo.due && (
-                    <span className={cx('shrink-0 text-[11px]', todo.due < t ? 'font-medium text-[#e03e3e]' : 'text-faint')}>
+                    <span className={cx('m3-list-trailing', todo.due < t && 'font-medium text-error')}>
                       {shortDate(todo.due)}
                     </span>
                   )}
@@ -236,30 +275,36 @@ export default function Dashboard() {
           )}
         </section>
 
-        <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            🗓️ Upcoming exams
-            <a href="#/student" className="text-xs font-medium text-accent hover:underline">
-              All →
+        {/* Yaklaşan sınavlar */}
+        <section className="m3-card p-3 md:p-4">
+          <h2 className="title-medium mb-3 flex items-center justify-between text-on-surface-variant">
+            Yaklaşan sınavlar
+            <a href="#/student" className="label-large text-primary hover:underline">
+              Tümü →
             </a>
           </h2>
           {nextExams.length === 0 ? (
-            <p className="py-3 text-center text-sm text-faint">No exams scheduled.</p>
+            <p className="body-medium py-3 text-center text-on-surface-variant">Planlanmış sınav yok.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {nextExams.map((ex) => {
                 const diff = daysUntil(ex.date);
                 return (
-                  <li key={ex.id} className="flex items-center justify-between gap-2 rounded-lg bg-side px-2.5 py-2">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{ex.title}</span>
-                    <span className="shrink-0 text-xs text-faint">{shortDate(ex.date)}</span>
+                  <li key={ex.id} className="m3-list-item-static min-h-[2.75rem] bg-surface-container-low">
+                    <span className="m3-list-avatar h-8 w-8 bg-secondary-container text-on-secondary-container">
+                      <Icon name="event" size={16} />
+                    </span>
+                    <span className="m3-list-lines">
+                      <span className="m3-list-headline body-medium font-medium">{ex.title}</span>
+                    </span>
+                    <span className="m3-list-trailing">{shortDate(ex.date)}</span>
                     <span
                       className={cx(
-                        'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                        diff === 0 ? 'bg-[#f4b8b8] text-[#3d0c0c] dark:bg-[#4a1f1f] dark:text-[#f19999]' : 'bg-hover text-soft',
+                        'm3-chip h-7 shrink-0',
+                        diff === 0 ? 'bg-error-container text-on-error-container' : 'm3-chip-input',
                       )}
                     >
-                      {diff === 0 ? 'Today!' : `${diff} days`}
+                      {diff === 0 ? 'Bugün!' : `${diff} gün`}
                     </span>
                   </li>
                 );
@@ -268,42 +313,48 @@ export default function Dashboard() {
           )}
         </section>
 
-        <section className="card p-3 md:p-4">
-          <h2 className="mb-2.5 flex items-center justify-between text-sm font-semibold text-soft">
-            📱 Device
-            <a href="#/settings" className="text-xs font-medium text-accent hover:underline">
-              Settings →
+        {/* Cihaz */}
+        <section className="m3-card p-3 md:p-4">
+          <h2 className="title-medium mb-3 flex items-center justify-between text-on-surface-variant">
+            Cihaz
+            <a href="#/settings" className="label-large text-primary hover:underline">
+              Ayarlar →
             </a>
           </h2>
           {termuxUp === false ? (
             <div className="flex flex-col items-start gap-1 py-2">
-              <p className="text-sm font-medium">Termux API not connected</p>
-              <p className="text-xs leading-relaxed text-faint">
-                For notifications, vibration, and battery run <code className="rounded bg-hover px-1">npm run start</code> ile
-                the server and install Termux:API.
+              <p className="body-medium font-medium">Termux API bağlı değil</p>
+              <p className="body-small leading-relaxed text-on-surface-variant">
+                Bildirim, titreşim ve batarya için sunucuyu <code className="rounded bg-surface-container-high px-1">npm run start</code> ile
+                başlat ve Termux:API kur.
               </p>
             </div>
           ) : battery ? (
             <div className="flex items-center gap-4 py-1">
               <BatteryRing percent={battery.percent} charging={battery.charging} />
-              <div className="space-y-0.5 text-sm">
-                <p className="font-medium capitalize">{battery.charging ? 'Charging ⚡' : 'On battery'}</p>
-                <p className="text-xs text-faint">Termux API online · live</p>
+              <div className="space-y-0.5">
+                <p className="body-large font-medium">{battery.charging ? 'Şarj oluyor' : 'Bataryada'}</p>
+                <p className="body-small text-on-surface-variant">Termux API çevrimiçi · canlı</p>
               </div>
             </div>
           ) : (
-            <p className="py-6 text-center text-sm text-faint">Batarya bilgisi bekleniyor…</p>
+            <p className="body-medium py-6 text-center text-on-surface-variant">Batarya bilgisi bekleniyor…</p>
           )}
         </section>
       </div>
 
-      <a href="#/fitness" className="card card-lift mt-6 flex items-center gap-3 p-4">
-        <span className="text-2xl">🏋️</span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">Today's workout: {PROGRAM[wdOf(new Date())].focus}</p>
-          <p className="text-xs text-soft">{streak > 0 ? `${streak} daily streak continues 🔥` : 'Start the streak today'}</p>
-        </div>
-        <Icon name="chevronRight" size={16} className="shrink-0 text-faint" />
+      {/* Antrenman kartı */}
+      <a href="#/fitness" className="m3-card m3-card-filled m3-card-interactive m3-state mt-4 flex items-center gap-3">
+        <span className="m3-list-avatar bg-tertiary-container text-on-tertiary-container">
+          <Icon name="fitnessCenter" size={22} />
+        </span>
+        <span className="m3-list-lines">
+          <span className="m3-list-headline title-small">Bugünün antrenmanı: {PROGRAM[wdOf(new Date())].focus}</span>
+          <span className="m3-list-supporting">
+            {streak > 0 ? `${streak} günlük seri devam ediyor` : 'Seriyi bugün başlat'}
+          </span>
+        </span>
+        <Icon name="chevronRight" size={20} className="m3-list-trailing" />
       </a>
     </div>
   );

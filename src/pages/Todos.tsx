@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Empty } from '../components/Dialog';
+import { useMemo, useRef, useState, type FormEvent, type ReactNode, type TouchEvent } from 'react';
+import { Dialog, Empty } from '../components/Dialog';
 import { Page } from '../components/Page';
 import { Icon } from '../lib/icons';
 import { todos as todoActions } from '../lib/actions';
@@ -10,37 +10,31 @@ import type { Priority, Todo, TodoCategory } from '../lib/types';
 type Filter = 'all' | 'active' | 'today' | 'overdue' | 'done';
 
 const FILTERS: Array<{ key: Filter; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'today', label: 'Today' },
-  { key: 'overdue', label: 'Overdue' },
-  { key: 'done', label: 'Done' },
+  { key: 'all', label: 'Tümü' },
+  { key: 'active', label: 'Aktif' },
+  { key: 'today', label: 'Bugün' },
+  { key: 'overdue', label: 'Geciken' },
+  { key: 'done', label: 'Tamamlanan' },
 ];
 
-const CATEGORY_META: Record<TodoCategory, { emoji: string; label: string; cls: string }> = {
-  school: { emoji: '🏫', label: 'School', cls: 'bg-[#ddebf1] text-[#183347] dark:bg-[#1e3346] dark:text-[#8fc4ea]' },
-  personal: { emoji: '👤', label: 'Personal', cls: 'bg-[#fdecc8] text-[#402c1b] dark:bg-[#3d2f1a] dark:text-[#ecc06a]' },
-  sport: { emoji: '🏋️', label: 'Fitness', cls: 'bg-[#fae4e4] text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]' },
-};
-
-const CATEGORIES: Array<{ key: TodoCategory; label: string; emoji: string }> = [
-  { key: 'school', label: 'School', emoji: '🏫' },
-  { key: 'personal', label: 'Personal', emoji: '👤' },
-  { key: 'sport', label: 'Fitness', emoji: '🏋️' },
+const CATEGORIES: Array<{ key: TodoCategory; label: string; icon: 'school' | 'person' | 'dumbbell' }> = [
+  { key: 'school', label: 'Okul', icon: 'school' },
+  { key: 'personal', label: 'Kişisel', icon: 'person' },
+  { key: 'sport', label: 'Spor', icon: 'dumbbell' },
 ];
 
-const PRIORITY_META: Record<Priority, { label: string; color: string }> = {
-  high: { label: 'High', color: '#e03e3e' },
-  med: { label: 'Medium', color: '#d9730d' },
-  low: { label: 'Low', color: '#9b948f' },
+const PRIORITY_META: Record<Priority, { label: string; cls: string }> = {
+  high: { label: 'Yüksek', cls: 'bg-error-container text-on-error-container' },
+  med: { label: 'Orta', cls: 'bg-tertiary-container text-on-tertiary-container' },
+  low: { label: 'Düşük', cls: 'bg-secondary-container text-on-secondary-container' },
 };
 
-function dueMeta(due?: string): { text: string; cls: string } | null {
-  if (!due) return null;
+function dueChipCls(due?: string): string {
+  if (!due) return '';
   const diff = daysUntil(due);
-  if (diff < 0) return { text: shortDate(due), cls: 'bg-[#fae4e4] text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]' };
-  if (diff === 0) return { text: 'Today', cls: 'bg-[#fdecc8] text-[#402c1b] dark:bg-[#3d2f1a] dark:text-[#ecc06a]' };
-  return { text: shortDate(due), cls: 'bg-hover text-soft' };
+  if (diff < 0) return 'bg-error-container text-on-error-container';
+  if (diff === 0) return 'bg-tertiary-container text-on-tertiary-container';
+  return 'bg-secondary-container text-on-secondary-container';
 }
 
 function sortTodos(list: Todo[]): Todo[] {
@@ -58,6 +52,68 @@ function sortTodos(list: Todo[]): Todo[] {
   });
 }
 
+/* Dokunarak sağa kaydırınca silme — CSS transition, kütüphane yok */
+function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete: () => void }) {
+  const [dx, setDx] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+  const [axis, setAxis] = useState<'x' | 'y' | null>(null);
+  const startX = useRef(0);
+  const startY = useRef(0);
+
+  const onTouchStart = (e: TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    setAxis(null);
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    const dxCandidate = e.touches[0].clientX - startX.current;
+    const dyCandidate = e.touches[0].clientY - startY.current;
+    let ax = axis;
+    if (!ax) {
+      if (Math.abs(dxCandidate) > 8 || Math.abs(dyCandidate) > 8) {
+        ax = Math.abs(dxCandidate) > Math.abs(dyCandidate) ? 'x' : 'y';
+        setAxis(ax);
+      } else {
+        return;
+      }
+    }
+    if (ax === 'x') setDx(Math.min(0, Math.max(-140, dxCandidate)));
+  };
+
+  const onTouchEnd = () => {
+    if (dx < -80) {
+      setLeaving(true);
+      setDx(-140);
+      setTimeout(onDelete, 160);
+      return;
+    }
+    setDx(0);
+    setAxis(null);
+  };
+
+  return (
+    <li className="relative overflow-hidden rounded-[var(--md-shape-md)]">
+      <div className="absolute inset-y-0 right-0 flex items-center pr-5 text-error" aria-hidden="true">
+        <Icon name="trash" size={20} />
+      </div>
+      <div
+        className="relative bg-surface-container-low"
+        style={{
+          transform: `translateX(${dx}px)`,
+          opacity: leaving ? 0 : 1,
+          transition: axis === 'x' ? 'none' : 'transform 200ms var(--ease-spring), opacity 160ms ease',
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {children}
+      </div>
+    </li>
+  );
+}
+
 export default function Todos() {
   const db = useDB();
   const [filter, setFilter] = useState<Filter>('all');
@@ -70,6 +126,7 @@ export default function Todos() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [showDone, setShowDone] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const list = useMemo(() => {
     let l = sortTodos(db.todos);
@@ -103,6 +160,9 @@ export default function Todos() {
     todoActions.add(t, priority, due, undefined, category);
     setTitle('');
     setDue('');
+    setPriority('med');
+    setCategory('school');
+    setFormOpen(false);
   };
 
   const saveEdit = () => {
@@ -114,175 +174,205 @@ export default function Todos() {
   };
 
   const row = (t: Todo) => {
-    const dm = dueMeta(t.due);
+    const cat = CATEGORIES.find((c) => c.key === (t.category ?? 'school')) ?? CATEGORIES[0];
     const pm = PRIORITY_META[t.priority];
-    const cat = CATEGORY_META[t.category ?? 'school'];
     const editing = editingId === t.id;
     return (
-      <li key={t.id} className="group flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-hover">
-        <button
-          onClick={() => todoActions.toggle(t.id)}
-          aria-label="Tamamla"
-          title={`${cat.emoji} ${cat.label}`}
-          className={cx('todo-check h-5 w-5 rounded-full', t.done && 'checked')}
-        >
-          {t.done && <Icon name="check" size={11} />}
-        </button>
-        <span
-          title={cat.label}
-          className={cx('shrink-0 rounded-full px-1.5 text-[10px]', cat.cls)}
-        >
-          {cat.emoji}
-        </span>
-
-        {editing ? (
-          <input
-            autoFocus
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onBlur={saveEdit}
-            onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-            className="min-w-0 flex-1 rounded-md border-b-2 border-accent bg-transparent px-0.5 py-0.5"
-          />
-        ) : (
+      <SwipeRow key={t.id} onDelete={() => todoActions.remove(t.id)}>
+        <div className="m3-list-item">
           <button
-            onClick={() => {
-              setEditingId(t.id);
-              setEditText(t.title);
-            }}
-            className={cx('strike min-w-0 flex-1 truncate text-left text-sm', t.done && 'struck text-faint')}
-            title="Edit"
+            onClick={() => todoActions.toggle(t.id)}
+            aria-label="Tamamla"
+            className={cx('todo-check h-6 w-6', t.done && 'checked')}
           >
-            {t.title}
+            {t.done && <Icon name="check" size={13} />}
           </button>
-        )}
-
-        <div className="flex shrink-0 items-center gap-1.5">
-          {t.course && (
-            <span className="hidden max-w-28 truncate rounded-full bg-hover px-2 py-0.5 text-xs text-soft sm:inline">
-              {t.course}
+          <span className="m3-list-lines">
+            {editing ? (
+              <input
+                autoFocus
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onBlur={saveEdit}
+                onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
+                className="m3-list-headline field py-0.5"
+                aria-label="Görevi düzenle"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setEditingId(t.id);
+                  setEditText(t.title);
+                }}
+                className={cx('strike m3-list-headline text-left', t.done && 'struck text-on-surface-variant')}
+                title="Düzenlemek için dokun"
+              >
+                {t.title}
+              </button>
+            )}
+            <span className="m3-list-supporting">
+              {cat.label}
+              {t.course ? ` · ${t.course}` : ''}
             </span>
-          )}
-          {dm && <span className={cx('rounded-full px-2 py-0.5 text-xs font-medium', dm.cls)}>{dm.text}</span>}
-          <span title={`Priority: ${pm.label}`} className="h-2 w-2 shrink-0 rounded-full" style={{ background: pm.color }} />
-          <button
-            onClick={() => todoActions.remove(t.id)}
-            aria-label="Delete"
-            className="btn btn-ghost p-1 text-faint opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100"
-          >
-            <Icon name="trash" size={13} />
-          </button>
+          </span>
+          <span className="m3-list-trailing gap-1.5">
+            {t.due && (
+              <span className={cx('m3-chip h-6 px-2 text-[11px]', dueChipCls(t.due))}>{shortDate(t.due)}</span>
+            )}
+            <span
+              title={`Öncelik: ${pm.label}`}
+              className={cx('h-2.5 w-2.5 shrink-0 rounded-full', {
+                high: 'bg-error',
+                med: 'bg-tertiary',
+                low: 'bg-outline',
+              }[t.priority])}
+            />
+            <button
+              onClick={() => todoActions.remove(t.id)}
+              aria-label="Sil"
+              className="m3-icon-btn h-8 w-8 opacity-0 max-md:hidden group-hover:opacity-100"
+            >
+              <Icon name="trash" size={16} />
+            </button>
+          </span>
         </div>
-      </li>
+      </SwipeRow>
     );
   };
 
   return (
-    <Page icon="✅" title="Tasks" subtitle={`${activeCount} open task(s)`}>
-      <form onSubmit={submit} className="card mb-3 flex flex-col gap-2 p-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="New task…"
-            className="field min-w-0 flex-1 border-transparent bg-transparent focus:bg-transparent sm:border-line dark:focus:bg-transparent"
-          />
-          <div className="flex gap-2">
-            <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="field w-auto" />
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="field w-auto">
-              <option value="high">High</option>
-              <option value="med">Medium</option>
-              <option value="low">Low</option>
-            </select>
-            <button type="submit" disabled={!title.trim()} className="btn btn-primary">
-              <Icon name="plus" size={14} /> Add
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-1 rounded-lg bg-side p-0.5">
+    <Page title="Görevler" subtitle={`${activeCount} açık görev`}>
+      {/* Filtre çipleri */}
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={cx('m3-chip shrink-0', filter === f.key && 'm3-chip-selected')}
+            aria-pressed={filter === f.key}
+          >
+            {filter === f.key && <Icon name="check" size={16} />}
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setCatFilter('all')}
+            className={cx('m3-chip', catFilter === 'all' && 'm3-chip-selected')}
+            aria-pressed={catFilter === 'all'}
+          >
+            Hepsi
+          </button>
           {CATEGORIES.map((c) => (
             <button
               key={c.key}
-              type="button"
-              onClick={() => setCategory(c.key)}
-              className={cx(
-                'flex-1 rounded-md px-2 py-1 text-[11px] transition-colors',
-                category === c.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-              )}
-              aria-pressed={category === c.key}
+              onClick={() => setCatFilter(c.key)}
+              className={cx('m3-chip', catFilter === c.key && 'm3-chip-selected')}
+              aria-pressed={catFilter === c.key}
             >
-              {c.emoji} {c.label}
+              <Icon name={c.icon} size={15} />
+              {c.label}
+              <span className="text-outline tabular-nums">{catCounts[c.key]}</span>
             </button>
           ))}
         </div>
-      </form>
-
-      <div className="mb-3 space-y-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-side p-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={cx(
-                  'rounded-lg px-2.5 py-1 text-xs transition-colors',
-                  filter === f.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1 rounded-xl border border-line bg-side p-1">
-            <button
-              onClick={() => setCatFilter('all')}
-              className={cx(
-                'rounded-lg px-2.5 py-1 text-xs transition-colors',
-                catFilter === 'all' ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-              )}
-            >
-              All
-            </button>
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => setCatFilter(c.key)}
-                className={cx(
-                  'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition-colors',
-                  catFilter === c.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-                )}
-              >
-                <span>{c.emoji}</span>
-                <span className="text-faint">{catCounts[c.key]}</span>
-              </button>
-            ))}
-          </div>
-          <div className="relative ml-auto">
-            <Icon name="search" size={13} className="absolute top-1/2 left-2.5 -translate-y-1/2 text-faint" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="field w-32 pl-7 text-xs md:w-44" />
-          </div>
+        <div className="relative ml-auto">
+          <Icon name="search" size={15} className="absolute top-1/2 left-2.5 -translate-y-1/2 text-outline" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ara…"
+            className="field w-36 py-1.5 pl-8 text-xs md:w-48"
+            aria-label="Görevlerde ara"
+          />
         </div>
       </div>
 
       {list.length === 0 ? (
-        <Empty emoji="🍃" text="No tasks to show here." />
+        <Empty emoji="🍃" text="Burada gösterilecek görev yok." />
       ) : (
-        <div className="space-y-6">
-          {openList.length > 0 && <ul className="space-y-0.5">{openList.map(row)}</ul>}
+        <div className="space-y-5 group/list">
+          {openList.length > 0 && <ul className="space-y-1">{openList.map(row)}</ul>}
 
           {doneList.length > 0 && (
             <section>
               {filter !== 'done' && (
-                <button onClick={() => setShowDone(!showDone)} className="btn btn-ghost mb-1 px-2 text-xs text-soft">
-                  <Icon name={showDone ? 'chevronDown' : 'chevronRight'} size={12} />
+                <button
+                  onClick={() => setShowDone(!showDone)}
+                  className="m3-btn m3-btn-text mb-1 text-on-surface-variant"
+                  aria-expanded={showDone}
+                >
+                  <Icon name={showDone ? 'expandLess' : 'expandMore'} size={18} />
                   Tamamlanan ({doneList.length})
                 </button>
               )}
-              {(showDone || filter === 'done') && <ul className="space-y-0.5">{doneList.map(row)}</ul>}
+              {(showDone || filter === 'done') && <ul className="space-y-1">{doneList.map(row)}</ul>}
             </section>
           )}
         </div>
       )}
+
+      {/* Yeni görev FAB'ı */}
+      <button onClick={() => setFormOpen(true)} className="m3-fab" aria-label="Yeni görev ekle">
+        <Icon name="plus" size={24} />
+      </button>
+
+      {/* Yeni görev formu */}
+      <Dialog open={formOpen} onClose={() => setFormOpen(false)} title="Yeni Görev">
+        <form onSubmit={submit} className="space-y-3">
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Görev…"
+            className="field"
+            aria-label="Görev başlığı"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1">
+              <span className="label-large text-on-surface-variant">Bitiş</span>
+              <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="field" />
+            </label>
+            <label className="space-y-1">
+              <span className="label-large text-on-surface-variant">Kategori</span>
+              <select value={category} onChange={(e) => setCategory(e.target.value as TodoCategory)} className="field">
+                {CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div>
+            <span className="label-large mb-1 block text-on-surface-variant">Öncelik</span>
+            <div className="m3-segmented w-full">
+              {(['low', 'med', 'high'] as Priority[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriority(p)}
+                  className={cx('m3-segmented-btn flex-1', priority === p && 'm3-segmented-selected')}
+                  aria-pressed={priority === p}
+                >
+                  {PRIORITY_META[p].label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={() => setFormOpen(false)} className="m3-btn m3-btn-text">
+              Vazgeç
+            </button>
+            <button type="submit" disabled={!title.trim()} className="m3-btn m3-btn-filled">
+              <Icon name="plus" size={16} /> Ekle
+            </button>
+          </div>
+        </form>
+      </Dialog>
     </Page>
   );
 }

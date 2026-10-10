@@ -2,25 +2,28 @@ import { useMemo } from 'react';
 import { Page } from '../components/Page';
 import { Icon } from '../lib/icons';
 import { workouts } from '../lib/actions';
-import { DAY_SHORT, PROGRAM, isoOf, wdOf, dayDone, computeStreak, type Kind } from '../lib/fitness';
+import { PROGRAM, isoOf, wdOf, dayDone, computeStreak, type Kind } from '../lib/fitness';
+import { TR_DAYS_SHORT } from '../lib/tr';
 import { patchSettings, useDB } from '../lib/store';
 import { cx } from '../lib/utils';
 
-const KIND_BADGE: Record<Kind, string> = {
-  strength: 'bg-[#ddebf1] text-[#183347] dark:bg-[#1e3346] dark:text-[#8fc4ea]',
-  cardio: 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]',
-  recovery: 'bg-hover text-soft',
+const KIND_LABEL: Record<Kind, string> = { strength: 'Kuvvet', cardio: 'Kardiyo', recovery: 'Toparlanma' };
+
+const KIND_CLS: Record<Kind, string> = {
+  strength: 'bg-primary-container text-on-primary-container',
+  cardio: 'bg-tertiary-container text-on-tertiary-container',
+  recovery: 'bg-surface-container-highest text-on-surface-variant',
 };
 
-const KIND_LABEL: Record<Kind, string> = { strength: 'Strength', cardio: 'Cardio', recovery: 'Recovery' };
-
-function Stat({ icon, value, label }: { icon: string; value: string; label: string }) {
+function Stat({ icon, value, label }: { icon: 'localFireDepartment' | 'calendarDays' | 'emojiEvents'; value: string; label: string }) {
   return (
-    <div className="card card-lift flex items-center gap-3 p-3">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-hover text-lg">{icon}</span>
+    <div className="m3-card flex items-center gap-3">
+      <span className="m3-list-avatar bg-secondary-container text-on-secondary-container">
+        <Icon name={icon} size={20} />
+      </span>
       <div className="min-w-0">
-        <div className="text-xl font-bold leading-tight tracking-tight tabular-nums">{value}</div>
-        <div className="truncate text-[11px] font-medium text-soft">{label}</div>
+        <div className="headline-small leading-tight tabular-nums">{value}</div>
+        <div className="body-small truncate text-on-surface-variant">{label}</div>
       </div>
     </div>
   );
@@ -39,6 +42,7 @@ export default function Fitness() {
   const idealMax = Math.round(24.9 * Math.pow(height / 100, 2));
   const hrLow = Math.round((220 - age) * 0.6);
   const hrHigh = Math.round((220 - age) * 0.75);
+  const bmiColor = bmi >= 30 ? 'var(--md-sys-color-error)' : bmi >= 25 ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-primary)';
 
   const today = new Date();
   const todayWd = wdOf(today);
@@ -72,8 +76,8 @@ export default function Fitness() {
 
   const numField = (label: string, unit: string, value: number, key: 'weightKg' | 'heightCm' | 'ageYears') => (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-soft">
-        {label} {unit && <span className="text-faint">({unit})</span>}
+      <span className="label-large mb-1 block text-on-surface-variant">
+        {label} {unit && <span className="text-outline">({unit})</span>}
       </span>
       <input
         type="number"
@@ -90,25 +94,26 @@ export default function Fitness() {
   );
 
   return (
-    <Page icon="🏋️" title="Fitness" subtitle="Home equipment-free program — tuned for your weight, height, and age.">
-      <section className="card mb-4 p-3 md:p-4">
-        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-soft">
-          <Icon name="target" size={14} /> Your stats
+    <Page title="Fitness" subtitle="Ekipmansız ev programı — kilo, boy ve yaşına göre ayarlı.">
+      {/* Vücut ölçüleri */}
+      <section className="m3-card mb-4 p-3 md:p-4">
+        <h2 className="title-medium mb-3 flex items-center gap-1.5 text-on-surface-variant">
+          <Icon name="target" size={16} /> Ölçüleri
         </h2>
         <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
           <div className="w-24">{numField('Kilo', 'kg', weight, 'weightKg')}</div>
           <div className="w-24">{numField('Boy', 'cm', height, 'heightCm')}</div>
-          <div className="w-24">{numField('Age', '', age, 'ageYears')}</div>
+          <div className="w-24">{numField('Yaş', '', age, 'ageYears')}</div>
           <div className="ml-auto flex items-center gap-3">
-            <div className="relative h-14 w-14 shrink-0" role="img" aria-label={`Body mass index ${bmi.toFixed(1)}`}>
+            <div className="relative h-14 w-14 shrink-0" role="img" aria-label={`Vücut kitle indeksi ${bmi.toFixed(1)}`}>
               <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--line)" strokeWidth="3.5" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--md-sys-color-surface-container-highest)" strokeWidth="3.5" />
                 <circle
                   cx="18"
                   cy="18"
                   r="15.5"
                   fill="none"
-                  stroke="#d9730d"
+                  stroke={bmiColor}
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeDasharray={`${Math.min(bmi, 40) * 2.43}, 100`}
@@ -117,49 +122,51 @@ export default function Fitness() {
               </svg>
               <span className="absolute inset-0 grid place-items-center text-[11px] font-bold tabular-nums">{bmi.toFixed(1)}</span>
             </div>
-            <div className="text-xs leading-relaxed text-soft">
-              <p className="font-semibold text-ink">BMI {bmi.toFixed(1)}</p>
+            <div className="body-small leading-relaxed text-on-surface-variant">
+              <p className="title-small text-on-surface">VKİ {bmi.toFixed(1)}</p>
               <p>
-                Ideal range: <b>{idealMin}–{idealMax} kg</b>
+                İdeal aralık: <b>{idealMin}–{idealMax} kg</b>
               </p>
-              <p className="text-faint">Losing 0.5 kg/week is plenty 🐢</p>
+              <p className="text-outline">Haftada 0,5 kg vermek yeterli 🐢</p>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Özet istatistikler */}
       <section className="mb-4 grid grid-cols-3 gap-3 max-sm:gap-2">
-        <Stat icon="🔥" value={`${streak}`} label="Streak (days)" />
-        <Stat icon="📅" value={`${weekDone}`} label="Bu hafta / 7" />
-        <Stat icon="🏆" value={`${totalDone}`} label="Total tamamlanan" />
+        <Stat icon="localFireDepartment" value={`${streak}`} label="Seri (gün)" />
+        <Stat icon="calendarDays" value={`${weekDone}`} label="Bu hafta / 7" />
+        <Stat icon="emojiEvents" value={`${totalDone}`} label="Toplam tamamlanan" />
       </section>
 
-      <section className="card mb-6 p-3 md:p-4">
-        <div className="mb-2 flex items-center justify-between gap-2 text-sm">
-          <span className="min-w-0 truncate font-medium">
-            Today: {DAY_SHORT[todayWd]} — {todayPlan.focus}
+      {/* Bugünün antrenmanı */}
+      <section className="m3-card m3-card-filled mb-6 p-3 md:p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="title-small min-w-0 truncate">
+            Bugün: {TR_DAYS_SHORT[todayWd]} — {todayPlan.focus}
           </span>
           <span
             className={cx(
-              'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-              todayAllDone ? 'bg-[#dbeddb] text-[#1c3829] dark:bg-[#1f3b2b] dark:text-[#9fe0b0]' : 'bg-hover text-soft',
+              'm3-chip h-7 shrink-0',
+              todayAllDone ? 'bg-tertiary-container text-on-tertiary-container' : 'bg-surface-container-highest text-on-surface-variant',
             )}
           >
-            {todayAllDone ? 'Done ✓' : `${todayChecked.length}/${todayPlan.exs.length}`}
+            {todayAllDone ? 'Tamamlandı ✓' : `${todayChecked.length}/${todayPlan.exs.length}`}
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-side">
+        <div className="m3-progress">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--accent), #9065b0)' }}
+            className="m3-progress-bar"
+            style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))' }}
           />
         </div>
       </section>
 
-      <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
-        <Icon name="dumbbell" size={14} /> Weekly program
+      <h2 className="title-medium mb-2 flex items-center gap-1.5 text-on-surface-variant">
+        <Icon name="dumbbell" size={16} /> Haftalık program
       </h2>
-      <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {PROGRAM.map((plan, i) => {
           const isToday = i === todayWd;
           const dayIso = (() => {
@@ -173,41 +180,39 @@ export default function Fitness() {
             <section
               key={i}
               className={cx(
-                'card p-3 transition-shadow md:p-4',
-                isToday && !allDone && 'ring-2 ring-accent/40',
-                allDone && 'ring-1 ring-emerald-500/30',
+                'm3-card p-3 md:p-4',
+                isToday && !allDone && 'ring-2 ring-primary',
+                allDone && 'ring-1 ring-tertiary',
               )}
             >
               <div className="mb-2.5 flex items-center gap-2">
                 <span
                   className={cx(
-                    'grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold',
-                    isToday ? 'bg-accent text-white' : 'bg-hover text-soft',
+                    'grid h-7 w-7 shrink-0 place-items-center rounded-[var(--md-shape-sm)] text-[11px] font-bold',
+                    isToday ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant',
                   )}
                 >
-                  {DAY_SHORT[i]}
+                  {TR_DAYS_SHORT[i]}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold leading-tight">{plan.focus}</p>
-                  <p className="truncate text-[11px] text-faint">{plan.tip}</p>
+                <div className="m3-list-lines">
+                  <p className="m3-list-headline title-small">{plan.focus}</p>
+                  <p className="m3-list-supporting">{plan.tip}</p>
                 </div>
                 {allDone ? (
-                  <span className="shrink-0 text-xs font-semibold text-emerald-600 dark:text-emerald-400">✓</span>
+                  <span className="shrink-0 text-title-small text-tertiary">✓</span>
                 ) : (
-                  <span className="shrink-0 text-[11px] tabular-nums text-faint">
+                  <span className="shrink-0 body-small tabular-nums text-on-surface-variant">
                     {checked.length}/{plan.exs.length}
                   </span>
                 )}
               </div>
               <div className="mb-2 flex flex-wrap gap-1.5">
-                <span className={cx('rounded-full px-2 py-0.5 text-[10.5px] font-semibold', KIND_BADGE[plan.kind])}>
-                  {KIND_LABEL[plan.kind]}
-                </span>
-                <span className="flex items-center gap-1 rounded-full bg-hover px-2 py-0.5 text-[10.5px] font-medium text-soft">
-                  <Icon name="clock" size={10} /> {plan.mins}
+                <span className={cx('m3-chip h-6 px-2 text-[11px]', KIND_CLS[plan.kind])}>{KIND_LABEL[plan.kind]}</span>
+                <span className="m3-chip m3-chip-input h-6 px-2 text-[11px]">
+                  <Icon name="clock" size={11} /> {plan.mins}
                 </span>
                 {isToday && (
-                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10.5px] font-semibold text-accent">Today</span>
+                  <span className="m3-chip h-6 bg-primary-container px-2 text-[11px] text-on-primary-container">Bugün</span>
                 )}
               </div>
               <ul className="space-y-0.5">
@@ -217,13 +222,16 @@ export default function Fitness() {
                     <li key={ex.id}>
                       <button
                         onClick={() => workouts.toggle(dayIso, ex.id)}
-                        className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left transition-colors hover:bg-hover"
+                        className="m3-list-item min-h-[2.5rem] px-1.5 py-1"
+                        aria-pressed={isChecked}
                       >
-                        <span className={cx('todo-check h-[18px] w-[18px] rounded-md', isChecked && 'checked')}>
+                        <span className={cx('todo-check h-[18px] w-[18px] rounded-[var(--md-shape-xs)]', isChecked && 'checked')}>
                           {isChecked && <Icon name="check" size={11} />}
                         </span>
-                        <span className={cx('min-w-0 flex-1 truncate text-[13px]', isChecked && 'text-faint')}>{ex.name}</span>
-                        <span className="shrink-0 text-[11px] font-medium tabular-nums text-faint">{ex.target}</span>
+                        <span className={cx('m3-list-headline text-[13px]', isChecked && 'text-on-surface-variant line-through')}>
+                          {ex.name}
+                        </span>
+                        <span className="m3-list-trailing font-medium tabular-nums">{ex.target}</span>
                       </button>
                     </li>
                   );
@@ -234,33 +242,33 @@ export default function Fitness() {
         })}
       </div>
 
-      <div className="mt-6 grid gap-2.5 sm:grid-cols-2 sm:gap-3">
-        <section className="card p-3 md:p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
-            <Icon name="flame" size={14} /> Golden rules
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <section className="m3-card p-3 md:p-4">
+          <h3 className="title-medium mb-2 flex items-center gap-1.5 text-on-surface-variant">
+            <Icon name="localFireDepartment" size={16} /> Altın kurallar
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
-            <li>💧 Drink <b>2.5–3 L of water</b> daily — keep a bottle handy</li>
-            <li>😴 <b>8–9 h of sleep</b> — muscles and fat loss happen here</li>
-            <li>🥤 No sugary drinks or packaged snacks at home</li>
-            <li>🚶 <b>6,000 →  ️10,000 steps</b> daily, plus 500 each week</li>
-            <li>⚖️ Weigh in only <b>Sunday morning</b>, on an empty stomach</li>
+            <li>💧 Günde <b>2,5–3 L su</b> iç — su şişesini hep yanımda tut</li>
+            <li>😴 <b>8–9 saat uyku</b> — kas ve yağ kaybı burada olur</li>
+            <li>🥤 Evde şekerli içecek ve paketli atıştırmalık yok</li>
+            <li>🚶 Günlük <b>6.000 → 10.000 adım</b>, her hafta +500</li>
+            <li>⚖️ Tartılma sadece <b>Pazar sabahı</b>, aç karnına</li>
             <li>
-              ❤️ Heart rate during walks around <b>{hrLow}–{hrHigh}</b>
+              ❤️ Yürüyüşte nabız <b>{hrLow}–{hrHigh}</b> civarı
             </li>
           </ul>
         </section>
-        <section className="card p-3 md:p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
-            <Icon name="activity" size={14} /> Nasıl ilerlersin?
+        <section className="m3-card p-3 md:p-4">
+          <h3 className="title-medium mb-2 flex items-center gap-1.5 text-on-surface-variant">
+            <Icon name="activity" size={16} /> Nasıl ilerlersin?
           </h3>
           <ul className="space-y-1.5 text-[13px] leading-relaxed">
-            <li><b>Weeks 1–2:</b> Keep the same reps until they feel easy</li>
-            <li><b>Progress:</b> Add +1 rep or +5 s each strength day</li>
-            <li>When it gets easy, progress: wall → table edge → knee push-ups</li>
-            <li>Extend walksby 5 min every 2 weeks</li>
+            <li><b>1–2. haftalar:</b> Tekrarlar kolaylaşana kadar aynı sayıda kal</li>
+            <li><b>İlerleme:</b> Her kuvvet gününde +1 tekrar veya +5 sn</li>
+            <li>Kolaylaşınca zorlaştır: duvar → masa kenarı → diz üstü şınav</li>
+            <li>Yürüyüşleri her 2 haftada 5 dk uzat</li>
           </ul>
-          <p className="mt-3 rounded-lg bg-side px-3 py-2 text-xs leading-relaxed text-soft">
+          <p className="body-small mt-3 rounded-[var(--md-shape-md)] bg-surface-container-low px-3 py-2 leading-relaxed text-on-surface-variant">
             Büyüme çağındasın: form bozulmasın, ağrı olursa dur, aşırı aç kalmadan beslen. Şüphedeysen ailenle/doktorunla paylaş. 💪
           </p>
         </section>

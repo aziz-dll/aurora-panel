@@ -32,32 +32,40 @@ export default function Notes() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-20 md:px-10 md:pt-10">
+    <div className="mx-auto flex h-full w-full max-w-[1000px] px-4 pt-6 md:px-10 md:pt-8">
       {/* Liste */}
-      <aside className={cx('w-full shrink-0 flex-col pb-32 md:flex md:w-64 md:pb-16', selected ? 'hidden' : 'flex')}>
-        <div className="mb-1 text-[26px] leading-none md:text-[34px] select-none">📝</div>
+      <aside className={cx('w-full shrink-0 flex-col pb-32 md:flex md:w-72 md:pb-16', selected ? 'hidden' : 'flex')}>
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-[22px] font-bold tracking-tight md:text-[28px]">Notes</h1>
-          <button onClick={create} className="btn btn-ghost mt-1 border border-line" aria-label="New note">
-            <Icon name="plus" size={14} />
-          </button>
+          <div>
+            <h1 className="headline-medium tracking-tight">Notlar</h1>
+            <p className="body-medium mt-1 text-on-surface-variant">{sorted.length} not</p>
+          </div>
         </div>
-        {sorted.length === 0 && <p className="text-sm text-faint">No notes yet.</p>}
-        <ul className="space-y-0.5">
+        {sorted.length === 0 && (
+          <div className="m3-card p-6 text-center">
+            <p className="body-medium text-on-surface-variant">Henüz not yok.</p>
+            <p className="body-small mt-1 text-on-surface-variant">Sağ alttaki düğmeyle ilk notunu ekle.</p>
+          </div>
+        )}
+        <ul className="space-y-1">
           {sorted.map((n) => (
             <li key={n.id}>
               <button
                 onClick={() => setSelectedId(n.id)}
                 className={cx(
-                  'w-full rounded-lg px-3 py-2 text-left transition-colors',
-                  n.id === selectedId ? 'bg-accent-soft' : 'hover:bg-hover',
+                  'm3-list-item',
+                  n.id === selectedId ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface',
                 )}
+                aria-current={n.id === selectedId ? 'true' : undefined}
               >
-                <span className="flex items-center gap-1.5">
-                  {n.pinned && <Icon name="star" size={11} className="shrink-0 text-[#d9730d]" />}
-                  <span className="truncate text-sm font-medium">{n.title || 'Untitled'}</span>
+                <span className="m3-list-avatar h-9 w-9 bg-surface-container-high text-on-surface-variant">
+                  <Icon name={n.pinned ? 'star' : 'stickyNote'} size={18} />
                 </span>
-                <span className="block truncate text-xs text-faint">{n.body.split('\n')[0] || 'Untitled'}</span>
+                <span className="m3-list-lines">
+                  <span className="m3-list-headline">{n.title || 'Başlıksız'}</span>
+                  <span className="m3-list-supporting">{n.body.split('\n')[0] || 'Boş not'}</span>
+                </span>
+                {n.pinned && <Icon name="star" size={16} className="m3-list-trailing text-primary" />}
               </button>
             </li>
           ))}
@@ -67,53 +75,61 @@ export default function Notes() {
       {/* Düzenleyici */}
       {selected && (
         <section key={selected.id} className="flex min-w-0 flex-1 flex-col pb-10 animate-[page-in_200ms_var(--ease-out)] md:pl-8">
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setSelectedId(null)} className="btn btn-ghost -ml-2 p-2 text-soft md:hidden" aria-label="Geri">
-              <Icon name="arrowLeft" size={17} />
+          <div className="flex items-center gap-1">
+            <button onClick={() => setSelectedId(null)} className="m3-icon-btn -ml-2 text-on-surface-variant md:hidden" aria-label="Geri">
+              <Icon name="arrowBack" size={20} />
             </button>
             <div className="flex-1" />
             <button
               onClick={() => noteActions.patch(selected.id, { pinned: !selected.pinned })}
-              className={cx('btn btn-ghost p-2 transition-transform active:scale-90', selected.pinned ? 'text-[#d9730d]' : 'text-faint')}
-              aria-label="Sabitle"
+              className={cx('m3-icon-btn', selected.pinned ? 'text-primary' : 'text-on-surface-variant')}
+              aria-label={selected.pinned ? 'Sabitlemeyi kaldır' : 'Sabitle'}
+              aria-pressed={selected.pinned}
             >
-              <Icon name="star" size={15} />
+              <Icon name="star" size={20} />
             </button>
             <button
               onClick={() => {
-                if (confirm('Delete this note?')) {
+                if (confirm('Bu not silinsin mi?')) {
                   noteActions.remove(selected.id);
                   setSelectedId(null);
                 }
               }}
-              className="btn btn-ghost p-2 text-faint hover:text-[#e03e3e]"
-              aria-label="Delete"
+              className="m3-icon-btn text-on-surface-variant hover:text-error"
+              aria-label="Notu sil"
             >
-              <Icon name="trash" size={15} />
+              <Icon name="trash" size={20} />
             </button>
           </div>
 
           <input
             value={selected.title}
             onChange={(e) => noteActions.patch(selected.id, { title: e.target.value })}
-            placeholder="Untitled"
-            className="font-display -ml-1 mt-3 w-full bg-transparent text-xl font-bold tracking-tight placeholder:text-faint/50 md:text-2xl"
+            placeholder="Başlıksız"
+            className="-ml-1 mt-3 w-full bg-transparent headline-small font-bold tracking-tight text-on-surface placeholder:text-outline/50"
+            aria-label="Not başlığı"
           />
           <textarea
             ref={bodyRef}
             value={selected.body}
             onChange={(e) => noteActions.patch(selected.id, { body: e.target.value })}
-            placeholder="Write something…"
+            placeholder="Bir şeyler yaz…"
             rows={6}
-            className="-ml-1 mt-3 w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed placeholder:text-faint/50"
+            className="-ml-1 mt-3 w-full resize-none overflow-hidden bg-transparent body-large leading-relaxed text-on-surface placeholder:text-outline/50"
+            aria-label="Not içeriği"
           />
 
-          <p className="mt-auto pt-4 text-xs text-faint">
+          <p className="body-small mt-auto pt-4 text-on-surface-variant">
             {selected.body.trim() ? selected.body.trim().split(/\s+/).length : 0} kelime · son düzenleme{' '}
             {formatDistanceToNow(new Date(selected.updatedAt), { addSuffix: true, locale: tr })}
           </p>
         </section>
       )}
+
+      {/* Yeni not FAB'ı */}
+      <button onClick={create} className="m3-fab" aria-label="Yeni not">
+        <Icon name="plus" size={24} />
+      </button>
     </div>
   );
 }

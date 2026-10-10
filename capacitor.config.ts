@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.gh0st.okulpaneli',
   appName: 'Aurora',
-  webDir: 'apk-loader',
+  webDir: 'dist',
   server: {
     // http şeması: https://localhost'tan http://<j7-ip>'ye istek "mixed content" sayılıp engellenmesin
     androidScheme: 'http',

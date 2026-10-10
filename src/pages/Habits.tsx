@@ -1,14 +1,13 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { Droplet, BookOpen, Dumbbell, Flame, Target, Activity, Sun, Moon, Clock, Heart, Star, CheckSquare, ListChecks, Archive, StickyNote, Repeat, TrendingUp, Zap, Gauge, Cpu, Pencil, Plus, Check, X } from 'lucide-react';
-import { Empty } from '../components/Dialog';
+import { Dialog, Empty } from '../components/Dialog';
 import { Page } from '../components/Page';
+import { Icon, type IconName } from '../lib/icons';
 import { habits as habitActions } from '../lib/actions';
 import { useDB } from '../lib/store';
 import { cx, todayISO } from '../lib/utils';
 import {
   HABIT_COLORS,
   HABIT_ICONS,
-  WEEKDAYS_SHORT,
   habitCompletedOn,
   habitExpectedOn,
   habitRate,
@@ -19,49 +18,26 @@ import {
 import type { Habit, HabitCategory, HabitFrequency, HabitType } from '../lib/types';
 
 const CATEGORIES: Array<{ key: HabitCategory; label: string }> = [
-  { key: 'health', label: 'Health' },
-  { key: 'productivity', label: 'Productivity' },
-  { key: 'mind', label: 'Mind' },
-  { key: 'social', label: 'Social' },
-  { key: 'other', label: 'Other' },
+  { key: 'health', label: 'Sağlık' },
+  { key: 'productivity', label: 'Verimlilik' },
+  { key: 'mind', label: 'Zihin' },
+  { key: 'social', label: 'Sosyal' },
+  { key: 'other', label: 'Diğer' },
 ];
 
 const FREQUENCIES: Array<{ key: HabitFrequency; label: string; needsTarget?: boolean; needsWeekdays?: boolean }> = [
-  { key: 'daily', label: 'Daily' },
-  { key: 'weekly', label: 'Weekly', needsWeekdays: true },
-  { key: 'x-per-week', label: 'X per week', needsTarget: true },
-  { key: 'x-per-month', label: 'X per month', needsTarget: true },
+  { key: 'daily', label: 'Günlük' },
+  { key: 'weekly', label: 'Haftalık', needsWeekdays: true },
+  { key: 'x-per-week', label: 'Haftada X', needsTarget: true },
+  { key: 'x-per-month', label: 'Ayda X', needsTarget: true },
 ];
 
-const DEFAULT_WEEKDAYS = [0, 1, 2, 3, 4]; // Mon-Fri
+const TR_WEEKDAYS_SHORT = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-// Map lucide icon name → component (used in icon picker + tile icons)
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  dumbbell: Dumbbell,
-  drop: Droplet,
-  book: BookOpen,
-  flame: Flame,
-  target: Target,
-  activity: Activity,
-  sun: Sun,
-  moon: Moon,
-  clock: Clock,
-  heart: Heart,
-  star: Star,
-  checkSquare: CheckSquare,
-  listChecks: ListChecks,
-  archive: Archive,
-  stickyNote: StickyNote,
-  repeat: Repeat,
-  trendingUp: TrendingUp,
-  zap: Zap,
-  gauge: Gauge,
-  cpu: Cpu,
-};
+const DEFAULT_WEEKDAYS = [0, 1, 2, 3, 4]; // Pzt-Cum
 
-function HabitIcon({ name, size = 16, className }: { name: string; size?: number; className?: string }) {
-  const C = ICON_MAP[name] ?? CheckSquare;
-  return <C size={size} className={className} />;
+function HabitIcon({ name, size = 18, className }: { name: string; size?: number; className?: string }) {
+  return <Icon name={name as IconName} size={size} className={className} />;
 }
 
 const BUILT_THRESHOLD = 21;
@@ -90,70 +66,63 @@ function HabitCard({
 
   return (
     <div
-      className={cx(
-        'rounded-xl border p-3 transition-all',
-        done ? 'shadow-[var(--shadow-card)]' : 'border-line hover:border-accent/30',
-      )}
-      style={done ? { backgroundColor: `${habit.color}10`, borderColor: `${habit.color}40` } : undefined}
+      className={cx('m3-card m3-card-interactive', done && 'ring-1')}
+      style={done ? { backgroundColor: `${habit.color}14`, borderColor: `${habit.color}55`, ['--tw-ring-color' as string]: `${habit.color}55` } : undefined}
     >
       <div className="flex items-center gap-3">
         <button
           onClick={onToggle}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full transition-all active:scale-95"
-          style={done ? { backgroundColor: habit.color, color: '#fff' } : { backgroundColor: `${habit.color}1a`, color: habit.color }}
-          aria-label={habit.type === 'quit' ? 'Mark as slip' : 'Mark as done'}
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full shadow-[var(--elevation-1)] transition-transform active:scale-90"
+          style={done ? { backgroundColor: habit.color, color: '#fff' } : { backgroundColor: `${habit.color}1f`, color: habit.color }}
+          aria-label={habit.type === 'quit' ? 'Kaydırmadım olarak işaretle' : 'Yaptım olarak işaretle'}
+          aria-pressed={done}
         >
-          {done ? <Check size={20} /> : <HabitIcon name={habit.icon} size={20} />}
+          {done ? <Icon name="check" size={22} /> : <HabitIcon name={habit.icon} size={22} />}
         </button>
-        <div className="min-w-0 flex-1">
+        <div className="m3-list-lines">
           <div className="flex items-center gap-1.5">
-            <p className={cx('truncate text-[15px] font-semibold', done && 'opacity-70')}>
-              {habit.title}
-            </p>
-            {isBuilt && <span title={`${BUILT_THRESHOLD}+ day streak`}>🎉</span>}
-            {habit.archived && <span title="Archived">📦</span>}
+            <p className={cx('m3-list-headline title-small', done && 'opacity-75')}>{habit.title}</p>
+            {isBuilt && <Icon name="emojiEvents" size={15} className="shrink-0 text-tertiary" aria-label={`${BUILT_THRESHOLD}+ gün seri`} />}
+            {habit.archived && <span className="label-small text-on-surface-variant">arşivli</span>}
             {habit.type === 'quit' && (
-              <span className="rounded-full bg-[#fae4e4] px-1.5 text-[10px] font-semibold text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
-                quit
-              </span>
+              <span className="m3-chip h-5 shrink-0 bg-error-container px-2 text-[10px] text-on-error-container">bırak</span>
             )}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-soft">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 body-small text-on-surface-variant">
             {streak > 0 && (
-              <span className="font-medium text-[#d9730d]">
-                🔥 {streak} day{streak === 1 ? '' : 's'}
+              <span className="flex items-center gap-0.5 font-medium text-tertiary">
+                <Icon name="localFireDepartment" size={12} /> {streak} gün
               </span>
             )}
-            {rate > 0 && <span>· {rate}% (30d)</span>}
+            {rate > 0 && <span>· %{rate} (30g)</span>}
             {habit.frequency === 'weekly' && habit.weekdays && (
-              <span>· {habit.weekdays.map((d) => WEEKDAYS_SHORT[d]).join('')}</span>
+              <span>· {habit.weekdays.map((d) => TR_WEEKDAYS_SHORT[d]).join(' ')}</span>
             )}
-            {habit.reminderTime && <span>· ⏰ {habit.reminderTime}</span>}
+            {habit.reminderTime && (
+              <span className="flex items-center gap-0.5">
+                · <Icon name="clock" size={11} /> {habit.reminderTime}
+              </span>
+            )}
           </div>
+          {rate > 0 && (
+            <div className="m3-progress mt-1.5 h-1">
+              <div className="m3-progress-bar" style={{ width: `${rate}%`, background: habit.color }} />
+            </div>
+          )}
         </div>
-        <div className="flex shrink-0 gap-0.5">
-          <button
-            onClick={onToggleGrid}
-            className="btn btn-ghost p-1.5 text-faint"
-            aria-label="Toggle streak grid"
-            title="Show streak grid"
-          >
-            <span className="text-[10px] font-semibold uppercase">30d</span>
+        <div className="flex shrink-0">
+          <button onClick={onToggleGrid} className="m3-icon-btn h-9 w-9 text-[11px] font-semibold" aria-label="30 günlük ızgarayı aç/kapat">
+            30g
           </button>
-          <button
-            onClick={onEdit}
-            className="btn btn-ghost p-1.5 text-faint"
-            aria-label="Edit"
-          >
-            <Pencil size={14} />
+          <button onClick={onEdit} className="m3-icon-btn h-9 w-9" aria-label="Düzenle">
+            <Icon name="pencil" size={17} />
           </button>
           <button
             onClick={onArchive}
-            className="btn btn-ghost p-1.5 text-faint"
-            aria-label={habit.archived ? 'Unarchive' : 'Archive'}
-            title={habit.archived ? 'Unarchive' : 'Archive'}
+            className="m3-icon-btn h-9 w-9"
+            aria-label={habit.archived ? 'Arşivden çıkar' : 'Arşivle'}
           >
-            <Archive size={14} />
+            <Icon name="archive" size={17} />
           </button>
         </div>
       </div>
@@ -167,26 +136,28 @@ function TileStreakGrid({ habit }: { habit: Habit }) {
   const db = useDB();
   const days = lastNDates(todayISO(), 30);
   const todayIso = todayISO();
-  // 5 rows × 6 columns (30 cells)
+  // 5 sıra × 6 sütun (30 hücre)
   return (
     <div className="mt-3 flex flex-wrap gap-[3px] pl-[3.75rem]">
       {days.map((iso) => {
         const status = tileStatus(habit, iso, db.habitLog);
         const isToday = iso === todayIso;
         const isFuture = iso > todayIso;
-        let bg = 'var(--line)';
-        if (status === 'done') bg = habit.color;
-        else if (status === 'skip') bg = 'transparent';
         return (
           <div
             key={iso}
             title={iso}
-            className={cx(
-              'h-5 w-5 rounded-sm transition-all',
-              isToday && 'ring-2 ring-[var(--accent)]',
-              isFuture && 'opacity-30',
-            )}
-            style={{ background: status === 'done' ? bg : status === 'slip' ? 'rgba(224, 62, 62, 0.25)' : status === 'skip' ? 'transparent' : 'var(--line)' }}
+            className={cx('h-5 w-5 rounded-[var(--md-shape-xs)]', isToday && 'ring-2 ring-primary', isFuture && 'opacity-30')}
+            style={{
+              background:
+                status === 'done'
+                  ? habit.color
+                  : status === 'slip'
+                    ? 'rgba(224, 62, 62, 0.25)'
+                    : status === 'skip'
+                      ? 'transparent'
+                      : 'var(--md-sys-color-surface-container-highest)',
+            }}
           />
         );
       })}
@@ -194,7 +165,7 @@ function TileStreakGrid({ habit }: { habit: Habit }) {
   );
 }
 
-function NewHabitForm({
+function HabitForm({
   initial,
   onClose,
 }: {
@@ -234,38 +205,37 @@ function NewHabitForm({
   };
 
   return (
-    <form onSubmit={submit} className="card mb-4 space-y-3 p-3 animate-[pop-in_240ms_var(--ease-spring)]">
-      <div className="flex gap-2">
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Drink water"
-          className="field flex-1"
-          autoFocus
-        />
-      </div>
+    <form onSubmit={submit} className="space-y-4">
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="örn. Her gün su iç"
+        className="field"
+        autoFocus
+        aria-label="Alışkanlık adı"
+      />
 
-      <div className="flex gap-1 rounded-lg bg-side p-0.5">
+      <div className="m3-segmented w-full">
         <button
           type="button"
           onClick={() => setType('build')}
-          className={cx('flex-1 rounded-md px-2 py-1 text-[11px]', type === 'build' ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft')}
+          className={cx('m3-segmented-btn flex-1', type === 'build' && 'm3-segmented-selected')}
           aria-pressed={type === 'build'}
         >
-          📈 Build
+          Kazan
         </button>
         <button
           type="button"
           onClick={() => setType('quit')}
-          className={cx('flex-1 rounded-md px-2 py-1 text-[11px]', type === 'quit' ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft')}
+          className={cx('m3-segmented-btn flex-1', type === 'quit' && 'm3-segmented-selected')}
           aria-pressed={type === 'quit'}
         >
-          🚭 Quit
+          Bırak
         </button>
       </div>
 
       <div>
-        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">Icon</p>
+        <p className="label-medium mb-1.5 text-on-surface-variant">Simge</p>
         <div className="grid grid-cols-7 gap-1">
           {HABIT_ICONS.map((name) => (
             <button
@@ -273,19 +243,20 @@ function NewHabitForm({
               type="button"
               onClick={() => setIcon(name)}
               className={cx(
-                'grid h-9 w-9 place-items-center rounded-md transition-all',
-                icon === name ? 'bg-accent-soft ring-2 ring-accent' : 'bg-side text-soft hover:bg-hover',
+                'grid h-9 w-9 place-items-center rounded-[var(--md-shape-sm)] transition-colors',
+                icon === name ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-on-surface-variant',
               )}
               aria-pressed={icon === name}
+              aria-label={`Simge: ${name}`}
             >
-              <HabitIcon name={name} size={16} />
+              <HabitIcon name={name} size={17} />
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">Color</p>
+        <p className="label-medium mb-1.5 text-on-surface-variant">Renk</p>
         <div className="flex flex-wrap gap-2">
           {HABIT_COLORS.map((c) => (
             <button
@@ -293,22 +264,18 @@ function NewHabitForm({
               type="button"
               onClick={() => setColor(c)}
               className={cx(
-                'h-6 w-6 rounded-full transition-transform',
-                color === c ? 'scale-110 ring-2 ring-offset-2 ring-offset-paper' : 'opacity-60 hover:opacity-100',
+                'h-7 w-7 rounded-full transition-transform',
+                color === c ? 'scale-110 ring-2 ring-primary ring-offset-2 ring-offset-surface-container-high' : 'opacity-60 hover:opacity-100',
               )}
-              style={{
-                background: c,
-                ...(color === c
-                  ? ({ ['--tw-ring-color' as string]: c } as React.CSSProperties)
-                  : {}),
-              }}
+              style={{ background: c }}
+              aria-label={`${c} rengi`}
             />
           ))}
         </div>
       </div>
 
       <div>
-        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">Frequency</p>
+        <p className="label-medium mb-1.5 text-on-surface-variant">Sıklık</p>
         <div className="grid grid-cols-2 gap-1.5">
           {FREQUENCIES.map((f) => (
             <button
@@ -316,8 +283,8 @@ function NewHabitForm({
               type="button"
               onClick={() => setFrequency(f.key)}
               className={cx(
-                'rounded-md px-2 py-1.5 text-[11px] transition-colors',
-                frequency === f.key ? 'bg-accent text-white' : 'bg-side text-soft hover:bg-hover',
+                'm3-chip w-full justify-center',
+                frequency === f.key && 'm3-chip-selected',
               )}
               aria-pressed={frequency === f.key}
             >
@@ -329,7 +296,7 @@ function NewHabitForm({
 
       {freqMeta.needsTarget && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-soft">Target</span>
+          <span className="body-small text-on-surface-variant">Hedef</span>
           <input
             type="number"
             min={1}
@@ -337,16 +304,17 @@ function NewHabitForm({
             value={target}
             onChange={(e) => setTarget(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
             className="field w-20"
+            aria-label="Hedef sayısı"
           />
-          <span className="text-xs text-soft">{frequency === 'x-per-week' ? 'days/week' : 'days/month'}</span>
+          <span className="body-small text-on-surface-variant">{frequency === 'x-per-week' ? 'gün/hafta' : 'gün/ay'}</span>
         </div>
       )}
 
       {freqMeta.needsWeekdays && (
         <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-faint">Days</p>
+          <p className="label-medium mb-1 text-on-surface-variant">Günler</p>
           <div className="flex gap-1">
-            {WEEKDAYS_SHORT.map((d, i) => (
+            {TR_WEEKDAYS_SHORT.map((d, i) => (
               <button
                 key={d}
                 type="button"
@@ -354,9 +322,10 @@ function NewHabitForm({
                   setWeekdays((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i].sort()))
                 }
                 className={cx(
-                  'h-9 flex-1 rounded-md text-[11px] font-medium',
-                  weekdays.includes(i) ? 'bg-accent text-white' : 'bg-side text-soft hover:bg-hover',
+                  'h-9 flex-1 rounded-[var(--md-shape-sm)] text-[11px] font-medium transition-colors',
+                  weekdays.includes(i) ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant',
                 )}
+                aria-pressed={weekdays.includes(i)}
               >
                 {d}
               </button>
@@ -367,7 +336,7 @@ function NewHabitForm({
 
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1">
-          <span className="text-xs text-soft">Reminder</span>
+          <span className="label-large text-on-surface-variant">Hatırlatma</span>
           <input
             type="time"
             value={reminderTime}
@@ -376,7 +345,7 @@ function NewHabitForm({
           />
         </label>
         <label className="space-y-1">
-          <span className="text-xs text-soft">Category</span>
+          <span className="label-large text-on-surface-variant">Kategori</span>
           <select value={category} onChange={(e) => setCategory(e.target.value as HabitCategory)} className="field">
             {CATEGORIES.map((c) => (
               <option key={c.key} value={c.key}>
@@ -387,12 +356,18 @@ function NewHabitForm({
         </label>
       </div>
 
-      <div className="flex gap-2">
-        <button type="button" onClick={onClose} className="btn btn-ghost flex-1 border border-line">
-          <X size={14} /> Cancel
+      <div className="flex justify-end gap-2 pt-1">
+        <button type="button" onClick={onClose} className="m3-btn m3-btn-text">
+          Vazgeç
         </button>
-        <button type="submit" disabled={!title.trim()} className="btn btn-primary flex-1">
-          {initial ? 'Save' : <><Plus size={14} /> Add</>}
+        <button type="submit" disabled={!title.trim()} className="m3-btn m3-btn-filled">
+          {initial ? (
+            'Kaydet'
+          ) : (
+            <>
+              <Icon name="plus" size={16} /> Ekle
+            </>
+          )}
         </button>
       </div>
     </form>
@@ -439,52 +414,43 @@ export default function Habits() {
     });
   };
 
+  const cardProps = (h: Habit) => ({
+    habit: h,
+    onToggle: () => habitActions.toggle(today, h.id),
+    onEdit: () => setEditing(h),
+    onArchive: () => habitActions.archive(h.id, !h.archived),
+    showGrid: openGrid.has(h.id),
+    onToggleGrid: () => toggleGrid(h.id),
+  });
+
   return (
     <Page
-      icon="🔁"
-      title="Habits"
+      title="Alışkanlıklar"
       subtitle={
         db.habits.length === 0
-          ? 'Track daily routines'
-          : `${activeHabits.length} active${archivedHabits.length ? ` · ${archivedHabits.length} archived` : ''}`
+          ? 'Günlük rutinlerini takip et'
+          : `${activeHabits.length} aktif${archivedHabits.length ? ` · ${archivedHabits.length} arşivli` : ''}`
       }
       actions={
         <button
           onClick={() => setShowArchived(!showArchived)}
-          className={cx('btn btn-ghost p-1.5', showArchived && 'bg-accent-soft text-accent')}
-          aria-label="Toggle archived"
-          title="Show archived"
+          className={cx('m3-btn m3-btn-tonal', showArchived && 'm3-chip-selected')}
+          aria-pressed={showArchived}
         >
-          <Archive size={14} />
+          <Icon name="archive" size={16} /> Arşiv
         </button>
       }
     >
-      {!adding && !editing && (
-        <button onClick={() => setAdding(true)} className="btn btn-primary mb-3 w-full justify-center">
-          <Plus size={14} /> New habit
-        </button>
-      )}
-      {adding && <NewHabitForm onClose={() => setAdding(false)} />}
-      {editing && <NewHabitForm initial={editing} onClose={() => setEditing(null)} />}
-
       {db.habits.length === 0 ? (
-        <Empty emoji="🌱" text="No habits yet — add your first one to start tracking." />
+        <Empty emoji="🌱" text="Henüz alışkanlık yok — ilkini ekleyerek başla." />
       ) : (
         <div className="space-y-5">
           {todayHabits.length > 0 && (
             <section>
-              <h2 className="mb-2 text-sm font-semibold text-soft">Today</h2>
+              <h2 className="title-medium mb-2 text-on-surface-variant">Bugün</h2>
               <div className="space-y-2">
                 {todayHabits.map((h) => (
-                  <HabitCard
-                    key={h.id}
-                    habit={h}
-                    onToggle={() => habitActions.toggle(today, h.id)}
-                    onEdit={() => setEditing(h)}
-                    onArchive={() => habitActions.archive(h.id, !h.archived)}
-                    showGrid={openGrid.has(h.id)}
-                    onToggleGrid={() => toggleGrid(h.id)}
-                  />
+                  <HabitCard key={h.id} {...cardProps(h)} />
                 ))}
               </div>
             </section>
@@ -492,18 +458,10 @@ export default function Habits() {
 
           {otherHabits.length > 0 && (
             <section>
-              <h2 className="mb-2 text-sm font-semibold text-soft">Not scheduled today</h2>
+              <h2 className="title-medium mb-2 text-on-surface-variant">Bugün planlanmadı</h2>
               <div className="space-y-2">
                 {otherHabits.map((h) => (
-                  <HabitCard
-                    key={h.id}
-                    habit={h}
-                    onToggle={() => habitActions.toggle(today, h.id)}
-                    onEdit={() => setEditing(h)}
-                    onArchive={() => habitActions.archive(h.id, !h.archived)}
-                    showGrid={openGrid.has(h.id)}
-                    onToggleGrid={() => toggleGrid(h.id)}
-                  />
+                  <HabitCard key={h.id} {...cardProps(h)} />
                 ))}
               </div>
             </section>
@@ -511,28 +469,35 @@ export default function Habits() {
 
           {showArchived && archivedHabits.length > 0 && (
             <section>
-              <h2 className="mb-2 text-sm font-semibold text-soft">Archived ({archivedHabits.length})</h2>
+              <h2 className="title-medium mb-2 text-on-surface-variant">Arşivlenenler ({archivedHabits.length})</h2>
               <div className="space-y-2">
                 {archivedHabits.map((h) => (
-                  <HabitCard
-                    key={h.id}
-                    habit={h}
-                    onToggle={() => habitActions.toggle(today, h.id)}
-                    onEdit={() => setEditing(h)}
-                    onArchive={() => habitActions.archive(h.id, !h.archived)}
-                    showGrid={openGrid.has(h.id)}
-                    onToggleGrid={() => toggleGrid(h.id)}
-                  />
+                  <HabitCard key={h.id} {...cardProps(h)} />
                 ))}
               </div>
             </section>
           )}
 
           {todayHabits.length === 0 && otherHabits.length === 0 && !showArchived && (
-            <p className="py-6 text-center text-sm text-faint">No active habits. Click «New habit» to add one.</p>
+            <p className="body-medium py-6 text-center text-on-surface-variant">
+              Aktif alışkanlık yok. «Yeni alışkanlık» ile ekle.
+            </p>
           )}
         </div>
       )}
+
+      {/* Yeni alışkanlık FAB'ı */}
+      <button onClick={() => setAdding(true)} className="m3-fab" aria-label="Yeni alışkanlık">
+        <Icon name="plus" size={24} />
+      </button>
+
+      <Dialog open={adding} onClose={() => setAdding(false)} title="Yeni Alışkanlık">
+        <HabitForm onClose={() => setAdding(false)} />
+      </Dialog>
+
+      <Dialog open={editing !== null} onClose={() => setEditing(null)} title="Alışkanlığı Düzenle">
+        <HabitForm initial={editing} onClose={() => setEditing(null)} />
+      </Dialog>
     </Page>
   );
 }

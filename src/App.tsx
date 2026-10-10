@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import { TopBar } from './components/TopBar';
+import { DockNav } from './components/DockNav';
+import SplashScreen from './components/SplashScreen';
 
 import { getDB, updateDB, useDB } from './lib/store';
 import { toggleDay } from './lib/habits';
@@ -44,6 +46,54 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
 }
 
+function hexToHsl(hex: string): [number, number, number] {
+  const [r255, g255, b255] = hexToRgb(hex);
+  const r = r255 / 255;
+  const g = g255 / 255;
+  const b = b255 / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l * 100];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+  return [h * 360, s * 100, l * 100];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const hue = ((h % 360) + 360) % 360;
+  const sat = Math.min(100, Math.max(0, s)) / 100;
+  const lig = Math.min(100, Math.max(0, l)) / 100;
+  const c = (1 - Math.abs(2 * lig - 1)) * sat;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = lig - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (hue < 60) [r, g, b] = [c, x, 0];
+  else if (hue < 120) [r, g, b] = [x, c, 0];
+  else if (hue < 180) [r, g, b] = [0, c, x];
+  else if (hue < 240) [r, g, b] = [0, x, c];
+  else if (hue < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+const DEFAULT_ACCENT = '#2383e2';
+
+const ACCENT_M3_VARS: readonly string[] = [
+  '--md-sys-color-primary',
+  '--md-sys-color-on-primary',
+  '--md-sys-color-primary-container',
+  '--md-sys-color-on-primary-container',
+  '--md-sys-color-inverse-primary',
+];
+
 const PAGES: Record<string, React.ComponentType> = {
   '/': Dashboard,
   '/todos': Todos,
@@ -65,25 +115,57 @@ export default function App() {
   // Server istatistiklerini uygulama boyunca topla — widget'lar taze veri alsın
   useSystemStats();
   const settings = db.settings;
+  const [splash, setSplash] = useState(true);
 
+  // Tema senkronu + Material You accent paleti (accent → primary ailesi)
   useEffect(() => {
+    const root = document.documentElement;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
       const dark = settings.theme === 'dark' || (settings.theme === 'system' && mq.matches);
-      document.documentElement.classList.toggle('dark', dark);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#131210' : '#fafaf8');
+      root.classList.toggle('dark', dark);
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+        m.setAttribute('content', dark ? '#121316' : '#faf9fd');
+      });
+
+      const [r, g, b] = hexToRgb(settings.accent);
+      root.style.setProperty('--accent', settings.accent);
+      root.style.setProperty('--accent-soft', `rgba(${r}, ${g}, ${b}, 0.13)`);
+
+      if (settings.accent.toLowerCase() === DEFAULT_ACCENT) {
+        for (const v of ACCENT_M3_VARS) root.style.removeProperty(v);
+      } else {
+        const [h, s] = hexToHsl(settings.accent);
+        if (dark) {
+          root.style.setProperty('--md-sys-color-primary', hslToHex(h, s, 78));
+          root.style.setProperty('--md-sys-color-on-primary', hslToHex(h, Math.min(s, 60), 16));
+          root.style.setProperty('--md-sys-color-primary-container', hslToHex(h, s * 0.85, 30));
+          root.style.setProperty('--md-sys-color-on-primary-container', hslToHex(h, Math.min(s + 8, 100), 90));
+          root.style.setProperty('--md-sys-color-inverse-primary', hslToHex(h, s, 40));
+        } else {
+          root.style.setProperty('--md-sys-color-primary', hslToHex(h, s * 0.95, 38));
+          root.style.setProperty('--md-sys-color-on-primary', '#ffffff');
+          root.style.setProperty('--md-sys-color-primary-container', hslToHex(h, s * 0.7, 90));
+          root.style.setProperty('--md-sys-color-on-primary-container', hslToHex(h, s * 0.9, 14));
+          root.style.setProperty('--md-sys-color-inverse-primary', hslToHex(h, s, 78));
+        }
+      }
     };
     apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, [settings.theme]);
+    // Chrome 64: MediaQueryList.addEventListener 74+ — addListener'a düş
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    }
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, [settings.theme, settings.accent]);
 
+  // Splash güvenlik ağı: onDone gelmezse en geç 2s'de kaldır
   useEffect(() => {
-    const root = document.documentElement;
-    const [r, g, b] = hexToRgb(settings.accent);
-    root.style.setProperty('--accent', settings.accent);
-    root.style.setProperty('--accent-soft', `rgba(${r}, ${g}, ${b}, 0.13)`);
-  }, [settings.accent]);
+    const t = setTimeout(() => setSplash(false), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
@@ -166,7 +248,7 @@ export default function App() {
   const Page = PAGES[path] ?? Dashboard;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-paper text-ink">
+    <div className="flex h-screen flex-col overflow-hidden bg-surface text-on-surface">
       <TopBar path={path} />
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
@@ -175,6 +257,8 @@ export default function App() {
           </div>
         </div>
       </div>
+      <DockNav path={path} />
+      {splash && <SplashScreen onDone={() => setSplash(false)} />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Page } from '../components/Page';
 import { Icon, type IconName } from '../lib/icons';
 import { exportJSON, importJSON, patchSettings, resetAll, useDB } from '../lib/store';
@@ -11,44 +11,66 @@ import { cx } from '../lib/utils';
 const ACCENTS = ['#2383e2', '#9065b0', '#0f7b6c', '#d9730d', '#e03e3e', '#c14c8a'];
 
 const THEMES: Array<{ key: ThemeMode; label: string }> = [
-  { key: 'system', label: 'System' },
-  { key: 'light', label: 'Light' },
-  { key: 'dark', label: 'Dark' },
+  { key: 'system', label: 'Sistem' },
+  { key: 'light', label: 'Açık' },
+  { key: 'dark', label: 'Koyu' },
 ];
 
-function Section({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children }: { icon: IconName; title: string; children: ReactNode }) {
   return (
-    <section className="mb-5 md:mb-7">
-      <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-soft">
+    <section className="mb-4 md:mb-5">
+      <h2 className="label-medium mb-2 flex items-center gap-1.5 text-on-surface-variant">
         <Icon name={icon} size={14} /> {title}
       </h2>
-      <div className="card p-3 md:p-4">{children}</div>
+      <div className="m3-card p-2 md:p-3">{children}</div>
     </section>
   );
 }
 
-function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
+function Row({
+  icon,
+  label,
+  hint,
+  children,
+  htmlFor,
+}: {
+  icon?: IconName;
+  label: string;
+  hint?: string;
+  children: ReactNode;
+  htmlFor?: string;
+}) {
   return (
-    <div className="flex items-center gap-3 py-1">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={cx('relative h-6 w-10 shrink-0 rounded-full transition-colors', checked ? 'bg-accent' : 'bg-faint/40')}
-      >
-        <span
-          className={cx(
-            'absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200',
-            checked && 'translate-x-4',
-          )}
-        />
-      </button>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium leading-tight">{label}</p>
-        {hint && <p className="mt-0.5 text-xs leading-snug text-faint">{hint}</p>}
-      </div>
+    <div className="m3-list-item-static min-h-[3rem] px-1">
+      {icon && (
+        <span className="m3-list-avatar bg-surface-container-high text-on-surface-variant">
+          <Icon name={icon} size={18} />
+        </span>
+      )}
+      <label htmlFor={htmlFor} className="m3-list-lines cursor-pointer">
+        <span className="m3-list-headline body-medium font-medium">{label}</span>
+        {hint && <span className="m3-list-supporting">{hint}</span>}
+      </label>
+      {children}
     </div>
+  );
+}
+
+function SwitchRow({ icon, checked, onChange, label, hint }: { icon: IconName; checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
+  return (
+    <label className="m3-list-item-static m3-state min-h-[3rem] cursor-pointer px-1">
+      <span className="m3-list-avatar bg-surface-container-high text-on-surface-variant">
+        <Icon name={icon} size={18} />
+      </span>
+      <span className="m3-list-lines">
+        <span className="m3-list-headline body-medium font-medium">{label}</span>
+        {hint && <span className="m3-list-supporting">{hint}</span>}
+      </span>
+      <span className="m3-switch shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <span className="m3-switch-track" />
+      </span>
+    </label>
   );
 }
 
@@ -80,67 +102,69 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `aurora-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `aurora-yedek-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    flash('Backup downloaded ✓');
+    flash('Yedek indirildi ✓');
   };
 
   const doImport = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      if (importJSON(String(reader.result))) flash('Backup restored ✓');
-      else flash('Could not read file ✗');
+      if (importJSON(String(reader.result))) flash('Yedek geri yüklendi ✓');
+      else flash('Dosya okunamadı ✗');
     };
     reader.readAsText(file);
   };
 
+  const waterPct = ((db.settings.waterEveryHours - 1) / 3) * 100;
+
   return (
-    <Page icon="⚙️" title="Settings" subtitle={feedback || undefined}>
-      <Section icon="star" title="Profile">
-        <label className="flex items-center gap-3">
-          <span className="w-24 shrink-0 text-sm text-soft">Name</span>
+    <Page title="Ayarlar" subtitle="Paneli kendine göre ayarla — her şey cihazında saklanır.">
+      {/* Profil */}
+      <Section icon="person" title="Profil">
+        <Row label="Ad" htmlFor="settings-name">
           <input
+            id="settings-name"
             value={db.settings.studentName}
             onChange={(e) => patchSettings({ studentName: e.target.value })}
-            placeholder="e.g. Alex"
-            className="field"
+            placeholder="örn. Ali"
+            className="field max-w-[220px]"
           />
-        </label>
+        </Row>
       </Section>
 
-      <Section icon="sun" title="Appearance">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-sm text-soft">Theme</span>
-            <div className="flex gap-1 rounded-lg bg-side p-1">
+      {/* Görünüm */}
+      <Section icon="palette" title="Görünüm">
+        <div className="space-y-3 p-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="body-medium font-medium">Tema</span>
+            <div className="m3-segmented">
               {THEMES.map((t) => (
                 <button
                   key={t.key}
                   onClick={() => patchSettings({ theme: t.key })}
-                  className={cx(
-                    'rounded-md px-3 py-1 text-xs transition-colors',
-                    db.settings.theme === t.key ? 'bg-paper font-medium shadow-[var(--shadow-card)]' : 'text-soft hover:text-ink',
-                  )}
+                  className={cx('m3-segmented-btn', db.settings.theme === t.key && 'm3-segmented-selected')}
+                  aria-pressed={db.settings.theme === t.key}
                 >
                   {t.label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-sm text-soft">Accent</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="body-medium font-medium">Vurgu rengi</span>
             <div className="flex gap-2">
               {ACCENTS.map((c) => (
                 <button
                   key={c}
                   onClick={() => patchSettings({ accent: c })}
-                  aria-label={`Color ${c}`}
+                  aria-label={`${c} rengi`}
                   className={cx(
-                    'h-6 w-6 rounded-full transition-transform',
-                    db.settings.accent === c ? 'scale-110 ring-2 ring-offset-2 ring-offset-paper' : 'opacity-60 hover:opacity-100',
+                    'h-7 w-7 rounded-full transition-transform',
+                    db.settings.accent === c ? 'scale-110 ring-2 ring-primary ring-offset-2 ring-offset-surface-container' : 'opacity-60 hover:opacity-100',
                   )}
-                  style={{ background: c, ...(db.settings.accent === c ? ({ '--tw-ring-color': c }) as React.CSSProperties : {}) }}
+                  style={{ background: c }}
                 />
               ))}
             </div>
@@ -148,79 +172,83 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section icon="bell" title="Reminders">
-        <div className="space-y-4">
+      {/* Hatırlatıcılar */}
+      <Section icon="notifications" title="Hatırlatıcılar">
+        <div className="space-y-1">
           {!remindersAvailable() && (
-            <p className="rounded-lg bg-side px-3 py-2 text-xs text-soft">
-              Notifications work in the APK — in the browser this section has no effect.
+            <p className="body-small m-1 rounded-[var(--md-shape-md)] bg-surface-container-low px-3 py-2 text-on-surface-variant">
+              Bildirimler APK'da çalışır — tarayıcıda bu bölümün etkisi yoktur.
             </p>
           )}
-          <Toggle
+          <SwitchRow
+            icon="notificationAdd"
             checked={db.settings.remindersEnabled}
             onChange={(v) => {
               patchSettings({ remindersEnabled: v });
               if (v) void requestReminderPermission();
             }}
-            label="Reminders on"
-            hint="Homework, exam, water and workout notifications"
+            label="Hatırlatıcılar açık"
+            hint="Ödev, sınav, su ve antrenman bildirimleri"
           />
           {db.settings.remindersEnabled && (
-            <button
-              onClick={async () => {
-                const ok = await sendTestNotification();
-                flash(ok ? 'Test notification sent — should arrive in 1-2 s ✓' : 'No notification permission ✗');
-              }}
-              className="btn btn-ghost border border-line justify-start"
-            >
-              <Icon name="bell" size={14} /> Send test notification
-            </button>
+            <Row label="Test bildirimi gönder" hint="1-2 saniye içinde gelmeli">
+              <button
+                onClick={async () => {
+                  const ok = await sendTestNotification();
+                  flash(ok ? 'Test bildirimi gönderildi ✓' : 'Bildirim izni yok ✗');
+                }}
+                className="m3-btn m3-btn-tonal"
+              >
+                <Icon name="bell" size={15} /> Gönder
+              </button>
+            </Row>
           )}
           {db.settings.remindersEnabled && permState === false && (
-            <div className="rounded-lg bg-[#fae4e4] px-3 py-2.5 text-xs leading-relaxed text-[#621f1f] dark:bg-[#40222a] dark:text-[#ef8b8b]">
-              <p className="font-semibold">Notification permission denied 🔕</p>
-              <p className="mt-0.5">
-                Once Android blocks the prompt it won't ask again. To enable:{' '}
-                <b>Phone Settings → Apps → Aurora → Notifications → Allow</b>
+            <div className="m3-card m3-card-outlined m-1 border-error/60 bg-error-container text-on-error-container">
+              <p className="body-medium font-semibold">Bildirim izni reddedildi</p>
+              <p className="body-small mt-0.5 leading-relaxed">
+                Android istemi bir kez reddedilince tekrar sormaz. Açmak için:{' '}
+                <b>Telefon Ayarları → Uygulamalar → Aurora → Bildirimler → İzin ver</b>
               </p>
               <button
                 onClick={async () => {
                   if (await requestReminderPermission()) setPermState(true);
-                  else setFeedback('System prompt is blocked — open phone settings to enable ✗');
+                  else flash('Sistem istemi engellendi — telefon ayarlarından aç ✗');
                 }}
-                className="btn mt-2 border border-current px-2.5 py-1 text-xs font-medium"
+                className="m3-btn m3-btn-filled mt-2"
               >
-                Try again
+                Tekrar dene
               </button>
             </div>
           )}
-          <div className={cx('space-y-3', !db.settings.remindersEnabled && 'pointer-events-none opacity-40')}>
-            <div className="grid grid-cols-2 gap-3">
+          <div className={cx('space-y-1', !db.settings.remindersEnabled && 'pointer-events-none opacity-40')}>
+            <div className="grid grid-cols-2 gap-3 p-1">
               <label className="space-y-1">
-                <span className="text-xs text-soft">Remind homework</span>
+                <span className="label-large text-on-surface-variant">Ödev hatırlatma</span>
                 <select
                   value={db.settings.todoReminderDays}
                   onChange={(e) => patchSettings({ todoReminderDays: Number(e.target.value) })}
                   className="field"
                 >
-                  <option value={1}>1 day before</option>
-                  <option value={2}>2 days before</option>
-                  <option value={3}>3 days before</option>
+                  <option value={1}>1 gün önce</option>
+                  <option value={2}>2 gün önce</option>
+                  <option value={3}>3 gün önce</option>
                 </select>
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Remind exam</span>
+                <span className="label-large text-on-surface-variant">Sınav hatırlatma</span>
                 <select
                   value={db.settings.examReminderDays}
                   onChange={(e) => patchSettings({ examReminderDays: Number(e.target.value) })}
                   className="field"
                 >
-                  <option value={3}>3 days before</option>
-                  <option value={7}>1 week before</option>
-                  <option value={14}>2 weeks before</option>
+                  <option value={3}>3 gün önce</option>
+                  <option value={7}>1 hafta önce</option>
+                  <option value={14}>2 hafta önce</option>
                 </select>
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Reminder time</span>
+                <span className="label-large text-on-surface-variant">Hatırlatma saati</span>
                 <input
                   type="time"
                   value={db.settings.reminderTime}
@@ -229,203 +257,219 @@ export default function Settings() {
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-xs text-soft">Lead time before exam</span>
+                <span className="label-large text-on-surface-variant">Sınav öncesi uyarı</span>
                 <select
                   value={db.settings.examLeadMinutes}
                   onChange={(e) => patchSettings({ examLeadMinutes: Number(e.target.value) })}
                   className="field"
                 >
-                  <option value={15}>15 minutes</option>
-                  <option value={30}>30 minutes</option>
-                  <option value={45}>45 minutes</option>
-                  <option value={60}>1 hour</option>
-                  <option value={90}>1.5 hours</option>
+                  <option value={15}>15 dakika önce</option>
+                  <option value={30}>30 dakika önce</option>
+                  <option value={45}>45 dakika önce</option>
+                  <option value={60}>1 saat önce</option>
+                  <option value={90}>1,5 saat önce</option>
                 </select>
               </label>
             </div>
-            <div className="space-y-3 border-t border-line pt-3">
-              <Toggle
-                checked={db.settings.waterEnabled}
-                onChange={(v) => patchSettings({ waterEnabled: v })}
-                label="💧 Water reminder"
-                hint={`${db.settings.waterFrom}–${db.settings.waterTo}, every ${db.settings.waterEveryHours}h`}
-              />
-              <Toggle
-                checked={db.settings.workoutEnabled}
-                onChange={(v) => patchSettings({ workoutEnabled: v })}
-                label="🏋️ Workout reminder"
-                hint={`Every day at ${db.settings.workoutTime} — skipped if you already trained`}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-1">
-                  <span className="text-xs text-soft">Workout time</span>
-                  <input
-                    type="time"
-                    value={db.settings.workoutTime}
-                    onChange={(e) => patchSettings({ workoutTime: e.target.value })}
-                    className="field"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-xs text-soft">Water every</span>
-                  <select
-                    value={db.settings.waterEveryHours}
-                    onChange={(e) => patchSettings({ waterEveryHours: Number(e.target.value) })}
-                    className="field"
-                  >
-                    <option value={1}>1 hour</option>
-                    <option value={2}>2 hours</option>
-                    <option value={3}>3 hours</option>
-                    <option value={4}>4 hours</option>
-                  </select>
-                </label>
+
+            <hr className="m3-divider m-2" />
+
+            <SwitchRow
+              icon="waterDrop"
+              checked={db.settings.waterEnabled}
+              onChange={(v) => patchSettings({ waterEnabled: v })}
+              label="Su hatırlatıcısı"
+              hint={`${db.settings.waterFrom}–${db.settings.waterTo} arası`}
+            />
+            {db.settings.waterEnabled && (
+              <div className="px-3 pt-1">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="label-large text-on-surface-variant">Su içme aralığı</span>
+                  <span className="body-small tabular-nums text-on-surface-variant">her {db.settings.waterEveryHours} saat</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={4}
+                  step={1}
+                  value={db.settings.waterEveryHours}
+                  onChange={(e) => patchSettings({ waterEveryHours: Number(e.target.value) })}
+                  className="m3-slider"
+                  style={{ ['--m3-fill' as string]: `${waterPct}%` }}
+                  aria-label="Su hatırlatıcı aralığı (saat)"
+                />
+                <div className="flex justify-between body-small text-outline">
+                  <span>1 sa</span>
+                  <span>2 sa</span>
+                  <span>3 sa</span>
+                  <span>4 sa</span>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <label className="space-y-1">
-                  <span className="text-xs text-soft">Water from</span>
+            )}
+            <SwitchRow
+              icon="fitnessCenter"
+              checked={db.settings.workoutEnabled}
+              onChange={(v) => patchSettings({ workoutEnabled: v })}
+              label="Antrenman hatırlatıcısı"
+              hint={`Her gün saat ${db.settings.workoutTime} — o gün antrenman yaptıysan gelmez`}
+            />
+            <div className="grid grid-cols-2 gap-3 p-1">
+              <label className="space-y-1">
+                <span className="label-large text-on-surface-variant">Antrenman saati</span>
+                <input
+                  type="time"
+                  value={db.settings.workoutTime}
+                  onChange={(e) => patchSettings({ workoutTime: e.target.value })}
+                  className="field"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="label-large text-on-surface-variant">Su başlangıç / bitiş</span>
+                <div className="flex gap-2">
                   <input
                     type="time"
                     value={db.settings.waterFrom}
                     onChange={(e) => patchSettings({ waterFrom: e.target.value })}
                     className="field"
+                    aria-label="Su hatırlatıcı başlangıç"
                   />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-xs text-soft">Water until</span>
                   <input
                     type="time"
                     value={db.settings.waterTo}
                     onChange={(e) => patchSettings({ waterTo: e.target.value })}
                     className="field"
+                    aria-label="Su hatırlatıcı bitiş"
                   />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-xs text-soft">All reminders at</span>
-                  <input
-                    type="time"
-                    value={db.settings.reminderTime}
-                    onChange={(e) => patchSettings({ reminderTime: e.target.value })}
-                    className="field"
-                  />
-                </label>
-              </div>
+                </div>
+              </label>
             </div>
-            <div className="space-y-3 border-t border-line pt-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-faint">Notification channels</p>
-              <Toggle
-                checked={db.settings.notifications.examChannel}
-                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, examChannel: v } })}
-                label="📝 Exam reminders"
-                hint="High priority — before exam and on exam day"
-              />
-              <Toggle
-                checked={db.settings.notifications.todoChannel}
-                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, todoChannel: v } })}
-                label="⏳ Homework reminders"
-                hint="Approaching deadlines"
-              />
-              <Toggle
-                checked={db.settings.notifications.waterChannel}
-                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, waterChannel: v } })}
-                label="💧 Water reminder"
-                hint="Low priority — silent notification"
-              />
-              <Toggle
-                checked={db.settings.notifications.workoutChannel}
-                onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, workoutChannel: v } })}
-                label="🏋️ Workout reminder"
-                hint="Notifies when it's workout time"
-              />
-            </div>
+
+            <hr className="m3-divider m-2" />
+
+            <p className="label-medium px-3 pt-1 text-on-surface-variant">Bildirim kanalları</p>
+            <SwitchRow
+              icon="event"
+              checked={db.settings.notifications.examChannel}
+              onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, examChannel: v } })}
+              label="Sınav hatırlatıcıları"
+              hint="Yüksek öncelik — sınav öncesi ve sınav günü"
+            />
+            <SwitchRow
+              icon="checkSquare"
+              checked={db.settings.notifications.todoChannel}
+              onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, todoChannel: v } })}
+              label="Ödev hatırlatıcıları"
+              hint="Yaklaşan teslim tarihleri"
+            />
+            <SwitchRow
+              icon="waterDrop"
+              checked={db.settings.notifications.waterChannel}
+              onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, waterChannel: v } })}
+              label="Su hatırlatıcısı"
+              hint="Düşük öncelik — sessiz bildirim"
+            />
+            <SwitchRow
+              icon="dumbbell"
+              checked={db.settings.notifications.workoutChannel}
+              onChange={(v) => patchSettings({ notifications: { ...db.settings.notifications, workoutChannel: v } })}
+              label="Antrenman hatırlatıcısı"
+              hint="Antrenman saati geldiğinde bildirir"
+            />
           </div>
         </div>
       </Section>
 
-      <Section icon="clipboard" title="Integrations">
-        <label className="space-y-1">
-          <span className="text-sm text-soft">FileBrowser URL</span>
+      {/* Entegrasyonlar */}
+      <Section icon="folder" title="Entegrasyonlar">
+        <label className="block space-y-1 p-1" htmlFor="settings-filebrowser">
+          <span className="label-large text-on-surface-variant">FileBrowser adresi</span>
           <input
+            id="settings-filebrowser"
             value={db.settings.filebrowserUrl}
             onChange={(e) => patchSettings({ filebrowserUrl: e.target.value })}
             placeholder="http://192.168.1.200:5555"
             inputMode="url"
             className="field"
           />
+          <span className="body-small text-on-surface-variant">«Dosyalar» sayfası bu adresi gömer.</span>
         </label>
-        <p className="mt-2 text-xs text-faint">The «Files» page embeds the FileBrowser at this address.</p>
       </Section>
 
+      {/* Termux API */}
       <Section icon="zap" title="Termux API">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="relative flex h-2 w-2">
-                {up === true && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
-                <span
-                  className={cx(
-                    'relative inline-flex h-2 w-2 rounded-full',
-                    up === null ? 'bg-faint' : up ? 'bg-emerald-500' : 'bg-zinc-400 opacity-50',
-                  )}
-                />
-              </span>
-              {up === null ? 'Checking…' : up ? 'Connected' : 'Not connected'}
-              {battery && (
-                <span className="text-xs text-faint">
-                  · Battery {battery.percent ?? '?'}%{battery.charging ? ' ⚡' : ''}
-                </span>
-              )}
-            </div>
+        <div className="space-y-2 p-1">
+          <Row
+            icon={up === false ? 'wifiOff' : 'wifi'}
+            label={up === null ? 'Kontrol ediliyor…' : up ? 'Bağlı' : 'Bağlı değil'}
+            hint={
+              battery
+                ? `Batarya %${battery.percent ?? '?'}${battery.charging ? ' · şarj oluyor' : ''}`
+                : 'Bildirim, titreşim ve batarya için Termux:API'
+            }
+          >
+            <span className="m3-chip h-7">
+              <span
+                className={cx(
+                  'h-2 w-2 rounded-full',
+                  up === null ? 'bg-outline-variant' : up ? 'bg-tertiary' : 'bg-outline',
+                )}
+              />
+              {up === null ? '…' : up ? 'Çevrimiçi' : 'Çevrimdışı'}
+            </span>
+          </Row>
+
+          <div className="grid grid-cols-2 gap-2 p-1">
+            <button
+              onClick={async () => flash((await termux.toast('Merhaba Termux!')) ? 'Toast gösterildi ✓' : 'Termux bağlı değil ✗')}
+              className="m3-btn m3-btn-outlined justify-start"
+            >
+              <Icon name="alert" size={15} /> Test toast
+            </button>
+            <button
+              onClick={async () => flash((await termux.vibrate(400)) ? 'Titretildi ✓' : 'Termux bağlı değil ✗')}
+              className="m3-btn m3-btn-outlined justify-start"
+            >
+              <Icon name="zap" size={15} /> Titret
+            </button>
+            <button
+              onClick={async () => flash((await termux.copy('Aurora panelinden selamlar 👋')) ? 'Kopyalandı ✓' : 'Termux bağlı değil ✗')}
+              className="m3-btn m3-btn-outlined justify-start"
+            >
+              <Icon name="contentCopy" size={15} /> Panoya kopyala
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={async () => flash((await termux.toast('Hello Termux!')) ? 'Toast shown ✓' : 'Termux not connected ✗')}
-              className="btn btn-ghost border border-line justify-start"
-            >
-              <Icon name="alert" size={14} /> Test toast
-            </button>
-            <button
-              onClick={async () => flash((await termux.vibrate(400)) ? 'Vibrated ✓' : 'Termux not connected ✗')}
-              className="btn btn-ghost border border-line justify-start"
-            >
-              <Icon name="zap" size={14} /> Vibrate
-            </button>
-            <button
-              onClick={async () => flash((await termux.copy('Greetings from the school panel 👋')) ? 'Copied ✓' : 'Termux not connected ✗')}
-              className="btn btn-ghost border border-line justify-start"
-            >
-              <Icon name="clipboard" size={14} /> Copy to clipboard
-            </button>
-          </div>
-
-          <p className="rounded-lg bg-side px-3 py-2.5 text-xs leading-relaxed text-soft">
-            On the device, install: <code className="rounded bg-hover px-1 py-0.5">pkg install termux-api</code> +{' '}
-            the <b>Termux:API</b> app (F-Droid). Then start the server:{' '}
-            <code className="rounded bg-hover px-1 py-0.5">npm run build &amp;&amp; npm run start</code> → open{' '}
-            <code className="rounded bg-hover px-1 py-0.5">localhost:8788</code> in a browser.
+          <p className="body-small rounded-[var(--md-shape-md)] bg-surface-container-low px-3 py-2.5 leading-relaxed text-on-surface-variant">
+            Cihazda kurulum: <code className="rounded bg-surface-container-high px-1">pkg install termux-api</code> +{' '}
+            <b>Termux:API</b> uygulaması (F-Droid). Sonra sunucuyu başlat:{' '}
+            <code className="rounded bg-surface-container-high px-1">npm run build && npm run start</code> → tarayıcıda{' '}
+            <code className="rounded bg-surface-container-high px-1">localhost:8788</code> adresini aç.
           </p>
         </div>
       </Section>
 
-      <Section icon="download" title="Data">
-        <p className="mb-3 text-xs text-soft">Everything is stored on your device — no accounts, no cloud.</p>
+      {/* Veri */}
+      <Section icon="download" title="Veri">
+        <p className="body-small mb-3 px-1 text-on-surface-variant">
+          Her şey cihazında saklanır — hesap yok, bulut yok.
+        </p>
         <div className="grid grid-cols-3 gap-2">
-          <button onClick={doExport} className="btn btn-ghost border border-line justify-start">
-            <Icon name="download" size={14} /> Backup
+          <button onClick={doExport} className="m3-btn m3-btn-outlined justify-start">
+            <Icon name="download" size={15} /> Yedekle
           </button>
-          <button onClick={() => fileRef.current?.click()} className="btn btn-ghost border border-line justify-start">
-            <Icon name="upload" size={14} /> Restore
+          <button onClick={() => fileRef.current?.click()} className="m3-btn m3-btn-outlined justify-start">
+            <Icon name="upload" size={15} /> Geri yükle
           </button>
           <button
             onClick={() => {
-              if (confirm('All data will be reset to sample values. Are you sure?')) {
+              if (confirm('Tüm veriler örnek değerlere sıfırlanacak. Emin misin?')) {
                 resetAll();
-                flash('Reset complete');
+                flash('Sıfırlama tamamlandı');
               }
             }}
-            className="btn justify-start text-[#e03e3e] hover:bg-[#fae4e4] dark:hover:bg-[#40222a]"
+            className="m3-btn m3-btn-danger justify-start"
           >
-            <Icon name="trash" size={14} /> Reset
+            <Icon name="trash" size={15} /> Sıfırla
           </button>
         </div>
         <input
@@ -440,6 +484,17 @@ export default function Settings() {
           }}
         />
       </Section>
+
+      {/* Snackbar geri bildirimi */}
+      {feedback && (
+        <div className="m3-snackbar" role="status">
+          <Icon name={feedback.includes('✗') ? 'error' : 'checkCircle'} size={18} className="shrink-0" />
+          <span className="body-medium min-w-0 flex-1">{feedback}</span>
+          <button onClick={() => setFeedback('')} className="m3-btn m3-btn-text shrink-0 text-inverse-primary">
+            Tamam
+          </button>
+        </div>
+      )}
     </Page>
   );
 }

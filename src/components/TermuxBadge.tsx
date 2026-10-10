@@ -1,29 +1,35 @@
 import { useTermuxStatus } from '../lib/useTermuxStatus';
 import { cx } from '../lib/utils';
+import { Icon } from '../lib/icons';
 
 export function TermuxBadge() {
   const { connected, battery } = useTermuxStatus();
 
+  const label = connected === true ? 'Bağlı' : connected === false ? 'Termux API offline' : 'Termux API…';
+
   return (
-    <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-soft">
+    <div className="m3-chip">
       <span className="relative flex h-1.5 w-1.5 shrink-0">
         {connected && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+          <span className="absolute top-0 left-0 h-1.5 w-1.5 animate-ping rounded-full bg-[#34d399]" aria-hidden="true" />
         )}
         <span
           className={cx(
-            'relative inline-flex h-1.5 w-1.5 rounded-full',
-            connected === null ? 'bg-faint' : connected ? 'bg-emerald-500' : 'bg-zinc-400 opacity-50',
+            'relative h-1.5 w-1.5 rounded-full',
+            connected === null ? 'bg-outline-variant' : connected ? 'bg-[#34d399]' : 'bg-[#a8a29e]'
           )}
+          aria-hidden="true"
         />
       </span>
       {connected && battery ? (
-        <span className="truncate">
-          Batarya %{battery.percent ?? '?'}
-          {battery.charging ? ' ⚡' : ''}
-        </span>
+        <>
+          <Icon name="battery" size={12} className="shrink-0 text-on-surface-variant" aria-hidden="true" />
+          <span className="truncate font-medium">
+            Batarya %{battery.percent ?? '?'}{battery.charging ? ' ⚡' : ''}
+          </span>
+        </>
       ) : (
-        <span className="truncate">{connected === false ? 'Termux API offline' : 'Termux API…'}</span>
+        <span className="truncate font-medium text-on-surface-variant">{label}</span>
       )}
     </div>
   );
